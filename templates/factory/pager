@@ -13,13 +13,21 @@ IF pager AND pager.first_page != pager.last_page;
 
 <P ALIGN="center">Pages: 
 [%
-     FOREACH num = [pager.first_page .. pager.last_page];
+    SET begin_page = pager.current_page - 10;
+    IF begin_page < 1;
+        SET begin_page = pager.first_page;
+    END;
+    SET end_page = pager.current_page + 10;
+    IF pager.last_page < end_page;
+        SET end_page = pager.last_page;
+    END;
+     FOREACH num = [begin_page .. end_page];
           IF num == pager.current_page;
             "["; num; "] ";
           ELSE;
             SET args = "?page=" _ num; # Order?
             SET label = "[" _ num _ "]";
-          link(classmetadata.moniker, "list", args, label);
+          link(classmetadata.table, "list", args, label);
           END;
      END;
 %]

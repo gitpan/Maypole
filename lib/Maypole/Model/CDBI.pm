@@ -1,12 +1,13 @@
 package Maypole::Model::CDBI;
 use base qw(Maypole::Model::Base Class::DBI);
-use Lingua::EN::Inflect::Number qw(to_PL);
 use Class::DBI::AsForm;
 use Class::DBI::FromCGI;
 use Class::DBI::Loader;
 use Class::DBI::AbstractSearch;
 use Class::DBI::Plugin::RetrieveAll;
 use Class::DBI::Pager;
+
+use Lingua::EN::Inflect::Number qw(to_PL);
 use CGI::Untaint;
 use strict;
 
@@ -25,6 +26,7 @@ modules.
 
 sub related {
     my ($self, $r) = @_;
+
     # Has-many methods; XXX this is a hack
     map {to_PL($_)} 
     grep { exists $r->{config}{ok_tables}{$_} }
@@ -65,8 +67,8 @@ sub delete :Exported {
 sub stringify_column {
     my $class = shift;
     return ($class->columns("Stringify"),
-                (grep { $_ ne "id" } $class->primary_columns),
-                (grep { $_ eq "name" } $class->columns)
+                (grep { /(name|title)/i } $class->columns),
+                (grep { !/id$/i } $class->primary_columns),
                )[0];
 }
 

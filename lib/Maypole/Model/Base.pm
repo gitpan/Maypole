@@ -18,7 +18,7 @@ sub process {
         $r->objects([ $obj ]);
         shift @{$r->{args}};
     }
-    $class->$method($r);
+    $class->$method($r, $obj, @{$r->{args}});
 }
 
 sub display_columns { 
@@ -125,7 +125,7 @@ Return a hash mapping column names with human-readable equivalents.
 
 sub column_names { my $class = shift; map { 
         my $col = $_;
-        $col =~ s/_+(\w)?/ \U\1/g;
+        $col =~ s/_+(\w)?/ \U$1/g;
         $_ => ucfirst $col } $class->columns }
 
 =head2 description

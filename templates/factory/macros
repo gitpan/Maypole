@@ -33,8 +33,8 @@ command for that object. Otherwise, it just displays the data.
 [%
 
 MACRO maybe_link_view(object) BLOCK;
-    IF object.moniker; # It's an object, i.e. a has-a
-        link(object.moniker, "view", object.id, object);
+    IF object.table; # It's an object, i.e. a has-a
+        link(object.table, "view", object.id, object);
     ELSE;
         object;
     END;
@@ -79,7 +79,7 @@ This is a generic button, which performs an action on an object.
 #%]
 [% MACRO button(obj, action) BLOCK; %]
 <TD>
-<FORM METHOD="post" ACTION="[%base%]/[%obj.moniker%]/[%action%]/[%obj.id%]">
+<FORM METHOD="post" ACTION="[%base%]/[%obj.table%]/[%action%]/[%obj.id%]">
     <INPUT TYPE="submit" NAME="[%action%]" VALUE="[%action%]">
 </FORM>
 </TD>

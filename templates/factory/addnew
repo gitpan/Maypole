@@ -11,9 +11,8 @@ table.
 
 #%]
 <h3>Add a new [%classmetadata.moniker%]</h3>
-<FORM METHOD="post" ACTION="[%base%]/[%classmetadata.moniker%]/do_edit/">
+<FORM METHOD="post" ACTION="[%base%]/[%classmetadata.table%]/do_edit/">
     <INPUT TYPE="hidden" NAME="action" VALUE="create">
-    <INPUT TYPE="hidden" NAME="class" VALUE="[%classmetadata.name%]">
     <TABLE class="view">
      [% FOR col = classmetadata.columns;
         NEXT IF col == "id";

@@ -20,7 +20,7 @@ WriteMakefile(
         Template => 0,
     }, # e.g., Module::Name => 1.1
     ($] >= 5.005 ?     ## Add these new keywords supported since 5.005
-      (ABSTRACT_FROM  => 'lib/Apache/MVC.pm', # retrieve abstract from module
+      (ABSTRACT_FROM  => 'lib/Maypole.pm', # retrieve abstract from module
        AUTHOR         => 'Simon Cozens <simon@simon-cozens.org>') : ()),
 );
 
@@ -45,16 +45,16 @@ if (!-e "t/beerdb.db") {
 __DATA__
 
 create table brewery (
-    id int not null auto_increment primary key,
+    id integer auto_increment primary key,
     name varchar(30),
     url varchar(50),
     notes text
 );
 
 create table beer (
-    id int not null auto_increment primary key,
+    id integer auto_increment primary key,
     brewery integer,
-    style integer, 
+    style integer,
     name varchar(30),
     url varchar(120),
 #    tasted date,
@@ -65,15 +65,21 @@ create table beer (
 );
 
 create table handpump (
-    id int not null auto_increment primary key,
+    id integer auto_increment primary key,
     beer integer,
     pub integer
 );
 
 create table pub (
-    id int not null auto_increment primary key,
+    id integer auto_increment primary key,
     name varchar(60),
     url varchar(120),
+    notes text
+);
+
+create table style (
+    id integer auto_increment primary key,
+    name varchar(60),
     notes text
 );
 

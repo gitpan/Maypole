@@ -16,12 +16,7 @@ sub parse_location {
     my $loc = $self->{ar}->location;
     no warnings 'uninitialized';
     $self->{path} =~ s/^($loc)?\///;
-    $self->{path} ||= "frontpage";
-    my @pi = split /\//, $self->{path};
-    shift @pi while @pi and !$pi[0];
-    $self->{table} = shift @pi;
-    $self->{action} = shift @pi;
-    $self->{args} = \@pi;
+    $self->parse_path;
 
     $self->{params} = { $self->{ar}->content };
     $self->{query}  = { $self->{ar}->args };

@@ -4,16 +4,13 @@ use attributes ();
 use UNIVERSAL::require;
 use strict;
 use warnings;
-our $VERSION = "1.3";
+our $VERSION = "1.4";
 __PACKAGE__->mk_classdata($_) for qw( config init_done view_object );
 __PACKAGE__->mk_accessors ( qw( ar params query objects model_class
 args action template ));
 __PACKAGE__->config({});
 __PACKAGE__->init_done(0);
-
-# Ape Apache::Constants interface
-use constant OK => 0;
-use constant DECLINED => -1;
+use Maypole::Constants;
 
 sub debug { 0 }
 
@@ -57,7 +54,14 @@ sub handler {
     my $r = bless { config => $class->config }, $class;
     $r->get_request();
     $r->parse_location();
+    my $status = $r->handler_guts();
+    return $status unless $status == OK;
+    $r->send_output;
+    return $status;
+}
 
+sub handler_guts {
+    my $r = shift;
     $r->model_class($r->config->{model}->class_of($r, $r->{table}));
     my $status = $r->is_applicable;
     if ($status == OK) { 
@@ -77,12 +81,9 @@ sub handler {
         $r->{path} =~ s{/}{}; # De-absolutify
         $r->template($r->{path});
     }
-    $status = OK;
     if (!$r->{output}) { # You might want to do it yourself
-        $status = $r->view_object->process($r);
-    }
-    $r->send_output;
-    return $status;
+        return $r->view_object->process($r);
+    } else { return OK; }
 }
 
 sub is_applicable {
@@ -117,6 +118,16 @@ sub call_authenticate {
 sub additional_data {}
 
 sub authenticate { return OK }
+
+sub parse_path {
+    my $self = shift;
+    $self->{path} ||= "frontpage";
+    my @pi = split /\//, $self->{path};
+    shift @pi while @pi and !$pi[0];
+    $self->{table} = shift @pi;
+    $self->{action} = shift @pi;
+    $self->{args} = \@pi;
+}
 
 =head1 NAME
 
@@ -233,7 +244,8 @@ introduction to the process we're trying to automate.
 You should probably not use Maypole directly. Maypole is an abstract
 class which does not specify how to communicate with the outside world.
 The most popular subclass of Maypole is L<Apache::MVC>, which interfaces
-the Maypole framework to Apache mod_perl.
+the Maypole framework to Apache mod_perl; another important one is
+L<CGI::Maypole>.
 
 If you are implementing Maypole subclasses, you need to provide at least
 the C<parse_location> and C<send_output> methods. You may also want to
@@ -252,6 +264,8 @@ sub send_output{ die "Do not use Maypole directly; use Apache::MVC or similar" }
 There's more documentation, examples, and a wiki at the Maypole web site:
 
 http://maypole.simon-cozens.org/
+
+L<Apache::MVC>, L<CGI::Maypole>.
 
 =head1 AUTHOR
 

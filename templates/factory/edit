@@ -13,7 +13,7 @@ form similar to L<add_new> but with the current values filled in.
 [% FOR item = objects; %]
 <h2> Edit [% item.name %]</h2>
 
-<FORM ACTION="[% base %]/[% classmetadata.moniker %]/do_edit/[% item.id %]" METHOD="post">
+<FORM ACTION="[% base %]/[% item.table %]/do_edit/[% item.id %]" METHOD="post">
 [%
      FOR col = classmetadata.columns;
         NEXT IF col == "id";

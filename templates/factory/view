@@ -7,7 +7,7 @@ C<objects> and displays the object's properties in a table.
 
 =cut
 
-%#]
+#%]
 [% PROCESS macros %]
 [% INCLUDE header %]
 

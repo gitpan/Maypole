@@ -4,12 +4,12 @@ use Class::DBI::Loader::Relationship;
 
 # This is the sample application. Change this to the path to your
 # database. (or use mysql or something)
-#BeerDB->set_database("dbi:SQLite:t/beerdb.db");
-BeerDB->setup("dbi:mysql:beerdb");
+BeerDB->setup("dbi:SQLite:t/beerdb.db");
+#BeerDB->setup("dbi:mysql:beerdb");
 
 # Change this to the root of the web space.
-#BeerDB->config->{uri_base} = "http://localhost/beerdb/";
-BeerDB->config->{uri_base} = "http://neo.trinity-house.org.uk/beerdb/";
+BeerDB->config->{uri_base} = "http://localhost/beerdb/";
+#BeerDB->config->{uri_base} = "http://neo.trinity-house.org.uk/beerdb/";
 
 BeerDB->config->{rows_per_page} = 10;
 

@@ -12,10 +12,10 @@ accessible, with a link to the list page for each one.
 <ul id="navlist">
 [%
     FOR table = config.display_tables;
-        '<LI '; 'id="active"' IF table == classmetadata.moniker; '>';
+        '<LI '; 'id="active"' IF table == classmetadata.table; '>';
 
         # Hack
-        SET active = '" id="current' IF table == classmetadata.moniker;
+        SET active = '" id="current' IF table == classmetadata.table;
 
         link(table, "list", active, table);
         SET active = "";

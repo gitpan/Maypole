@@ -1,5 +1,15 @@
 Revision history for Perl extension Maypole 
 
+1.4   Fri Apr 16 18:11:41 BST 2004
+    - Much, much more documentation
+    - CLI debugging mode
+    - CGI frontend (CGI::Maypole)
+    - Beginnings of a test suite
+    - Maypole::Constants module to remove dependency on Apache
+    - Refactoring of view classes to base/module-specific modules
+    - HTML::Mason view class
+    - Various small template bug fixes and enhancements
+
 1.3   Fri Mar 26 19:16:33 GMT 2004
     - Fix serious order/CDBI::Page interaction bug.
     - Die if model/view class can't be compiled.

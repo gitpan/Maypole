@@ -28,5 +28,5 @@ stages of the content generation process, and so on.
 The final chapters are examples of how to construct large web
 applications in Maypole: L<Flox.pod> describes a "social network" site
 similar to Friendster and Orkut; L<PetStore.pod> implements the Java/C#
-benchmark Pet Store application; and L<Recipe.pod> describes a kitchen
-management application.
+benchmark Pet Store application; and L<BuySpy.pod> implements the
+ASP.NET sample portal application.

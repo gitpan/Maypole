@@ -17,13 +17,11 @@
 [% FOR col = classmetadata.columns.list;
     NEXT IF col == "id";
     "<TH>"; 
-        '<A HREF="'; base; classmetadata.moniker; "/list/?";
-        "page=" _ pager.current_page _ "&" IF pager;
-        "order="; col; 
-        "&o2=desc" IF col == request.query.order and request.query.o2 != "desc";
-        '">';
-        classmetadata.colnames.$col; 
-        '</A>';
+    SET additional = "?order=" _ col;
+    SET additional = additional _ "&page=" _ pager.current_page IF pager;
+    SET additional = additional _ "&o2=desc" 
+        IF col == request.query.order and request.query.o2 != "desc";
+     link(classmetadata.table, "list", additional, classmetadata.colnames.$col);
     "</TH>";
 END %]
 </TR>

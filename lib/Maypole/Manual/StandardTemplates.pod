@@ -1,5 +1,9 @@
 
-=head1 Maypole's Standard Templates and Actions
+=head1 NAME
+
+Maypole::Manual::StandardTemplates - Maypole's Standard Templates and Actions
+
+=head1 DESCRIPTION
 
 As we saw in our Create-Read-Update-Delete (CRUD) example,
 Maypole does all it can to make your life

@@ -1,4 +1,8 @@
-=head1 The Maypole Manual
+=head1 NAME
+
+Maypole::Manual - The Maypole Manual
+
+=head1 DESCRIPTION
 
 The Maypole documentation is arranged over several files; this is 
 the right one to start with, as it provides an overview of the

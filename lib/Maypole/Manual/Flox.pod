@@ -1,4 +1,8 @@
-=head1 Flox: A Free Social Networking Site
+=head1 NAME
+
+Maypole::Manual::Flox - Flox: A Free Social Networking Site
+
+=head1 DESCRIPTION
 
 Friendster, Tribe, and now Google's Orkut - it seems like in early 2004,
 everyone wanted to be a social networking site. At the time, I was too

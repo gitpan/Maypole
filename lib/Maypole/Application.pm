@@ -7,7 +7,7 @@ use Maypole;
 use Maypole::Config;
 
 our @ISA;
-our $VERSION = '2.05';
+our $VERSION = '2.06';
 
 sub import {
     my ( $self, @plugins ) = @_;

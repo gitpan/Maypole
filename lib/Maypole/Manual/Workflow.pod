@@ -1,6 +1,10 @@
 =pod
 
-=head1 Maypole's Request Workflow
+=head1 NAME
+
+Maypole::Manual::Workflow - Maypole's Request Workflow
+
+=head1 DESCRIPTION
 
 This chapter describes the progress of a request through Maypole.
 
@@ -154,4 +158,4 @@ Next L<The Beer Database Revisited|Maypole::Manual::Beer>,
 Previous
 L<Standard Templates and Actions|Maypole::Manual::StandardTemplates>
 
-
+=cut

@@ -1,4 +1,8 @@
-=head1 Maypole Request Hacking Cookbook
+=head1 NAME
+
+Maypole::Manual::Request - Maypole Request Hacking Cookbook
+
+=head1 DESCRIPTION
 
 Hacks; design patterns; recipes: call it what you like, this chapter is a
 developing collection of techniques which can be slotted in to Maypole

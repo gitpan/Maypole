@@ -1,4 +1,8 @@
-=head1 Maypole Model Classes
+=head1 NAME
+
+Maypole::Manual::Model - Maypole Model Classes
+
+=head1 DESCRIPTION
 
 Maypole's model classes provide an interface to your data store.
 In principle Maypole can connect to pretty much any data source,

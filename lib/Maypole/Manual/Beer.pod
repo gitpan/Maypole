@@ -1,4 +1,8 @@
-=head1 The Beer Database, Twice
+=head1 NAME
+
+Maypole::Manual::Beer - The Beer Database, Twice
+
+=head1 DESCRIPTION
 
 We briefly introduced the "beer database" example in the
 L<Introduction to Maypole|Maypole::Manual::About> chapter, where we

@@ -14,7 +14,8 @@ my $mock_maypole = new Test::MockModule('CGI::Maypole');
 my $mock_cgi = new Test::MockModule('CGI::Simple');
 $mock_cgi->mock(path_info => sub {
     delete $_[0]->{'.path_info'};
-    goto $mock_cgi->original('path_info')
+    my $orig_path_info = $mock_cgi->original('path_info');
+    goto $orig_path_info;
 });
 
 # run()

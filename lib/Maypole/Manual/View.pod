@@ -1,4 +1,8 @@
-=head1 Maypole View Classes
+=head1 NAME
+
+Maypole::Manual::View - Maypole View Classes
+
+=head1 DESCRIPTION
 
 In a large application, you will almost certainly want to customize the
 layout and design of the output pages. This task may even be the purview

@@ -7,7 +7,7 @@ use Maypole::Config;
 use Maypole::Constants;
 use Maypole::Headers;
 
-our $VERSION = '2.05';
+our $VERSION = '2.06';
 
 __PACKAGE__->mk_classdata($_) for qw( config init_done view_object );
 __PACKAGE__->mk_accessors(
@@ -492,11 +492,13 @@ Maypole is currently maintained by Simon Flack C<simonflk#cpan.org>
 
 Simon Cozens, C<simon#cpan.org>
 
+Sebastian Riedel, C<sri#oook.de> maintained Maypole from 1.99_01 to 2.04
+
 =head1 THANKS TO
 
-Danijel Milicevic, Dave Slack, Jesse Sheidlower, Jody Belka, Marcus Ramberg,
-Mickael Joanne, Randal Schwartz, Simon Flack, Steve Simms, Veljko Vidovic
-and all the others who've helped.
+Sebastian Riedel, Danijel Milicevic, Dave Slack, Jesse Sheidlower, Jody Belka,
+Marcus Ramberg, Mickael Joanne, Randal Schwartz, Simon Flack, Steve Simms,
+Veljko Vidovic and all the others who've helped.
 
 =head1 LICENSE
 

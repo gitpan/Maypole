@@ -2,6 +2,12 @@ This file documents the revision history for Perl extension Maypole.
 For information about current developments and future releases, see:
     http://maypole.perl.org/?TheRoadmap
 
+2.06  Wed Dec 29 01:30:00 2004
+    Fixes:
+    - Minor restructuring of the manual so search.cpan.org indexes it better
+    - #9129: Skip t/apache_mvc.t if Apache::Request isn't installed
+    
+
 2.05  Fri Dec 24 03:20:00 2004
     - Revised and updated documentation. Many thanks to Dave Howorth for his
       hard work and 120kb documentation patches.

@@ -1,4 +1,8 @@
-=head1 The Maypole iBuySpy Portal
+=head1 NAME
+
+Maypole::Manual::BugSpy - The Maypole iBuySpy Portal
+
+=head1 DESCRIPTION
 
 I think it's good fun to compare Maypole against other frameworks,
 so here's how to build the ASP.NET tutorial site in Maypole.

@@ -1,10 +1,14 @@
 #!/usr/bin/perl -w
 use strict;
 use Test::More;
-BEGIN { if (eval { require mod_perl }) { 
-            plan tests => 2;
-        } else { Test::More->import(skip_all =>"mod_perl is not installed: $@") }
-      }
+BEGIN {
+    if (eval { require Apache::Request }) {
+        plan tests => 2;
+    } else {
+        Test::More->import(skip_all =>"Apache::Request is not installed: $@");
+    }
+}
+
 require_ok('Apache::MVC');
 ok($Apache::MVC::VERSION, 'defines $VERSION');
 # defines $VERSION

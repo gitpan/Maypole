@@ -151,8 +151,8 @@ during view initialization.
 
 =head2 paths
 
-Returns search paths for templates. the default method returns factory, custom
-and E<lt>tablenameE<gt> under the configured template root.
+Returns search paths for templates. the default method returns folders for the
+model class's C<moniker>, factory, custom under the configured template root.
 
 =head2 vars
 

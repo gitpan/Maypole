@@ -1,5 +1,9 @@
 
-=head1 Introduction to Maypole
+=head1 NAME
+
+Maypole::Manual::About - Introduction to Maypole
+
+=head1 DESCRIPTION
 
 This chapter serves as a gentle introduction to Maypole and setting up
 Maypole applications. We look at what Maypole is, how to get it up and

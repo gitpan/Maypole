@@ -1,6 +1,6 @@
 package Apache::MVC;
 
-our $VERSION = '2.06';
+our $VERSION = '2.08';
 
 use strict;
 use warnings;

@@ -385,10 +385,6 @@ that class. That is, for the C<beer> table, C<classmetadata.cgi.style>
 should be a C<HTML::Element> object containing a drop-down list of
 beer styles.
 
-TODO =item C<description>
-TODO
-TODO This is the human-readable description provided by a class.
-
 =item C<related_accessors>
 
 This is a list of accessors which can be called on an object to get

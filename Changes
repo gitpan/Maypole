@@ -2,6 +2,37 @@ This file documents the revision history for Perl extension Maypole.
 For information about current developments and future releases, see:
     http://maypole.perl.org/?TheRoadmap
 
+2.08  Mon Jan 24 20:45:00 2005
+    - Added $r->config->template_extension() to set optional file extension
+      for templates (Dave Howorth)
+
+    Fixes:
+    - Maypole::Application adds plugin classes to caller's @ISA (Marcus Ramberg)
+    - FETCH_CODE_ATRIBUTES in M::M::Base should return an empty list if there
+      are no attributes
+    - M::M::CDBI will warn() about Class::DBI::FromCGI errors
+    
+
+2.07  Sun Jan 16 18:45:00 2005
+    (This version was not uploaded to CPAN)
+
+    Internal changes:
+    - Removed Maypole::Model->description. It didn't work as expected and
+      clashed with 'description' columns in the database
+
+    Fixes:
+    - Model->process() shouldn't set $r->objects() to a list with a single,
+      undefined element
+    - Fixed overriding $r->template_args->{classmetadata} in M::V::Base
+      (Thanks to Dave Howorth for spotting the mistake)
+    - #9473: Maypole::Model::CDBI->related_class (Thanks David Baird)
+    - #9434: M::M::CDBI->search generated "uninitialized value" warnings
+
+    Templates:
+    - The addnew template will attempt to prefill form fields with request
+      parameters
+    - edit template includes 'addnew' if there is no object to edit
+
 2.06  Wed Dec 29 01:30:00 2004
     Fixes:
     - Minor restructuring of the manual so search.cpan.org indexes it better

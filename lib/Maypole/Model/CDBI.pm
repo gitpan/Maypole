@@ -82,8 +82,13 @@ sub related {
 
 sub related_class {
     my ( $self, $r, $accessor ) = @_;
-    my $related = $self->related->{$accessor};
-    if ( my $mapping = $related->{args}->{mapping} ) {
+
+    my $related = $self->meta_info( has_many => $accessor ) ||
+                  $self->meta_info( has_a    => $accessor ) ||
+                  return;
+
+    my $mapping = $related->{args}->{mapping};
+    if ( @$mapping ) {
         return $related->{foreign_class}->meta_info('has_a')->{ $$mapping[0] }
           ->{foreign_class};
     }
@@ -114,7 +119,9 @@ sub do_edit : Exported {
                     { required => $r->{config}{ $r->{table} }{required_cols} || [], }
             );
         };
-        $fatal = $@;
+        if ($fatal = $@) {
+            warn "$fatal" if $r->debug;
+        }
         $creating++;
     }
     if ( my %errors = $fatal ? (FATAL => $fatal) : $obj->cgi_update_errors ) {
@@ -123,17 +130,13 @@ sub do_edit : Exported {
         $r->{template_args}{cgi_params} = $r->{params};
         $r->{template_args}{errors}     = \%errors;
 
-        if ($creating) {
-            undef $obj;
-            $r->template("addnew");
-        } else {
-            $r->template("edit");
-        }
+        undef $obj if $creating;
+        $r->template("edit");
     }
     else {
         $r->{template} = "view";
     }
-    $r->objects( [$obj] );
+    $r->objects( $obj ? [$obj] : []);
 }
 
 sub delete : Exported {
@@ -171,7 +174,8 @@ sub search : Exported {
     my $oper   = "like";                                # For now
     my %params = %{ $r->{params} };
     my %values = map { $_ => { $oper, $params{$_} } }
-      grep { length ($params{$_}) and $fields{$_} } keys %params;
+      grep { defined $params{$_} && length ($params{$_}) && $fields{$_} }
+      keys %params;
 
     $r->template("list");
     if ( !%values ) { return $self->list($r) }

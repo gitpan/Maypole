@@ -35,9 +35,8 @@ sub vars {
           # ...
     );
     if ($class) {
-        my $classmeta = $args{classmetadata} ||= {};
+        my $classmeta = $r->template_args->{classmetadata} ||= {};
         $classmeta->{name}              ||= $class;
-        $classmeta->{description}       ||= $class->description;
         $classmeta->{table}             ||= $class->table;
         $classmeta->{columns}           ||= [ $class->display_columns ];
         $classmeta->{list_columns}      ||= [ $class->list_columns ];
@@ -57,9 +56,7 @@ sub vars {
     }
 
     # Overrides
-    local $r->{template_args} = $r->{template_args};
-    delete $r->{template_args}{classmetadata}; # already overrides
-    %args = ( %args, %{ $r->{template_args} || {} } );
+    %args = ( %args, %{ $r->template_args || {} } );
     %args;
 }
 

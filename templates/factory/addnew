@@ -18,8 +18,19 @@ table.
     [% FOR col = classmetadata.columns %]
         [% NEXT IF col == "id" %]
             <label><span class="field">[% classmetadata.colnames.$col %]</span>
-            [% classmetadata.cgi.$col.as_XML; %]
+            [% 
+            SET elem = classmetadata.cgi.$col.clone;
+            IF elem.tag == "textarea";
+                elem = elem.push_content(request.param(col));
+            ELSE;
+                elem.attr("value", request.param(col));
+            END;
+            elem.as_XML; %]
 	    </label>
+        [% IF errors.$col %]
+           <span class="error">[% errors.$col %]</span>
+        [% END %]
+
     [% END; %]
     <input type="submit" name="create" value="create"/>
 </fieldset>

@@ -6,7 +6,7 @@ use warnings;
 use CGI::Simple;
 use Maypole::Headers;
 
-our $VERSION = '2.06';
+our $VERSION = '2.08';
 
 sub run {
     my $self = shift;

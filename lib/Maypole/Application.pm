@@ -7,7 +7,7 @@ use Maypole;
 use Maypole::Config;
 
 our @ISA;
-our $VERSION = '2.06';
+our $VERSION = '2.08';
 
 sub import {
     my ( $self, @plugins ) = @_;
@@ -28,7 +28,7 @@ sub import {
             if ($@) { warn qq(Loading plugin "Maypole::Plugin::$_" failed: $@) }
             else {
                 warn "Loaded plugin: Maypole::Plugin::$_" if $caller->debug;
-                unshift @ISA, "Maypole::Plugin::$_";
+                push @{"${caller}::ISA"}, "Maypole::Plugin::$_";
             }
         }
     }

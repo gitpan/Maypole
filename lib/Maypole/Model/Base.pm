@@ -7,7 +7,7 @@ our %remember;
 
 sub MODIFY_CODE_ATTRIBUTES { $remember{ $_[1] } = $_[2]; () }
 
-sub FETCH_CODE_ATTRIBUTES { $remember{ $_[1] } }
+sub FETCH_CODE_ATTRIBUTES { $remember{ $_[1] } || () }
 
 sub process {
     my ( $class, $r ) = @_;
@@ -15,7 +15,8 @@ sub process {
     return if $r->{template};    # Authentication has set this, we're done.
 
     $r->{template} = $method;
-    $r->objects([ $class->fetch_objects($r) ]);
+    my $obj = $class->fetch_objects($r);
+    $r->objects([$obj]) if $obj;
     $class->$method( $r, $obj, @{ $r->{args} } );
 }
 
@@ -168,14 +169,6 @@ sub column_names {
     } $class->columns;
 }
 
-=head2 description
-
-A description of the class to be passed to the template.
-
-=cut
-
-sub description { "A poorly defined class" }
-
 =head2 is_public
 
 should return true if a certain action is supported, or false otherwise. 
@@ -187,7 +180,7 @@ sub is_public {
     my ( $self, $action ) = @_;
     my $cv = $self->can($action);
     return 0 unless $cv;
-    my $attrs = join " ", attributes::get($cv);
+    my $attrs = join " ", (attributes::get($cv) || ());
     do {
         warn "$action not exported" if Maypole->debug;
         return 0;

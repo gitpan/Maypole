@@ -5,12 +5,13 @@ use attributes ();
 use strict;
 use warnings;
 
-our $VERSION = "1." . sprintf "%04d", q$Rev: 324 $ =~ /: (\d+)/;
+our $VERSION = "1." . sprintf "%04d", q$Rev: 333 $ =~ /: (\d+)/;
 
 # Public accessors.
 __PACKAGE__->mk_accessors(
-     qw( view view_options uri_base template_root model loader display_tables
-         ok_tables rows_per_page dsn user pass opts application_name)
+     qw( view view_options uri_base template_root template_extension model
+         loader display_tables ok_tables rows_per_page dsn user pass opts
+         application_name)
 );
 
 # Should only be modified by model.
@@ -45,6 +46,10 @@ Optional.
 =head3 tables
 
 Contains a list of all tables, if supported by model.
+
+=head3 template_extension
+
+Optional template file extension.
 
 =head3 template_root
 

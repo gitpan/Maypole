@@ -5,7 +5,7 @@ use Template;
 use File::Spec::Functions qw(catdir tmpdir);
 
 use strict;
-our $VERSION = "1." . sprintf "%04d", q$Rev: 324 $ =~ /: (\d+)/;
+our $VERSION = "1." . sprintf "%04d", q$Rev: 333 $ =~ /: (\d+)/;
 
 sub template {
     my ( $self, $r ) = @_;
@@ -21,8 +21,12 @@ sub template {
 
     $self->{provider}->include_path([ $self->paths($r) ]);
 
+    my $template_file = $r->template;
+    my $ext = $r->config->template_extension;
+    $template_file .= $ext if defined $ext;
+
     my $output;
-    if ($self->{tt}->process( $r->template, { $self->vars($r) }, \$output )) {
+    if ($self->{tt}->process($template_file, { $self->vars($r) }, \$output )) {
         $r->{output} = $output;
         return OK;
     }

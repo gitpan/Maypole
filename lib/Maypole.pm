@@ -7,7 +7,7 @@ use Maypole::Config;
 use Maypole::Constants;
 use Maypole::Headers;
 
-our $VERSION = '2.06';
+our $VERSION = '2.08';
 
 __PACKAGE__->mk_classdata($_) for qw( config init_done view_object );
 __PACKAGE__->mk_accessors(
@@ -186,8 +186,7 @@ sub exception { return ERROR }
 sub parse_path {
     my $self = shift;
     $self->{path} ||= "frontpage";
-    my @pi = split /\//, $self->{path};
-    shift @pi while @pi and !$pi[0];
+    my @pi = $self->{path} =~ m{([^/]+)/?}g;
     $self->{table}  = shift @pi;
     $self->{action} = shift @pi;
     $self->{action} ||= "index";

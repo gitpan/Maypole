@@ -17,6 +17,7 @@ lib/Maypole/CLI.pm
 lib/Maypole/Constants.pm
 lib/Maypole/Model/Base.pm
 lib/Maypole/Model/CDBI.pm
+lib/Maypole/Model/CDBI/Plain.pm
 lib/Maypole/View/Base.pm
 lib/Maypole/View/Mason.pm
 lib/Maypole/View/TT.pm
@@ -34,6 +35,7 @@ templates/custom/frontpage
 templates/custom/header
 templates/factory/addnew
 templates/factory/edit
+templates/factory/footer
 templates/factory/header
 templates/factory/list
 templates/factory/macros

@@ -31,7 +31,7 @@ sub send_output { $buffer = shift->{output} }
 
 # Do it!
 CHECK { if ((caller(0))[1] eq "-e") { 
-            $package->handler() and print $buffer; 
+            $package->handler() == OK and print $buffer; 
        } }
 
 1;

@@ -1,5 +1,10 @@
 Revision history for Perl extension Maypole 
 
+1.6   Fri Jul 16 23:51:21 BST 2004
+    - Two very trivial fixes:
+    - Put ::Plain in the MANIFEST, so it actually ships this time
+    - Make CLI test == OK, not just true
+
 1.5   Mon Jun 21 14:36:54 BST 2004
     - CLI mode correctly uses Constants module
     - Template footers as well as headers (Markus Ramberg)

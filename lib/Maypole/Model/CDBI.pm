@@ -90,8 +90,8 @@ sub search :Exported {
 
     $r->template("list");
     if (!%values) { return $self->list($r) }
-    $self = $self->do_pager($r);
     my $order = $self->order($r);
+    $self = $self->do_pager($r);
     $r->objects([ $self->search_where(\%values), 
                   ($order ? { order => $order } : ())  
                 ]);
@@ -117,8 +117,8 @@ sub order {
 
 sub list :Exported {
     my ($self, $r) = @_;
-    $self = $self->do_pager($r);
     my $order = $self->order($r);
+    $self = $self->do_pager($r);
     if ($order) { 
         $r->objects([ $self->retrieve_all_sorted_by( $order )]);
     } else {

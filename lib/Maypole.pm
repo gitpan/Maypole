@@ -4,7 +4,7 @@ use attributes ();
 use UNIVERSAL::require;
 use strict;
 use warnings;
-our $VERSION = "1.2";
+our $VERSION = "1.3";
 __PACKAGE__->mk_classdata($_) for qw( config init_done view_object );
 __PACKAGE__->mk_accessors ( qw( ar params query objects model_class
 args action template ));
@@ -28,6 +28,7 @@ sub setup {
     my $config = $calling_class->config;
     $config->{model} ||= "Maypole::Model::CDBI";
     $config->{model}->require;
+    die "Couldn't load the model class $config->{model}: $@" if $@;
     $config->{model}->setup_database($config, $calling_class, @_);
     for my $subclass (@{$config->{classes}}) {
         no strict 'refs';
@@ -42,6 +43,7 @@ sub init {
     my $config = $class->config;
     $config->{view}  ||= "Maypole::View::TT";
     $config->{view}->require;
+    die "Couldn't load the view class $config->{view}: $@" if $@;
     $config->{display_tables} ||= [ @{$class->config->{tables}} ];
     $class->view_object($class->config->{view}->new);
     $class->init_done(1);

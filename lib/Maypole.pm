@@ -6,7 +6,7 @@ use warnings;
 use Maypole::Config;
 use Maypole::Constants;
 
-our $VERSION = '2.0';
+our $VERSION = '2.01';
 
 __PACKAGE__->mk_classdata($_) for qw( config init_done view_object );
 __PACKAGE__->mk_accessors(

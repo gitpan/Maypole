@@ -23,10 +23,9 @@ lib/Maypole/Model/CDBI/Plain.pm
 lib/Maypole/View/Base.pm
 lib/Maypole/View/TT.pm
 Makefile
+Makefile.old
 Makefile.PL
 MANIFEST			This list of files
-MANIFEST.SKIP
-META.yml
 README
 t/01basics.t
 t/02pod.t
@@ -52,3 +51,4 @@ templates/factory/title
 templates/factory/view
 templates/maypole.css
 TODO
+META.yml                                 Module meta-data (added by MakeMaker)

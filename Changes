@@ -1,5 +1,8 @@
 Revision history for Perl extension Maypole 
 
+2.01  Fri Oct 24 14:50:00 2004
+    - documentation fix to make t/03podcoverage happy
+
 2.0   Fri Oct 22 20:00:00 2004
     - added parse_args() (Simon Flack)
     - call additional_data() and authenticate() for plain templates

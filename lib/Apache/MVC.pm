@@ -153,6 +153,25 @@ C<delete> commands; for instance, a list of breweries, go to
 For more information about how the system works and how to extend it,
 see L<Maypole>.
 
+=head1 Implementation
+
+This class overrides a set of methods in the base Maypole class to provide it's
+functionality. See L<Maypole> for these:
+
+=over
+
+=item get_request
+
+=item get_template_root
+
+=item parse_args
+
+=item parse_location
+
+=item send_output
+
+=back
+
 =head1 AUTHOR
 
 Simon Cozens, C<simon@cpan.org>

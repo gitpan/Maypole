@@ -1,19 +1,33 @@
 [% PROCESS macros %]
 [% INCLUDE header %]
 [% INCLUDE title %]
+[% IF search %]
+    <div id="title">Search results</div>
+[% ELSE %]
+    <div id="title">Listing of all [% classmetadata.plural %]</div>
+[% END %]
 [% INCLUDE navbar %]
 <div class="list">
     <table id="matrix" width="100%" >
         <tr>
-            [% FOR col = classmetadata.columns.list;
+            [% FOR col = classmetadata.list_columns.list;
                 NEXT IF col == "id";
                 "<th>"; 
                 SET additional = "?order=" _ col;
-                SET additional = additional _ "&amp;page=" _ pager.current_page
+                SET additional = additional _ "&page=" _ pager.current_page
                     IF pager;
-                SET additional = additional _ "&amp;o2=desc" 
+                SET additional = additional _ "&o2=desc" 
                 IF col == request.query.order and request.query.o2 != "desc";
-                link(classmetadata.table, "list", additional,
+                SET action = "list";
+                FOR name = classmetadata.columns.list;
+                  IF request.query.$name;
+                    SET additional =
+                        additional  _ "&" _ name _ "=" _
+                        request.query.$name;
+                    SET action = "search";
+                  END;
+                END;
+                link(classmetadata.table, action, additional,
                     classmetadata.colnames.$col);
                 IF col == request.query.order;
                     IF request.query.o2 != "desc";

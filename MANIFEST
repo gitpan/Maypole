@@ -7,12 +7,12 @@ lib/Maypole/Application.pm
 lib/Maypole/CLI.pm
 lib/Maypole/Config.pm
 lib/Maypole/Constants.pm
+lib/Maypole/Manual.pod
 lib/Maypole/Manual/About.pod
 lib/Maypole/Manual/Beer.pod
 lib/Maypole/Manual/BuySpy.pod
 lib/Maypole/Manual/Flox.pod
 lib/Maypole/Manual/Model.pod
-lib/Maypole/Manual/Overview.pod
 lib/Maypole/Manual/Request.pod
 lib/Maypole/Manual/StandardTemplates.pod
 lib/Maypole/Manual/View.pod
@@ -23,17 +23,16 @@ lib/Maypole/Model/CDBI/Plain.pm
 lib/Maypole/View/Base.pm
 lib/Maypole/View/TT.pm
 Makefile
-Makefile.old
 Makefile.PL
-MANIFEST
-MANIFEST.bak
+MANIFEST			This list of files
 MANIFEST.SKIP
-META.yml			Module meta-data (added by MakeMaker)
+META.yml
 README
 t/01basics.t
 t/02pod.t
 t/03podcoverage.t
 t/beerdb.db
+t/templates/custom/classdata
 t/templates/custom/frontpage
 t/templates/custom/list
 t/templates/custom/view

@@ -10,6 +10,8 @@ form similar to L<add_new> but with the current values filled in.
 #%]
 [% PROCESS macros %]
 [% INCLUDE header %]
+[% INCLUDE title %]
+<div id="title">Edit a [% classmetadata.moniker %]</div>
 [% FOR item = objects; %]
 <form action="[% base %]/[% item.table %]/do_edit/[% item.id %]" method="post">
 <fieldset>

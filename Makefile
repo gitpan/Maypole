@@ -53,11 +53,11 @@ AR_STATIC_ARGS = cr
 DIRFILESEP = /
 NAME = Maypole
 NAME_SYM = Maypole
-VERSION = 1.99_01
+VERSION = 2.0
 VERSION_MACRO = VERSION
-VERSION_SYM = 1_99_01
+VERSION_SYM = 2_0
 DEFINE_VERSION = -D$(VERSION_MACRO)=\"$(VERSION)\"
-XS_VERSION = 1.99_01
+XS_VERSION = 2.0
 XS_VERSION_MACRO = XS_VERSION
 XS_DEFINE_VERSION = -D$(XS_VERSION_MACRO)=\"$(XS_VERSION)\"
 INST_ARCHLIB = blib/arch
@@ -157,12 +157,12 @@ MAN3PODS = lib/Apache/MVC.pm \
 	lib/Maypole/CLI.pm \
 	lib/Maypole/Config.pm \
 	lib/Maypole/Constants.pm \
+	lib/Maypole/Manual.pod \
 	lib/Maypole/Manual/About.pod \
 	lib/Maypole/Manual/Beer.pod \
 	lib/Maypole/Manual/BuySpy.pod \
 	lib/Maypole/Manual/Flox.pod \
 	lib/Maypole/Manual/Model.pod \
-	lib/Maypole/Manual/Overview.pod \
 	lib/Maypole/Manual/Request.pod \
 	lib/Maypole/Manual/StandardTemplates.pod \
 	lib/Maypole/Manual/View.pod \
@@ -200,12 +200,12 @@ TO_INST_PM = lib/Apache/MVC.pm \
 	lib/Maypole/CLI.pm \
 	lib/Maypole/Config.pm \
 	lib/Maypole/Constants.pm \
+	lib/Maypole/Manual.pod \
 	lib/Maypole/Manual/About.pod \
 	lib/Maypole/Manual/Beer.pod \
 	lib/Maypole/Manual/BuySpy.pod \
 	lib/Maypole/Manual/Flox.pod \
 	lib/Maypole/Manual/Model.pod \
-	lib/Maypole/Manual/Overview.pod \
 	lib/Maypole/Manual/Request.pod \
 	lib/Maypole/Manual/StandardTemplates.pod \
 	lib/Maypole/Manual/View.pod \
@@ -240,6 +240,8 @@ PM_TO_BLIB = lib/Maypole/Config.pm \
 	blib/lib/Maypole/Manual/Workflow.pod \
 	lib/Maypole/Manual/Beer.pod \
 	blib/lib/Maypole/Manual/Beer.pod \
+	lib/Maypole/Manual.pod \
+	blib/lib/Maypole/Manual.pod \
 	lib/Maypole/Manual/About.pod \
 	blib/lib/Maypole/Manual/About.pod \
 	lib/Maypole/Manual/Flox.pod \
@@ -252,8 +254,6 @@ PM_TO_BLIB = lib/Maypole/Config.pm \
 	blib/lib/Maypole/Model/Base.pm \
 	lib/Maypole/Manual/Request.pod \
 	blib/lib/Maypole/Manual/Request.pod \
-	lib/Maypole/Manual/Overview.pod \
-	blib/lib/Maypole/Manual/Overview.pod \
 	lib/Maypole/Manual/View.pod \
 	blib/lib/Maypole/Manual/View.pod \
 	lib/Maypole/Manual/BuySpy.pod \
@@ -322,7 +322,7 @@ RCS_LABEL = rcs -Nv$(VERSION_SYM): -q
 DIST_CP = best
 DIST_DEFAULT = tardist
 DISTNAME = Maypole
-DISTVNAME = Maypole-1.99_01
+DISTVNAME = Maypole-2.0
 
 
 # --- MakeMaker macro section:
@@ -475,13 +475,13 @@ manifypods : pure_all  \
 	lib/CGI/Maypole.pm \
 	lib/Maypole/Manual/Workflow.pod \
 	lib/Maypole/Manual/Beer.pod \
+	lib/Maypole/Manual.pod \
 	lib/Maypole/Manual/About.pod \
 	lib/Maypole/Manual/Flox.pod \
 	lib/Maypole/Model/CDBI.pm \
 	lib/Maypole/Manual/StandardTemplates.pod \
 	lib/Maypole/Model/Base.pm \
 	lib/Maypole/Manual/Request.pod \
-	lib/Maypole/Manual/Overview.pod \
 	lib/Maypole/Manual/View.pod \
 	lib/Maypole/Manual/BuySpy.pod \
 	lib/Maypole/CLI.pm \
@@ -497,13 +497,13 @@ manifypods : pure_all  \
 	lib/CGI/Maypole.pm \
 	lib/Maypole/Manual/Workflow.pod \
 	lib/Maypole/Manual/Beer.pod \
+	lib/Maypole/Manual.pod \
 	lib/Maypole/Manual/About.pod \
 	lib/Maypole/Manual/Flox.pod \
 	lib/Maypole/Model/CDBI.pm \
 	lib/Maypole/Manual/StandardTemplates.pod \
 	lib/Maypole/Model/Base.pm \
 	lib/Maypole/Manual/Request.pod \
-	lib/Maypole/Manual/Overview.pod \
 	lib/Maypole/Manual/View.pod \
 	lib/Maypole/Manual/BuySpy.pod \
 	lib/Maypole/CLI.pm
@@ -520,13 +520,13 @@ manifypods : pure_all  \
 	  lib/CGI/Maypole.pm $(INST_MAN3DIR)/CGI::Maypole.$(MAN3EXT) \
 	  lib/Maypole/Manual/Workflow.pod $(INST_MAN3DIR)/Maypole::Manual::Workflow.$(MAN3EXT) \
 	  lib/Maypole/Manual/Beer.pod $(INST_MAN3DIR)/Maypole::Manual::Beer.$(MAN3EXT) \
+	  lib/Maypole/Manual.pod $(INST_MAN3DIR)/Maypole::Manual.$(MAN3EXT) \
 	  lib/Maypole/Manual/About.pod $(INST_MAN3DIR)/Maypole::Manual::About.$(MAN3EXT) \
 	  lib/Maypole/Manual/Flox.pod $(INST_MAN3DIR)/Maypole::Manual::Flox.$(MAN3EXT) \
 	  lib/Maypole/Model/CDBI.pm $(INST_MAN3DIR)/Maypole::Model::CDBI.$(MAN3EXT) \
 	  lib/Maypole/Manual/StandardTemplates.pod $(INST_MAN3DIR)/Maypole::Manual::StandardTemplates.$(MAN3EXT) \
 	  lib/Maypole/Model/Base.pm $(INST_MAN3DIR)/Maypole::Model::Base.$(MAN3EXT) \
 	  lib/Maypole/Manual/Request.pod $(INST_MAN3DIR)/Maypole::Manual::Request.$(MAN3EXT) \
-	  lib/Maypole/Manual/Overview.pod $(INST_MAN3DIR)/Maypole::Manual::Overview.$(MAN3EXT) \
 	  lib/Maypole/Manual/View.pod $(INST_MAN3DIR)/Maypole::Manual::View.$(MAN3EXT) \
 	  lib/Maypole/Manual/BuySpy.pod $(INST_MAN3DIR)/Maypole::Manual::BuySpy.$(MAN3EXT) \
 	  lib/Maypole/CLI.pm $(INST_MAN3DIR)/Maypole::CLI.$(MAN3EXT) 
@@ -572,8 +572,8 @@ realclean purge ::  clean realclean_subdirs
 	$(RM_RF) $(DISTVNAME)
 	$(RM_F)  blib/lib/Maypole/Manual/StandardTemplates.pod blib/lib/Maypole/Application.pm blib/lib/Maypole/Config.pm blib/lib/Maypole/Manual/Flox.pod blib/lib/Maypole/Manual/Model.pod
 	$(RM_F) blib/lib/Maypole/Model/CDBI.pm $(MAKEFILE_OLD) blib/lib/Maypole/Constants.pm blib/lib/CGI/Maypole.pm blib/lib/Maypole/Manual/About.pod $(FIRST_MAKEFILE) blib/lib/Maypole/Manual/BuySpy.pod
-	$(RM_F) blib/lib/Maypole/Manual/Beer.pod blib/lib/Maypole/Model/CDBI/Plain.pm blib/lib/Maypole/Manual/Request.pod blib/lib/Maypole/Model/Base.pm blib/lib/Maypole/View/TT.pm blib/lib/Apache/MVC.pm
-	$(RM_F) blib/lib/Maypole/Manual/Overview.pod blib/lib/Maypole/Manual/View.pod blib/lib/Maypole/View/Base.pm blib/lib/Maypole.pm blib/lib/Maypole/Manual/Workflow.pod blib/lib/Maypole/CLI.pm
+	$(RM_F) blib/lib/Maypole/Manual.pod blib/lib/Maypole/Manual/Beer.pod blib/lib/Maypole/Model/CDBI/Plain.pm blib/lib/Maypole/Manual/Request.pod blib/lib/Maypole/Model/Base.pm blib/lib/Maypole/View/TT.pm
+	$(RM_F) blib/lib/Apache/MVC.pm blib/lib/Maypole/Manual/View.pod blib/lib/Maypole/View/Base.pm blib/lib/Maypole.pm blib/lib/Maypole/Manual/Workflow.pod blib/lib/Maypole/CLI.pm
 
 
 # --- MakeMaker metafile section:
@@ -581,7 +581,7 @@ metafile :
 	$(NOECHO) $(ECHO) '# http://module-build.sourceforge.net/META-spec.html' > META.yml
 	$(NOECHO) $(ECHO) '#XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#' >> META.yml
 	$(NOECHO) $(ECHO) 'name:         Maypole' >> META.yml
-	$(NOECHO) $(ECHO) 'version:      1.99_01' >> META.yml
+	$(NOECHO) $(ECHO) 'version:      2.0' >> META.yml
 	$(NOECHO) $(ECHO) 'version_from: lib/Maypole.pm' >> META.yml
 	$(NOECHO) $(ECHO) 'installdirs:  site' >> META.yml
 	$(NOECHO) $(ECHO) 'requires:' >> META.yml
@@ -843,7 +843,7 @@ testdb_static :: testdb_dynamic
 # --- MakeMaker ppd section:
 # Creates a PPD (Perl Package Description) for a binary distribution.
 ppd:
-	$(NOECHO) $(ECHO) '<SOFTPKG NAME="$(DISTNAME)" VERSION="1,99_01,0,0">' > $(DISTNAME).ppd
+	$(NOECHO) $(ECHO) '<SOFTPKG NAME="$(DISTNAME)" VERSION="2,0,0,0">' > $(DISTNAME).ppd
 	$(NOECHO) $(ECHO) '    <TITLE>$(DISTNAME)</TITLE>' >> $(DISTNAME).ppd
 	$(NOECHO) $(ECHO) '    <ABSTRACT>MVC web application framework</ABSTRACT>' >> $(DISTNAME).ppd
 	$(NOECHO) $(ECHO) '    <AUTHOR>Simon Cozens &lt;simon@simon-cozens.org&gt;</AUTHOR>' >> $(DISTNAME).ppd
@@ -887,13 +887,13 @@ pm_to_blib: $(TO_INST_PM)
 	  lib/CGI/Maypole.pm blib/lib/CGI/Maypole.pm \
 	  lib/Maypole/Manual/Workflow.pod blib/lib/Maypole/Manual/Workflow.pod \
 	  lib/Maypole/Manual/Beer.pod blib/lib/Maypole/Manual/Beer.pod \
+	  lib/Maypole/Manual.pod blib/lib/Maypole/Manual.pod \
 	  lib/Maypole/Manual/About.pod blib/lib/Maypole/Manual/About.pod \
 	  lib/Maypole/Manual/Flox.pod blib/lib/Maypole/Manual/Flox.pod \
 	  lib/Maypole/Model/CDBI.pm blib/lib/Maypole/Model/CDBI.pm \
 	  lib/Maypole/Manual/StandardTemplates.pod blib/lib/Maypole/Manual/StandardTemplates.pod \
 	  lib/Maypole/Model/Base.pm blib/lib/Maypole/Model/Base.pm \
 	  lib/Maypole/Manual/Request.pod blib/lib/Maypole/Manual/Request.pod \
-	  lib/Maypole/Manual/Overview.pod blib/lib/Maypole/Manual/Overview.pod \
 	  lib/Maypole/Manual/View.pod blib/lib/Maypole/Manual/View.pod \
 	  lib/Maypole/Manual/BuySpy.pod blib/lib/Maypole/Manual/BuySpy.pod \
 	  lib/Maypole/CLI.pm blib/lib/Maypole/CLI.pm 

@@ -1,6 +1,6 @@
 Revision history for Perl extension Maypole 
 
-2.0   XXX XXX XX XX:XX:XX XXX XXXX
+2.0   Fri Oct 22 20:00:00 2004
     - added parse_args() (Simon Flack)
     - call additional_data() and authenticate() for plain templates
     - merged Apache2::MVC (mod_perl2 support) into Apache::MVC

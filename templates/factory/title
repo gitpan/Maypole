@@ -1,7 +1,1 @@
     <a href="[% base %]/frontpage">[% config.application_name %]</a>
-[% IF search %]
-    <div id="title">Search results</div>
-[% ELSE %]
-    <div id="title">Listing of all [% classmetadata.plural %]</div>
-[% END %]
-	

@@ -33,7 +33,7 @@ mysql, but ended up with something like this:
 This leads naturally to the following driver code:
 
     package Portal;
-    use base 'Apache::MVC';
+    use Maypole::Application;
     Portal->setup("dbi:mysql:ibsportal");
     use Class::DBI::Loader::Relationship;
     Portal->config->{loader}->relationship($_) for (

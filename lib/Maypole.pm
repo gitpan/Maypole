@@ -1,13 +1,12 @@
 package Maypole;
 use base qw(Class::Accessor::Fast Class::Data::Inheritable);
-use attributes ();
 use UNIVERSAL::require;
 use strict;
 use warnings;
 use Maypole::Config;
 use Maypole::Constants;
 
-our $VERSION = '1.99_01';
+our $VERSION = '2.0';
 
 __PACKAGE__->mk_classdata($_) for qw( config init_done view_object );
 __PACKAGE__->mk_accessors(
@@ -63,7 +62,6 @@ sub handler {
     my $r = bless { config => $class->config }, $class;
     $r->get_request($req);
     $r->parse_location();
-    warn "Request path: $r->{path}" if $r->debug;
     my $status = $r->handler_guts();
     return $status unless $status == OK;
     $r->send_output;
@@ -135,7 +133,8 @@ sub is_applicable {
       . "Available tables are: "
       . join( ",", @{ $config->{display_tables} } )
       if $self->debug
-      and not $config->ok_tables->{ $self->{table} };
+      and not $config->ok_tables->{ $self->{table} }
+      and $self->{action};
     return DECLINED() unless exists $config->ok_tables->{ $self->{table} };
 
     # Is it public?

@@ -26,6 +26,10 @@ IF pager AND pager.first_page != pager.last_page;
           ELSE;
             SET label = num;
             SET args = "?page=" _ num;
+	    SET args = args _ "&order=" _ request.query.order
+	      IF request.query.order;
+	    SET args = args _ "&amp;o2=desc"
+	      IF request.query.o2 == "desc";
             SET action = "list";
             FOR col = classmetadata.columns.list;
               IF request.query.$col;

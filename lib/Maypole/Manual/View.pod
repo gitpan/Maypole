@@ -395,7 +395,7 @@ enough for you, then you can set your own view class while configuring
 your application:
 
    package BeerDB;
-   use base 'Apache::MVC';
+   use base Maypole::Application;
    ...
    BeerDB->setup("dbi:SQLite:t/beerdb.db");
    BeerDB->config->{uri_base} = "http://localhost/beerdb/";

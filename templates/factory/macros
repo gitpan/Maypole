@@ -54,7 +54,7 @@ for some.
 
 #%]
 [% MACRO display_line(item) BLOCK;
-    FOR col = classmetadata.columns;
+    FOR col = classmetadata.list_columns;
         NEXT IF col == "id";
         "<td>";
         IF col == "url" AND item.url;
@@ -66,7 +66,7 @@ for some.
         END;
         "</td>";
     END;
-    '<td class="actions" nowrap="nowrap">';
+    '<td class="actions">';
     button(item, "edit");
     button(item, "delete");
     "</td>";

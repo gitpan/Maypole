@@ -164,7 +164,7 @@ table {
     font: bold 12px Verdana, sans-serif;
 }
 
-#matrix th#actionth {
+#matrix #actionth {
     width: 1px; 
     padding: 0em 1em 0em 1em;
 }
@@ -291,6 +291,7 @@ label .field {
 .error { color: #d00; }
 
 .actions {
+    white-space: nowrap;
     background-color: #fff;
 }
 
@@ -334,7 +335,6 @@ label .field {
 .pager .current-page {
     padding: 2px 6px;
     font-weight: bold;
-    font-size: 13px;
     vertical-align: top;
 }
 

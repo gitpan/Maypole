@@ -135,7 +135,7 @@ As usual, though, we'll start with a handler class which sets up the
 database:
 
     package Flox;
-    use base qw(Apache::MVC);
+    use Maypole::Application;
     Flox->setup("dbi:mysql:flox");
     Flox->config->{display_tables} = [qw[user invitation connection]];
     1;

@@ -1,4 +1,5 @@
+--- The Future
 * Tests
-* Better Documentation and more complex examples
-* Add API documentation to Maypole::Application
-* Make server character sets configurable
+* Better documentation and more complex examples
+* Much more warnings
+* Multiple Models

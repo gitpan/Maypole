@@ -44,9 +44,10 @@ The first Maypole application was the beer database. We've already met
 it; it looks like this.
 
     package BeerDB;
-    use base 'Apache::MVC';
+    use Maypole::Application;
     BeerDB->set_database("dbi:SQLite:t/beerdb.db");
-    BeerDB->config->{uri_base} = "http://localhost/beerdb/";
+    BeerDB->config->{uri_base} = "http://localhost/beerdb";
+    BeerDB->config->{template_root} = "/path/to/templates";
     BeerDB->config->{rows_per_page} = 10;
     BeerDB->config->{display_tables} = [qw[beer brewery pub style]];
     BeerDB::Brewery->untaint_columns( printable => [qw/name notes url/] );
@@ -72,7 +73,7 @@ at a time.
 Here's the first section:
 
     package BeerDB;
-    use base 'Apache::MVC';
+    use Maypole::Application;
     BeerDB->setup("dbi:SQLite:t/beerdb.db");
 
 This is actually all you need for a functional database front-end. Everything
@@ -81,11 +82,9 @@ called C<BeerDB>. This package is called the B<driver class>, because
 it's a relatively small class which defines how the whole application is
 going to run. 
 
-The second line says that our front-end is going to be C<Apache::MVC>,
-which is the Apache C<mod_perl> based version of Maypole; there's also
-a CGI version, C<CGI::Maypole>, and a command-line version for
-debugging, C<Maypole::CLI>, but C<Apache::MVC> is  usually the one you
-want.
+The second line says that our front-end is going to be
+C<Maypole::Application>, it automatically detects if you're using
+mod_perl or CGI and loads everything neccessary for you.
 
 Thirdly we're going to need to set up our database with the given DBI
 connection string. Now the core of Maypole itself doesn't know about

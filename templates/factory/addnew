@@ -20,10 +20,12 @@ table.
             <label><span class="field">[% classmetadata.colnames.$col %]</span>
             [% 
             SET elem = classmetadata.cgi.$col.clone;
-            IF elem.tag == "textarea";
-                elem = elem.push_content(request.param(col));
-            ELSE;
-                elem.attr("value", request.param(col));
+            IF request.action == 'do_edit';
+                IF elem.tag == "textarea";
+                    elem = elem.push_content(request.param(col));
+                ELSE;
+                    elem.attr("value", request.param(col));
+                END;
             END;
             elem.as_XML; %]
 	    </label>

@@ -28,14 +28,15 @@ MANIFEST
 MANIFEST.SKIP
 META.yml			Module meta-data (added by MakeMaker)
 README
-t/constants.t
-t/maypole.t
-t/apache_mvc.t
-t/cgi_maypole.t
-t/headers.t
 t/01basics.t
 t/02pod.t
 t/03podcoverage.t
+t/apache_mvc.t
+t/application.t
+t/cgi_maypole.t
+t/constants.t
+t/headers.t
+t/maypole.t
 t/templates/custom/classdata
 t/templates/custom/frontpage
 t/templates/custom/list

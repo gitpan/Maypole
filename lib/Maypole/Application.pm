@@ -7,32 +7,38 @@ use Maypole;
 use Maypole::Config;
 
 our @ISA;
-our $VERSION = '2.08';
+our $VERSION = '2.09';
 
 sub import {
-    my ( $self, @plugins ) = @_;
+    my ( $class, @plugins ) = @_;
     my $caller = caller(0);
-    no strict 'refs';
-    push @{"${caller}::ISA"}, $self;
+
     my $autosetup=0;
-    foreach (sort @plugins) {
-        if    (/^\-Setup$/) { $autosetup++; }
-        elsif (/^\-Debug$/) {
-            *{"$caller\::debug"} = sub { 1 };
-            warn "Debugging enabled";
-        }
-        elsif (/^-.*$/) { warn "Unknown flag: $_" }
-        else {
-            # The plugin caller should be our application class
-            eval "package $caller; require Maypole::Plugin::$_";
-            if ($@) { warn qq(Loading plugin "Maypole::Plugin::$_" failed: $@) }
+    my @plugin_modules;
+    {
+        foreach (@plugins) {
+            if    (/^\-Setup$/) { $autosetup++; }
+            elsif (/^\-Debug$/) {
+                no strict 'refs';
+                *{"$caller\::debug"} = sub { 1 };
+                warn "Debugging enabled";
+            }
+            elsif (/^-.*$/) { warn "Unknown flag: $_" }
             else {
-                warn "Loaded plugin: Maypole::Plugin::$_" if $caller->debug;
-                push @{"${caller}::ISA"}, "Maypole::Plugin::$_";
+                my $plugin = "Maypole::Plugin::$_";
+                if ($plugin->require) {
+                    push @plugin_modules, "Maypole::Plugin::$_";
+                    warn "Loaded plugin: $plugin"
+                        if $caller->can('debug') && $caller->debug;
+                } else {
+                    warn qq(Loading plugin "$plugin" failed: )
+                        . $UNIVERSAL::require::ERROR;
+                }
             }
         }
     }
-
+    no strict 'refs';
+    push @{"${caller}::ISA"}, @plugin_modules, $class;
     $caller->config(Maypole::Config->new);
     $caller->setup() if $autosetup;
 }

@@ -2,6 +2,14 @@ This file documents the revision history for Perl extension Maypole.
 For information about current developments and future releases, see:
     http://maypole.perl.org/?TheRoadmap
 
+2.09  Mon Jan 25 22:00:00 2005
+    Fixes:
+    - Fixed plugin inheritance set up by Maypole::Application, added tests
+
+    Templates:
+    - factory/addnew will only prefill values when there's a row creation error
+
+
 2.08  Mon Jan 24 20:45:00 2005
     - Added $r->config->template_extension() to set optional file extension
       for templates (Dave Howorth)

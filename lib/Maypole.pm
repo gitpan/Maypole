@@ -7,7 +7,7 @@ use Maypole::Config;
 use Maypole::Constants;
 use Maypole::Headers;
 
-our $VERSION = '2.08';
+our $VERSION = '2.09';
 
 __PACKAGE__->mk_classdata($_) for qw( config init_done view_object );
 __PACKAGE__->mk_accessors(

@@ -1,6 +1,10 @@
 Revision history for Perl extension Maypole 
 
-2.01  Fri Oct 24 14:50:00 2004
+2.02  Mon Oct 25 13:00:00 2004
+    - Fixed charset in http header.
+    - replaced action links with forms in factory templates
+
+2.01  Sun Oct 24 14:50:00 2004
     - documentation fix to make t/03podcoverage happy
 
 2.0   Fri Oct 22 20:00:00 2004

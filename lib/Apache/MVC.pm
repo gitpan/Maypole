@@ -43,7 +43,7 @@ sub parse_args {
 sub send_output {
     my $r = shift;
     $r->{ar}->content_type(
-        $r->{content_type} . "; encoding=" . $r->{document_encoding} );
+        $r->{content_type} . "; charset=" . $r->{document_encoding} );
     $r->{ar}->headers_out->set( "Content-Length" => length $r->{output} );
     APACHE2 || $r->{ar}->send_http_header;
     $r->{ar}->print( $r->{output} );

@@ -306,6 +306,25 @@ label .field {
     background-color: #7d95b5;
 }
 
+.actionform {
+    display: inline;
+}
+
+#actionbutton {
+    height: 16px;
+    width: 40px;
+    font-family: sans-serif;
+    font-size: 10px;
+    border: 1px outset;
+    background-color: #fff;
+    margin-bottom: 0px;
+}
+
+#actionbutton:hover {
+    color: #fff;
+    background-color: #7d95b5;
+}
+
 .pager {
     font: 11px Arial, Helvetica, sans-serif;
     text-align: center;

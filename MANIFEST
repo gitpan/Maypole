@@ -1,0 +1,25 @@
+MANIFEST
+Changes
+lib/Maypole/Model/Base.pm
+lib/Maypole/Model/CDBI.pm
+lib/Maypole/View/TT.pm
+lib/Maypole/Workflow.pod
+lib/Maypole.pm
+lib/Apache/MVC.pm
+lib/BeerDB.pm
+t/1.t
+Makefile.PL
+README
+templates/beer/addnew
+templates/custom/header
+templates/custom/frontpage
+templates/factory/macros
+templates/factory/addnew
+templates/factory/header
+templates/factory/list
+templates/factory/search_form
+templates/factory/navbar
+templates/factory/edit
+templates/factory/view
+TODO
+META.yml                                 Module meta-data (added by MakeMaker)

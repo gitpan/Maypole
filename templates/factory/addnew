@@ -1,0 +1,26 @@
+[%#
+
+=head1 addnew
+
+This is the interface to adding a new instance of an object. (or a new
+row in the database, if you want to look at it that way) It displays a
+form containing a list of HTML components for each of the columns in the
+table.
+
+=cut
+
+#%]
+<h3>Add a new [%classmetadata.moniker%]</h3>
+<FORM METHOD="post" ACTION="[%base%]/[%classmetadata.moniker%]/do_edit/">
+    <INPUT TYPE="hidden" NAME="action" VALUE="create">
+    <INPUT TYPE="hidden" NAME="class" VALUE="[%classmetadata.name%]">
+    <TABLE class="view">
+     [% FOR col = classmetadata.columns;
+        NEXT IF col == "id";
+     %]
+     <TR> <TD class="field"> [% classmetadata.colnames.$col; %] </TD>
+     <TD> [% classmetadata.cgi.$col.as_HTML; %] </TD> </TR>
+    [% END; %]
+    </TABLE>
+    <INPUT TYPE="submit" NAME="create" VALUE="create">
+</FORM>

@@ -1,0 +1,27 @@
+[%#
+
+=head1 navbar
+
+This is a navigation bar to go across the page. (Or down the side, or
+whatetver you want to do with it.) It displays all the tables which are
+accessible, with a link to the list page for each one.
+
+#%]
+[% PROCESS macros %]
+<div id="navcontainer">
+<ul id="navlist">
+[%
+    FOR table = config.display_tables;
+        '<LI '; 'id="active"' IF table == classmetadata.moniker; '>';
+
+        # Hack
+        SET active = '" id="current' IF table == classmetadata.moniker;
+
+        link(table, "list", active, table);
+        SET active = "";
+        '</LI>';
+    END;
+%]
+</ul>
+</div> 
+

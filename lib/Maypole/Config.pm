@@ -8,15 +8,11 @@ use warnings;
 # Public accessors.
 __PACKAGE__->mk_accessors(
     qw( view uri_base template_root model loader display_tables ok_tables
-      rows_per_page dsn user pass opts application_name document_encoding
-      content_type models)
+      rows_per_page dsn user pass opts application_name)
 );
 
 # Should only be modified by model.
-__PACKAGE__->mk_ro_accessors(
-    qw( classes tables table_to_class
-      )
-);
+__PACKAGE__->mk_ro_accessors(qw( classes tables table_to_class));
 
 1;
 
@@ -32,6 +28,10 @@ This class stores all configuration data for your Maypole application.
 
 =head2 View related
 
+=head3 application_name
+
+This should be a string containing you applications name.
+
 =head3 view
 
 The view class for your Maypole Application. Defaults to "Maypole::View::TT"
@@ -40,6 +40,14 @@ The view class for your Maypole Application. Defaults to "Maypole::View::TT"
 
 This is the uri base that should be appended to your application when maypole 
 makes urls.
+
+=head3 tables
+
+Contains a list of all tables, if supported by model.
+
+=head3 table_to_class
+
+A hash containing a table to class mapping, if supported by model.
 
 =head3 template_root
 

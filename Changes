@@ -1,5 +1,12 @@
 Revision history for Perl extension Maypole 
 
+2.03  Tue Oct 26 13:00:00 2004
+    - increased version number of Apache::MVC
+    - fixed display_tables bug (Steve Simms)
+    - fixed templates, now again XHTML compliant
+    - documentation fix (Dave Howorth)
+    - Only set charset for text/*
+
 2.02  Mon Oct 25 13:00:00 2004
     - Fixed charset in http header.
     - replaced action links with forms in factory templates

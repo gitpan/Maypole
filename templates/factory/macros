@@ -81,8 +81,8 @@ This is a generic button, which performs an action on an object.
 
 #%]
 [% MACRO button(obj, action) BLOCK; %]
-<form class="actionform" action="[% base %]/[% obj.table %]/[% action %]/[% obj.id %]" method=POST>
-    <input id="actionbutton" type="submit" value="[% action %]" /></form>
+<form class="actionform" action="[% base %]/[% obj.table %]/[% action %]/[% obj.id %]" method="post">
+<div class="field"><input class="actionbutton" type="submit" value="[% action %]" /></div></form>
 [% END %]
 [%#
 

@@ -6,7 +6,7 @@ use warnings;
 use Maypole::Config;
 use Maypole::Constants;
 
-our $VERSION = '2.02';
+our $VERSION = '2.03';
 
 __PACKAGE__->mk_classdata($_) for qw( config init_done view_object );
 __PACKAGE__->mk_accessors(
@@ -48,7 +48,7 @@ sub init {
     $config->view->require;
     die "Couldn't load the view class " . $config->view . ": $@" if $@;
     $config->display_tables
-      || $config->display_tables( [ $class->config->tables ] );
+      || $config->display_tables( $class->config->tables );
     $class->view_object( $class->config->view->new );
     $class->init_done(1);
 
@@ -441,8 +441,8 @@ Simon Cozens, C<simon@cpan.org>
 =head1 THANKS TO
 
 Danijel Milicevic, Dave Slack, Jesse Sheidlower, Jody Belka, Marcus Ramberg,
-Mickael Joanne, Simon Flack, Veljko Vidovic and all the others who've
-helped.
+Mickael Joanne, Simon Flack, Steve Simms, Veljko Vidovic and all the others
+who've helped.
 
 =head1 LICENSE
 

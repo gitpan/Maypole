@@ -3,7 +3,8 @@ use base 'Maypole';
 
 use strict;
 use warnings;
-our $VERSION = "0.3";
+
+our $VERSION = '2.03';
 
 sub run {
     my $self = shift;

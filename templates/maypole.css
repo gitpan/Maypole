@@ -290,11 +290,6 @@ label .field {
 
 .error { color: #d00; }
 
-.actions {
-    white-space: nowrap;
-    background-color: #fff;
-}
-
 .action {
     border: 1px outset #7d95b5;
     style:block;
@@ -310,7 +305,7 @@ label .field {
     display: inline;
 }
 
-#actionbutton {
+.actionbutton {
     height: 16px;
     width: 40px;
     font-family: sans-serif;
@@ -320,9 +315,18 @@ label .field {
     margin-bottom: 0px;
 }
 
-#actionbutton:hover {
+.actionbutton:hover {
     color: #fff;
     background-color: #7d95b5;
+}
+
+.actions {
+white-space: nowrap;
+}
+
+.field {
+    display:inline;
+    background-color: #fff;
 }
 
 .pager {

@@ -40,3 +40,4 @@ END %]
 [% INCLUDE pager; %]
 [% INCLUDE addnew; %]
 </DIV>
+[% INCLUDE footer %]

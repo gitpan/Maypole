@@ -4,7 +4,7 @@ use attributes ();
 use UNIVERSAL::require;
 use strict;
 use warnings;
-our $VERSION = "1.4";
+our $VERSION = "1.5";
 __PACKAGE__->mk_classdata($_) for qw( config init_done view_object );
 __PACKAGE__->mk_accessors ( qw( ar params query objects model_class
 args action template ));
@@ -76,7 +76,6 @@ sub handler_guts {
         $r->model_class->process($r);
     } else { 
         # Otherwise, it's just a plain template.
-        $r->call_authenticate; # No harm in it
         delete $r->{model_class};
         $r->{path} =~ s{/}{}; # De-absolutify
         $r->template($r->{path});
@@ -89,7 +88,9 @@ sub handler_guts {
 sub is_applicable {
     my $self = shift;
     my $config = $self->config;
-    $config->{ok_tables} = {map {$_ => 1} @{$config->{display_tables}}};
+    $config->{ok_tables} ||= $config->{display_tables};
+    $config->{ok_tables} = {map {$_=>1} @{$config->{ok_tables}}}
+       if ref $config->{ok_tables} eq "ARRAY";
     warn "We don't have that table ($self->{table})"
         if $self->debug and not $config->{ok_tables}{$self->{table}};
     return DECLINED() unless exists $config->{ok_tables}{$self->{table}};

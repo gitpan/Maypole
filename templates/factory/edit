@@ -28,3 +28,4 @@ form similar to L<add_new> but with the current values filled in.
     END;
      '<INPUT TYPE="submit" NAME="edit" VALUE="edit">';
 END %]
+[% INCLUDE footer %]

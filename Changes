@@ -1,5 +1,21 @@
 Revision history for Perl extension Maypole 
 
+1.5   Mon Jun 21 14:36:54 BST 2004
+    - CLI mode correctly uses Constants module
+    - Template footers as well as headers (Markus Ramberg)
+    - Fix problems on failed object create (Jesse Shiedlower)
+    - Fix related() to deal with latest version of Class::DBI (Markus)
+    - Add sample CSS to distribution
+    - Maypole::Model::CDBI::Plain, for those who already have a CDBI set
+      of classes set up
+    - Friendlier errors when a template can't be found
+    - Don't authenticate without a model class
+    - #6569 Passing DBI options in setup() (Mickael Joanne)
+    - #6571 User-defined ok_tables: patch
+    - #6572 Makefile patch: require up-to-date CBDI::AsForm (Markus Ramberg)
+    - #6573 Set empty params to '' instead of undef (Jody Belka)
+    - #6617 Required cols patch in CDBI.pm (Jesse Sheidlower)
+
 1.4   Fri Apr 16 18:11:41 BST 2004
     - Much, much more documentation
     - CLI debugging mode

@@ -28,6 +28,7 @@ t/templates/custom/frontpage
 t/templates/custom/list
 Makefile.PL
 README
+templates/beerdb.css
 templates/beer/addnew
 templates/custom/frontpage
 templates/custom/header

@@ -83,16 +83,17 @@ For instance, a test script could look like this:
 
     use Test::More tests => 5;
     use Maypole::CLI qw(BeerDB);
+    use Maypole::Constants;
     $ENV{MAYPOLE_TEMPLATES} = "t/templates";
 
     # Hack because isa_ok only supports object isa not class isa
     isa_ok( (bless {},"BeerDB") , "Maypole");
 
     @ARGV = ("http://localhost/beerdb/");
-    is(BeerDB->handler, 200, "OK");
+    is(BeerDB->handler, OK, "OK");
     like($Maypole::CLI::buffer, qr/frontpage/, "Got the front page");
 
     @ARGV = ("http://localhost/beerdb/beer/list");
-    is(BeerDB->handler, 200, "OK");
+    is(BeerDB->handler, OK, "OK");
     like($Maypole::CLI::buffer, qr/Organic Best/, "Found a beer in the list");
 

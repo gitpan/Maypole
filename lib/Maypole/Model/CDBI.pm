@@ -26,29 +26,31 @@ modules.
 
 sub related {
     my ($self, $r) = @_;
-
-    # Has-many methods; XXX this is a hack
-    map {to_PL($_)} 
-    grep { exists $r->{config}{ok_tables}{$_} }
-    map {$_->table}
-    keys %{shift->__hasa_list || {}}
+    return keys %{$self->meta_info('has_many') || {}};
 }
 
 sub do_edit :Exported {
     my ($self, $r) = @_;
     my $h = CGI::Untaint->new(%{$r->{params}});
+    my $creating = 0;
     my ($obj) = @{$r->objects || []};
     if ($obj) {
         # We have something to edit
-        $obj->update_from_cgi($h);
+        $obj->update_from_cgi($h => {
+           required => $r->{config}{$r->{table}}{required_cols} || [],
+                                    });
     } else {
-        $obj = $self->create_from_cgi($h);
+        $obj = $self->create_from_cgi($h => {
+           required => $r->{config}{$r->{table}}{required_cols} || [],
+                                    });
+        $creating++;
     }
     if (my %errors = $obj->cgi_update_errors) {
         # Set it up as it was:
         $r->{template_args}{cgi_params} = $r->{params};
         $r->{template_args}{errors} = \%errors;
         $r->{template} = "edit";
+        undef $obj if $creating; # Couldn't create
     } else {
         $r->{template} = "view";
     }
@@ -129,13 +131,14 @@ sub list :Exported {
 }
 
 sub setup_database {
-    my ($self, $config, $namespace, $dsn, $u, $p) = @_;
+    my ($self, $config, $namespace, $dsn, $u, $p, $opts) = @_;
     $config->{dsn} = $dsn;
     $config->{loader} = Class::DBI::Loader->new(
         namespace => $namespace,
         dsn => $dsn,
         user => $u,
         password => $p,
+        options => $opts,
     );
     $config->{classes} = [ $config->{loader}->classes ];
     $config->{tables}  = [ $config->{loader}->tables ];

@@ -64,7 +64,33 @@ sub process {
 sub error {
     my ($self, $r) = @_;
     warn $r->{error};
-    if ($r->{error} =~ /not found$/) { return -1 }
+    if ($r->{error} =~ /not found$/) { 
+        # This is a rough test to see whether or not we're a template or
+        # a static page
+        return -1 unless @{$r->{objects}||[]}; 
+
+        $r->{error} = <<EOF;
+
+<H1> Template not found </H1>
+
+This template was not found while processing the following request:
+
+<B>@{[$r->{action}]}</B> on table <B>@{[ $r->{table} ]}</B> with objects:
+
+<PRE>
+@{[join "\n", @{$r->{objects}}]}
+</PRE>
+
+Looking for template <B>@{[$r->{template}]}</B> in paths:
+
+<PRE>
+@{[ join "\n", $self->paths($r) ]}
+</PRE>
+EOF
+        $r->{content_type} = "text/html";
+        $r->{output} = $r->{error};
+        return OK;
+    }
     $r->{content_type} = "text/plain";
     $r->{output} = $r->{error};
     $r->send_output;

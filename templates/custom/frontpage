@@ -13,3 +13,4 @@
 </TABLE>
 
 <BR>
+[% INCLUDE footer %]

@@ -19,6 +19,9 @@ sub parse_location {
     $self->parse_path;
 
     $self->{params} = { $self->{ar}->content };
+    while (my ($key, $value) = each %{$self->{params}}) {
+      $self->{params}{$key} = '' unless defined $value;
+    }
     $self->{query}  = { $self->{ar}->args };
 }
 

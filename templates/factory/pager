@@ -10,8 +10,7 @@ to the L<Data::Page> interface.
 [%
 IF pager AND pager.first_page != pager.last_page;
 %]
-
-<P ALIGN="center">Pages: 
+<p class="pager">Pages: 
 [%
     SET begin_page = pager.current_page - 10;
     IF begin_page < 1;
@@ -23,13 +22,20 @@ IF pager AND pager.first_page != pager.last_page;
     END;
      FOREACH num = [begin_page .. end_page];
           IF num == pager.current_page;
-            "["; num; "] ";
+            "<span class='current-page'>"; num; "</span>";
           ELSE;
-            SET args = "?page=" _ num; # Order?
-            SET label = "[" _ num _ "]";
-          link(classmetadata.table, "list", args, label);
+            SET label = num;
+            SET args = "?page=" _ num;
+            SET action = "list";
+            FOR col = classmetadata.columns.list;
+              IF request.query.$col;
+                SET args = args _ "&" _ col _ "=" _ request.query.$col;
+                SET action = "search";
+              END;
+            END;
+            link(classmetadata.table, action, args, label);
           END;
      END;
 %]
-</P>
+</p>
 [% END %]

@@ -1,2 +1,4 @@
-See http://wiki.simon-cozens.org/?MaypoleToDo
-
+* Tests
+* Better Documentation and more complex examples
+* Add API documentation to Maypole::Application
+* Make server character sets configurable

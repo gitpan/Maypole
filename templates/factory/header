@@ -1,24 +1,18 @@
-<HTML>
-    <HEAD>
-        <title> [% config.application_name || "A poorly configured Maypole application" %] </title>
-
-<META http-equiv=Content-Type content="text/html; charset=utf-8">
-
-<LINK title=myStyle href="/maypole.css" type=text/css rel=stylesheet>
-
-<script language="javascript" type="text/javascript">
-<!--
-function go()
-{
-    box = document.forms[-1].navi;
-    destination = box.options[box.selectedIndex].value;
-    if (box.options[box.selectedIndex].class == 'redirect')
-        location.href = destination;
-}
-
-// -->
-</SCRIPT>
-</HEAD>
-<BODY>
-<DIV class="content">
-
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>
+            [%
+              title || config.application_name ||
+                "A poorly configured Maypole application"
+            %]
+        </title>
+        <meta http-equiv="Content-Type" content="text/html; charset=[% 
+	    request.document_encoding
+	%]"/>
+        <link title="Maypole" href="/maypole.css" type="text/css"
+            rel="stylesheet"/>
+   </head>
+    <body>
+        <div class="content">

@@ -5,27 +5,28 @@
 This is the edit page. It edits the passed-in object, by displaying a
 form similar to L<add_new> but with the current values filled in.
 
-#%]
+=cut
 
+#%]
 [% PROCESS macros %]
 [% INCLUDE header %]
-
 [% FOR item = objects; %]
-<h2> Edit [% item.name %]</h2>
-
-<FORM ACTION="[% base %]/[% item.table %]/do_edit/[% item.id %]" METHOD="post">
-[%
-     FOR col = classmetadata.columns;
-        NEXT IF col == "id";
-        "<P>";
-        "<B>"; classmetadata.colnames.$col; "</B>";
-        ": ";
-            item.to_field(col).as_HTML;
-        "</P>";
-        IF errors.$col; 
-            "<FONT COLOR=\"#ff0000\">"; errors.$col; "</FONT>";
-        END;
+<form action="[% base %]/[% item.table %]/do_edit/[% item.id %]" method="post">
+<fieldset>
+<legend>Edit [% item.name %]</legend>
+[% FOR col = classmetadata.columns;
+    NEXT IF col == "id";
+    '<label><span class="field">';
+    classmetadata.colnames.$col; ":</span>";
+    item.to_field(col).as_XML;
+    "</label>";
+    IF errors.$col; 
+       '<span class="error">'; errors.$col;'</span>';
     END;
-     '<INPUT TYPE="submit" NAME="edit" VALUE="edit">';
-END %]
+    END;
+    '<input type="submit" name="edit" value="edit"/>';
+    "</fieldset></form>";
+    
+    END %]
+
 [% INCLUDE footer %]

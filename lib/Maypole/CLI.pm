@@ -1,39 +1,55 @@
 package Maypole::CLI;
 use UNIVERSAL::require;
-use URI; use URI::QueryParam;
+use URI;
+use URI::QueryParam;
 use Maypole::Constants;
 
 use strict;
 use warnings;
 my $package;
 our $buffer;
-sub import { 
+
+# Command line action
+CHECK {
+    if ( ( caller(0) )[1] eq "-e" ) {
+        $package->handler() == OK and print $buffer;
+    }
+}
+
+sub import {
     $package = $_[1];
     $package->require;
     die "Couldn't require $package - $@" if $@;
     no strict 'refs';
-    unshift @{$package."::ISA"}, "Maypole::CLI";
+    unshift @{ $package . "::ISA" }, "Maypole::CLI";
 }
 
-sub get_request {}
 sub get_template_root { $ENV{MAYPOLE_TEMPLATES} || "." }
 
 sub parse_location {
     my $self = shift;
-    my $url = URI->new(shift @ARGV);
-    my $root = URI->new($self->config->{uri_base})->path;
+    my $url  = URI->new( shift @ARGV );
+    my $root = URI->new( $self->config->uri_base )->path;
     $self->{path} = $url->path;
     $self->{path} =~ s/^$root//i if $root;
     $self->parse_path;
-    $self->{query} = $url->query_form_hash;
+    $self->parse_args($url);
+}
+
+sub parse_args {
+    my ( $self, $url ) = @_;
+    $self->{params} = $url->query_form_hash;
+    $self->{query}  = $url->query_form_hash;
 }
 
 sub send_output { $buffer = shift->{output} }
 
-# Do it!
-CHECK { if ((caller(0))[1] eq "-e") { 
-            $package->handler() == OK and print $buffer; 
-       } }
+sub call_url {
+    my $self = shift;
+    @ARGV = @_;
+    $package->handler() == OK and return $buffer;
+}
+
 
 1;
 
@@ -82,7 +98,7 @@ more easily.
 
 For instance, a test script could look like this:
 
-    use Test::More tests => 5;
+    use Test::More tests => 3;
     use Maypole::CLI qw(BeerDB);
     use Maypole::Constants;
     $ENV{MAYPOLE_TEMPLATES} = "t/templates";
@@ -90,11 +106,36 @@ For instance, a test script could look like this:
     # Hack because isa_ok only supports object isa not class isa
     isa_ok( (bless {},"BeerDB") , "Maypole");
 
-    @ARGV = ("http://localhost/beerdb/");
-    is(BeerDB->handler, OK, "OK");
-    like($Maypole::CLI::buffer, qr/frontpage/, "Got the front page");
+    like(BeerDB->call_url("http://localhost/beerdb/"), qr/frontpage/, "Got the front page");
 
-    @ARGV = ("http://localhost/beerdb/beer/list");
-    is(BeerDB->handler, OK, "OK");
-    like($Maypole::CLI::buffer, qr/Organic Best/, "Found a beer in the list");
+    like(BeerDB->call_url("http://localhost/beerdb/beer/list"), qr/Organic Best/, "Found a beer in the list");
 
+=head1 METHODS 
+
+=over 
+
+=item call_url
+
+for use in scripts. takes an url as argument, and returns the buffer. 
+
+=back
+
+
+=head1 Implementation
+
+This class overrides a set of methods in the base Maypole class to provide it's 
+functionality. See L<Maypole> for these:
+
+=over
+
+=item get_template_root
+
+=item parse_args
+
+=item parse_location
+
+=item send_output
+
+=back
+
+=cut 

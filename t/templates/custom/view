@@ -1,5 +1,5 @@
 # Begin object list
 [% FOR obj = objects %]
-[%obj.id%]: [% obj.name %]
+- [% obj.name %]
 [% END %]
 # End object list

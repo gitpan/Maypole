@@ -13,9 +13,11 @@ catenating the base URL, table, command, and any arguments.
 #%]
 [%
 MACRO link(table, command, additional, label) BLOCK;
-    '<A HREF="' _ base _ table _ "/" _ command _ "/" _ additional _ '">';
+    SET lnk = base _ "/" _ table _ "/" _ command _ "/" _ additional;
+    lnk = lnk | uri | html;
+    '<a href="' _ lnk _ '">';
     label;
-    "</A>";
+    "</a>";
 END;
 %]
 
@@ -31,7 +33,6 @@ command for that object. Otherwise, it just displays the data.
 #%]
 
 [%
-
 MACRO maybe_link_view(object) BLOCK;
     IF object.table; # It's an object, i.e. a has-a
         link(object.table, "view", object.id, object);
@@ -53,20 +54,22 @@ for some.
 
 #%]
 [% MACRO display_line(item) BLOCK;
-     FOR col = classmetadata.columns;
+    FOR col = classmetadata.columns;
         NEXT IF col == "id";
         "<td>";
-        IF col == "url";
-            "<A HREF="; item.url; "> "; item.url; "</A>";
+        IF col == "url" AND item.url;
+            '<a href="'; item.url; '"> '; item.url; '</a>';
         ELSIF col == item.stringify_column;
             maybe_link_view(item);
         ELSE;
             maybe_link_view(item.$col);
         END;
         "</td>";
-     END;
+    END;
+    '<td class="actions" nowrap="nowrap">';
     button(item, "edit");
     button(item, "delete");
+    "</td>";
 END %]
 [%#
 
@@ -78,11 +81,8 @@ This is a generic button, which performs an action on an object.
 
 #%]
 [% MACRO button(obj, action) BLOCK; %]
-<TD>
-<FORM METHOD="post" ACTION="[%base%]/[%obj.table%]/[%action%]/[%obj.id%]">
-    <INPUT TYPE="submit" NAME="[%action%]" VALUE="[%action%]">
-</FORM>
-</TD>
+<a class="action" href="[% base %]/[% obj.table %]/[% action %]/[% obj.id %]">
+    [% action %]</a>
 [% END %]
 [%#
 
@@ -99,12 +99,12 @@ brewery) calls the accesor, and displays a list of the results.
 [% 
 MACRO view_related(object) BLOCK;
     FOR accessor = classmetadata.related_accessors.list;
-        "<H3>"; accessor | ucfirst; "</H3>\n";
-        "<UL id=\"vlist\">";
+        "<div id=\"subtitle\">"; accessor | ucfirst; "</div>\n";
+        "<ul id=\"vlist\">";
         FOR thing = object.$accessor;
-            "<LI>"; maybe_link_view(thing); "</LI>\n";
+            "<li>"; maybe_link_view(thing); "</li>\n";
         END;
-        "</UL>";
+        "</ul>";
     END; 
 END;
 

@@ -10,16 +10,18 @@ table.
 =cut
 
 #%]
-<h3>Add a new [%classmetadata.moniker%]</h3>
-<FORM METHOD="post" ACTION="[%base%]/[%classmetadata.table%]/do_edit/">
-    <INPUT TYPE="hidden" NAME="action" VALUE="create">
-    <TABLE class="view">
-     [% FOR col = classmetadata.columns;
-        NEXT IF col == "id";
-     %]
-     <TR> <TD class="field"> [% classmetadata.colnames.$col; %] </TD>
-     <TD> [% classmetadata.cgi.$col.as_HTML; %] </TD> </TR>
+
+<div id="addnew">
+<form method="post" action="[% base %]/[% classmetadata.table %]/do_edit/">
+    <fieldset>
+<legend>Add a new [% classmetadata.moniker %]</legend>
+    [% FOR col = classmetadata.columns %]
+        [% NEXT IF col == "id" %]
+            <label><span class="field">[% classmetadata.colnames.$col %]</span>
+            [% classmetadata.cgi.$col.as_XML; %]
+	    </label>
     [% END; %]
-    </TABLE>
-    <INPUT TYPE="submit" NAME="create" VALUE="create">
-</FORM>
+    <input type="submit" name="create" value="create"/>
+</fieldset>
+</form>
+</div>

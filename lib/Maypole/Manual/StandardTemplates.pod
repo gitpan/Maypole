@@ -252,7 +252,7 @@ macros as we come across them.
 
 =head3 F<view> 
 
-=template view
+template view
 
 =head3 F<edit>
 

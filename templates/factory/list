@@ -1,43 +1,44 @@
 [% PROCESS macros %]
-
 [% INCLUDE header %]
-
-[% IF search %]
-<h2> Search results </h2>
-[% ELSE %]
-<h2> Listing of all [% classmetadata.plural %]</h2>
-[% END %]
-
+[% INCLUDE title %]
 [% INCLUDE navbar %]
-<DIV class="search"> [% INCLUDE search_form %] </DIV>
+<div class="list">
+    <table id="matrix" width="100%" >
+        <tr>
+            [% FOR col = classmetadata.columns.list;
+                NEXT IF col == "id";
+                "<th>"; 
+                SET additional = "?order=" _ col;
+                SET additional = additional _ "&amp;page=" _ pager.current_page
+                    IF pager;
+                SET additional = additional _ "&amp;o2=desc" 
+                IF col == request.query.order and request.query.o2 != "desc";
+                link(classmetadata.table, "list", additional,
+                    classmetadata.colnames.$col);
+                IF col == request.query.order;
+                    IF request.query.o2 != "desc";
+                        "&darr;";
+                    ELSE;
+                        "&uarr;";
+                    END;
+                END;
+                "</th>";
+            END %]
+	    <th id="actionth">Actions</th>
+        </tr>
+        [%  SET count = 0;
+        FOR item = objects;
+            SET count = count + 1;
+            "<tr";
+            ' class="alternate"' IF count % 2;
+            ">";
+            display_line(item);
+            "</tr>";
+        END %]
+    </table>
 
-<DIV class="list">
-<TABLE id="matrix" WIDTH="100%">
-<TR>
-[% FOR col = classmetadata.columns.list;
-    NEXT IF col == "id";
-    "<TH>"; 
-    SET additional = "?order=" _ col;
-    SET additional = additional _ "&page=" _ pager.current_page IF pager;
-    SET additional = additional _ "&o2=desc" 
-        IF col == request.query.order and request.query.o2 != "desc";
-     link(classmetadata.table, "list", additional, classmetadata.colnames.$col);
-    "</TH>";
-END %]
-</TR>
-
-[%  SET count = 0;
-FOR item = objects;
-    SET count = count + 1;
-    "<tr";
-    ' class="alternate"' IF count % 2;
-    ">";
-    display_line(item);
-    "</tr>";
-END %]
-</TABLE>
-
-[% INCLUDE pager; %]
-[% INCLUDE addnew; %]
-</DIV>
+[% INCLUDE pager %]
+[% INCLUDE addnew %]
+[% INCLUDE search_form %]
+</div>
 [% INCLUDE footer %]

@@ -1,13 +1,27 @@
 package Apache::MVC;
-use base 'Maypole';
-use Apache;
-use Apache::Request;
+
 use strict;
 use warnings;
-our $VERSION = "0.3";
+
+use base 'Maypole';
+use mod_perl;
+
+use constant APACHE2 => $mod_perl::VERSION >= 1.99;
+
+if (APACHE2) {
+    require Apache2;
+    require Apache::RequestRec;
+    require Apache::RequestUtil;
+    require APR::URI;
+}
+else { require Apache }
+require Apache::Request;
+
+our $VERSION = "0.4";
 
 sub get_request {
-    shift->{ar} = Apache::Request->new(Apache->request);
+    my ( $self, $r ) = @_;
+    $self->{ar} = Apache::Request->new($r);
 }
 
 sub parse_location {
@@ -17,25 +31,37 @@ sub parse_location {
     no warnings 'uninitialized';
     $self->{path} =~ s/^($loc)?\///;
     $self->parse_path;
+    $self->parse_args;
+}
 
-    $self->{params} = { $self->{ar}->content };
-    while (my ($key, $value) = each %{$self->{params}}) {
-      $self->{params}{$key} = '' unless defined $value;
-    }
-    $self->{query}  = { $self->{ar}->args };
+sub parse_args {
+    my $self = shift;
+    $self->{params} = { $self->_mod_perl_args( $self->{ar} ) };
+    $self->{query}  = { $self->_mod_perl_args( $self->{ar} ) };
 }
 
 sub send_output {
     my $r = shift;
-    $r->{ar}->content_type($r->{content_type});
-    $r->{ar}->headers_out->set("Content-Length" => length $r->{output});
-    $r->{ar}->send_http_header;
-    $r->{ar}->print($r->{output});
+    $r->{ar}->content_type(
+        $r->{content_type} . "; encoding=" . $r->{document_encoding} );
+    $r->{ar}->headers_out->set( "Content-Length" => length $r->{output} );
+    APACHE2 || $r->{ar}->send_http_header;
+    $r->{ar}->print( $r->{output} );
 }
 
 sub get_template_root {
     my $r = shift;
-    $r->{ar}->document_root . "/". $r->{ar}->location;
+    $r->{ar}->document_root . "/" . $r->{ar}->location;
+}
+
+sub _mod_perl_args {
+    my ( $self, $apr ) = @_;
+    my %args;
+    foreach my $key ( $apr->param ) {
+        my @values = $apr->param($key);
+        $args{$key} = @values == 1 ? $values[0] : \@values;
+    }
+    return %args;
 }
 
 1;
@@ -49,8 +75,8 @@ Apache::MVC - Apache front-end to Maypole
     package BeerDB;
     use base 'Apache::MVC';
     BeerDB->setup("dbi:mysql:beerdb");
-    BeerDB->config->{uri_base} = "http://your.site/";
-    BeerDB->config->{display_tables} = [qw[beer brewery pub style]];
+    BeerDB->config->uri_base("http://your.site/");
+    BeerDB->config->display_tables([qw[beer brewery pub style]]);
     # Now set up your database:
     # has-a relationships
     # untaint columns
@@ -130,6 +156,8 @@ see L<Maypole>.
 =head1 AUTHOR
 
 Simon Cozens, C<simon@cpan.org>
+Marcus Ramberg, C<marcus@thefeed.no>
+Screwed up by Sebastian Riedel, C<sri@oook.de>
 
 =head1 LICENSE
 

@@ -22,132 +22,214 @@ work of fetching rows and representing them as objects. It is a good
 model to copy if you're replacing it with other database abstraction
 modules.
 
+It implements a base set of methods required for a Maypole Data Model.
+See L<Maypole::Model::Base> for these:
+
+=over 4
+
+=item adopt
+
+=item class_of
+
+=item do_edit
+
+=item list
+
+=item related
+
+=item setup_database
+
+=back 
+
+=head1 Additional Commands
+
+=over 
+
+=item delete
+
+Surprisingly, this command causes a database record to be forever lost.
+
+=item search
+
+The search action 
+
+=back
+
+=head1 Helper Methods
+
+=over 
+
+=item order
+
+=item stringify_column
+
+=item do_pager
+
+=item related_class
+
+Given an accessor name as a method, this function returns the class this accessor returns.
+
+=back
+
 =cut
 
 sub related {
-    my ($self, $r) = @_;
-    return keys %{$self->meta_info('has_many') || {}};
+    my ( $self, $r ) = @_;
+    return keys %{ $self->meta_info('has_many') || {} };
 }
 
-sub do_edit :Exported {
-    my ($self, $r) = @_;
-    my $h = CGI::Untaint->new(%{$r->{params}});
+sub related_class {
+    my ( $self, $r, $accessor ) = @_;
+    my $related = $self->related->{$accessor};
+    if ( my $mapping = $related->{args}->{mapping} ) {
+        return $related->{foreign_class}->meta_info('has_a')->{ $$mapping[0] }
+          ->{foreign_class};
+    }
+    else {
+        return $related->{foreign_class};
+    }
+}
+
+sub do_edit : Exported {
+    my ( $self, $r ) = @_;
+    my $h        = CGI::Untaint->new( %{ $r->{params} } );
     my $creating = 0;
-    my ($obj) = @{$r->objects || []};
+    my ($obj) = @{ $r->objects || [] };
     if ($obj) {
+
         # We have something to edit
-        $obj->update_from_cgi($h => {
-           required => $r->{config}{$r->{table}}{required_cols} || [],
-                                    });
-    } else {
-        $obj = $self->create_from_cgi($h => {
-           required => $r->{config}{$r->{table}}{required_cols} || [],
-                                    });
+        $obj->update_from_cgi( $h =>
+              { required => $r->{config}{ $r->{table} }{required_cols} || [], }
+        );
+    }
+    else {
+        $obj =
+          $self->create_from_cgi( $h =>
+              { required => $r->{config}{ $r->{table} }{required_cols} || [], }
+          );
         $creating++;
     }
-    if (my %errors = $obj->cgi_update_errors) {
+    if ( my %errors = $obj->cgi_update_errors ) {
+
         # Set it up as it was:
         $r->{template_args}{cgi_params} = $r->{params};
-        $r->{template_args}{errors} = \%errors;
-        $r->{template} = "edit";
-        undef $obj if $creating; # Couldn't create
-    } else {
+        $r->{template_args}{errors}     = \%errors;
+        $r->{template}                  = "edit";
+        undef $obj if $creating;    # Couldn't create
+    }
+    else {
         $r->{template} = "view";
     }
-    $r->objects([ $obj ]);
+    $r->objects( [$obj] );
 }
 
-sub delete :Exported {
+sub delete : Exported {
     return shift->SUPER::delete(@_) if caller ne "Maypole::Model::Base";
-    my ($self, $r) = @_;
+    my ( $self, $r ) = @_;
     $_->SUPER::delete for @{ $r->objects || [] };
-    $r->objects([ $self->retrieve_all ]);
+    $r->objects( [ $self->retrieve_all ] );
     $r->{template} = "list";
     $self->list($r);
 }
 
 sub stringify_column {
     my $class = shift;
-    return ($class->columns("Stringify"),
-                (grep { /(name|title)/i } $class->columns),
-                (grep { !/id$/i } $class->primary_columns),
-               )[0];
+    return (
+        $class->columns("Stringify"),
+        ( grep { /(name|title)/i } $class->columns ),
+        ( grep { !/id$/i } $class->primary_columns ),
+    )[0];
 }
 
 sub adopt {
-    my ($self, $child) = @_;
+    my ( $self, $child ) = @_;
     $child->autoupdate(1);
-    if (my $col = $child->stringify_column) {
+    if ( my $col = $child->stringify_column ) {
         $child->columns( Stringify => $col );
     }
 }
 
-sub search :Exported {
+sub search : Exported {
     return shift->SUPER::search(@_) if caller ne "Maypole::Model::Base";
-                                    # A real CDBI search.
-    my ($self, $r) = @_;
-    my %fields = map {$_ => 1 } $self->columns;
-    my $oper = "like"; # For now
-    my %params = %{$r->{params}};
-    my %values = map { $_ => {$oper, $params{$_} } }
-                 grep { $params{$_} and $fields{$_} } keys %params;
+
+    # A real CDBI search.
+    my ( $self, $r ) = @_;
+    my %fields = map { $_ => 1 } $self->columns;
+    my $oper   = "like";                                # For now
+    my %params = %{ $r->{params} };
+    my %values = map { $_ => { $oper, $params{$_} } }
+      grep { defined $params{$_} and $fields{$_} } keys %params;
 
     $r->template("list");
-    if (!%values) { return $self->list($r) }
+    if ( !%values ) { return $self->list($r) }
     my $order = $self->order($r);
     $self = $self->do_pager($r);
-    $r->objects([ $self->search_where(\%values), 
-                  ($order ? { order => $order } : ())  
-                ]);
+    $r->objects(
+        [
+            $self->search_where(
+                \%values, ( $order ? { order => $order } : () )
+            )
+        ]
+    );
     $r->{template_args}{search} = 1;
 }
 
 sub do_pager {
-    my ($self, $r) = @_;
-    if ( my $rows = $r->config->{rows_per_page}) {
-        return $r->{template_args}{pager} = $self->pager($rows, $r->query->{page});
-    } else { return $self } 
+    my ( $self, $r ) = @_;
+    if ( my $rows = $r->config->rows_per_page ) {
+        return $r->{template_args}{pager} =
+          $self->pager( $rows, $r->query->{page} );
+    }
+    else { return $self }
 }
 
 sub order {
-    my ($self, $r) = @_;
+    my ( $self, $r ) = @_;
     my $order;
-    my %ok_columns = map {$_ => 1} $self->columns;
-    if ($order = $r->query->{order} and $ok_columns{$order}) {
-       $order .= ($r->query->{o2} eq "desc" && " DESC")
+    my %ok_columns = map { $_ => 1 } $self->columns;
+    if ( $order = $r->query->{order} and $ok_columns{$order} ) {
+        $order .= ( $r->query->{o2} eq "desc" && " DESC" );
     }
     $order;
 }
 
-sub list :Exported {
-    my ($self, $r) = @_;
+sub list : Exported {
+    my ( $self, $r ) = @_;
     my $order = $self->order($r);
     $self = $self->do_pager($r);
-    if ($order) { 
-        $r->objects([ $self->retrieve_all_sorted_by( $order )]);
-    } else {
-        $r->objects([ $self->retrieve_all ]);
+    if ($order) {
+        $r->objects( [ $self->retrieve_all_sorted_by($order) ] );
+    }
+    else {
+        $r->objects( [ $self->retrieve_all ] );
     }
 }
 
 sub setup_database {
-    my ($self, $config, $namespace, $dsn, $u, $p, $opts) = @_;
-    $config->{dsn} = $dsn;
-    $config->{loader} = Class::DBI::Loader->new(
-        namespace => $namespace,
-        dsn => $dsn,
-        user => $u,
-        password => $p,
-        options => $opts,
+    my ( $self, $config, $namespace, $dsn, $u, $p, $opts ) = @_;
+    $dsn  ||= $config->dsn;
+    $u    ||= $config->user;
+    $p    ||= $config->pass;
+    $opts ||= $config->opts;
+    $config->dsn($dsn);
+    $config->loader || $config->loader(
+        Class::DBI::Loader->new(
+            namespace => $namespace,
+            dsn       => $dsn,
+            user      => $u,
+            password  => $p,
+            options   => $opts,
+        )
     );
     $config->{classes} = [ $config->{loader}->classes ];
     $config->{tables}  = [ $config->{loader}->tables ];
+    warn( 'Loaded tables: ' . join ',', @{ $config->{tables} } )
+      if $namespace->debug;
 }
 
 sub class_of {
-    my ($self, $r, $table) = @_;
-    return $r->config->{loader}->_table2class($table);
+    my ( $self, $r, $table ) = @_;
+    return $r->config->loader->_table2class($table);
 }
 
 1;
-

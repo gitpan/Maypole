@@ -1,5 +1,35 @@
 Revision history for Perl extension Maypole 
 
+2.0   XXX XXX XX XX:XX:XX XXX XXXX
+    - added parse_args() (Simon Flack)
+    - call additional_data() and authenticate() for plain templates
+    - merged Apache2::MVC (mod_perl2 support) into Apache::MVC
+    - added Maypole::Application universal front-end
+    - config parameter handling for Maypole::Model::CDBI
+    - $r->{query} is now deprecated, use $r->{params} for GET and POST
+    - fixed multiple value handling (Simon Flack)
+    - added exception handling (Simon Flack)
+    - fixed documentation bugs
+    - changed default documentencoding to utf8. Change with 
+      $r->config->{document_encoding}
+    - removed Maypole::View::Mason as it's distributed separately on CPAN.
+    - factory templates are now XHTML 1.1 compliant.
+    - made the config hash into -> Maypole::Config
+    - accessors for everything
+    - win32 support
+    - new documentation for Maypole.pm (Simon Flack)
+    - moved doc/*.pod to lib/Maypole/Manual
+    - added Maypole::Model::Base::is_public() to make it simple to overload
+      :Exported behavior
+    - added support for replacing use base qw/All My Modules/ with 
+      use Maypole::Application qw/Redirect AnotherPlugin/; note that this 
+      will only triggers with parameters to import, to preserve backwards
+      compability.
+    - fixed search ordering in Maypole::Model::CDBI and parameter
+      handling in CGI::Maypole (Dave Slack)
+    - sweet new factory templates (Danijel Milicevic)
+    - zero search fix (Dave Slack)
+
 1.7   Sat Jul 17 20:15:26 BST 2004
     - Emergency release - we lost the "use Maypole::Constants" from
       CLI.pm somehow
@@ -12,7 +42,7 @@ Revision history for Perl extension Maypole
 1.5   Mon Jun 21 14:36:54 BST 2004
     - CLI mode correctly uses Constants module
     - Template footers as well as headers (Markus Ramberg)
-    - Fix problems on failed object create (Jesse Shiedlower)
+    - Fix problems on failed object create (Jesse Sheidlower)
     - Fix related() to deal with latest version of Class::DBI (Markus)
     - Add sample CSS to distribution
     - Maypole::Model::CDBI::Plain, for those who already have a CDBI set

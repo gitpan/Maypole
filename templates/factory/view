@@ -10,21 +10,19 @@ C<objects> and displays the object's properties in a table.
 #%]
 [% PROCESS macros %]
 [% INCLUDE header %]
-
 [% FOR item = objects %]
-[% SET string = item.stringify_column %]
-<h2> [% item.$string %]</h2>
-
-[% INCLUDE navbar %]
-
-<TABLE class="view">
-    <TR><TD class="field">[% classmetadata.colnames.$string %]</TD><TD> [% item.$string %] </TD></TR>
-[% 
-    FOR col = classmetadata.columns.list;
-    NEXT IF col == "id" OR col == string;
-    NEXT UNLESS item.$col;
-%]
-
+    [% SET string = item.stringify_column %]
+    <div id="title"> [% item.$string %]</div>
+    [% INCLUDE navbar %]
+    <table class="view">
+        <tr>
+            <td class="field">[% classmetadata.colnames.$string %]</td>
+            <td>[% item.$string %]</td>
+        </tr>
+        [% FOR col = classmetadata.columns.list;
+            NEXT IF col == "id" OR col == string;
+            NEXT UNLESS item.$col;
+        %]
 [%# 
 
 =for doc
@@ -33,24 +31,14 @@ It gets the displayable form of a column's name from the hash returned
 from the C<column_names> method:
 
 #%]
-
-    <TR>
-    <TD class="field"> [% classmetadata.colnames.$col; %] </TD>
-    <TD> [%
-
-#=cut
-
-    IF col == "url";  # Possibly too much magic.
-                "<A HREF="; item.url; "> "; item.url; "</A>";
-    ELSE;
-
-#=for doc
-
-#One interesting macro used in this template is C<maybe_link_view>:
-
-        maybe_link_view(item.$col); 
-%] 
-
+            <tr>
+                <td class="field">[% classmetadata.colnames.$col; %]</td>
+                <td>
+                    [% IF col == "url" && item.url;  # Possibly too much magic.
+                        '<a href="'; item.url; '"> '; item.url; '</a>';
+                    ELSE;
+                        maybe_link_view(item.$col); 
+                    END; %]
 [%#
 
 This tests whether or not the returned value is an object, and if so,
@@ -62,13 +50,10 @@ if there is no C<name> method or other stringification method defined.
 =cut
 
 #%] 
-
-[% END; %]
- </TD>
-</TR>
-[% END; %]
-</TABLE>
-
+                </td>
+            </tr>
+        [% END; %]
+    </table>
 [%#
 
 =for doc
@@ -80,13 +65,12 @@ a list of has-many accessors. Next it calls each of those accessors, and
 displays the results in a table.
 
 #%]
+    <br /><a href="[%base%]/[%item.table%]/list">Back to listing</a>
+[% view_related(item); %]
+    
 [%
-    view_related(item);
-
-#=cut
-
     button(item, "edit");
     button(item, "delete");
 %]
 [% END; %]
-
+[% INCLUDE footer %]

@@ -1,11 +1,14 @@
 package BeerDB;
-use base 'Apache::MVC';
+use base 'Maypole::Application';
 use Class::DBI::Loader::Relationship;
 
 # This is the sample application. Change this to the path to your
 # database. (or use mysql or something)
 BeerDB->setup("dbi:SQLite:t/beerdb.db");
 #BeerDB->setup("dbi:mysql:beerdb");
+
+# Give it a name.
+BeerDB->config->{application_name} = 'The Beer Database';
 
 # Change this to the root of the web space.
 BeerDB->config->{uri_base} = "http://localhost/beerdb/";
@@ -18,7 +21,7 @@ BeerDB->config->{display_tables} = [qw[beer brewery pub style]];
 BeerDB::Brewery->untaint_columns( printable => [qw/name notes url/] );
 BeerDB::Style->untaint_columns( printable => [qw/name notes/] );
 BeerDB::Beer->untaint_columns(
-    printable => [qw/abv name price notes/],
+    printable => [qw/abv name price notes url/],
     integer => [qw/style brewery score/],
     date =>[ qw/date/],
 );

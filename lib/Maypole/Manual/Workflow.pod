@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-Maypole::Workflow - Describes the progress of a request through Maypole
+Maypole::Manual::Workflow - Describes the progress of a request through Maypole
 
 =head1 SYNOPSIS
 

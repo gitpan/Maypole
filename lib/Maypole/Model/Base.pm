@@ -17,10 +17,7 @@ sub process {
     $r->{template} = $method;
     $r->objects( [] );
     my $obj = $class->retrieve( $r->{args}->[0] );
-    if ($obj) {
-        $r->objects( [$obj] );
-        shift @{ $r->{args} };
-    }
+    $r->objects( [$obj] ) if $obj;
     $class->$method( $r, $obj, @{ $r->{args} } );
 }
 
@@ -107,7 +104,6 @@ errors. A hash of errors will be passed to the template.
 
 sub do_edit { die "This is an abstract method" }
 
-
 =item list
 
 The C<list> method should fill C<< $r-> objects >> with all of the
@@ -126,7 +122,6 @@ Empty Action.
 =back
 
 =cut
-
 
 sub list : Exported {
     die "This is an abstract method";

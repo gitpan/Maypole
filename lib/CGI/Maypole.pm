@@ -4,7 +4,7 @@ use base 'Maypole';
 use strict;
 use warnings;
 
-our $VERSION = '2.03';
+our $VERSION = '2.04';
 
 sub run {
     my $self = shift;

@@ -1,5 +1,12 @@
 Revision history for Perl extension Maypole 
 
+2.04  Tue Oct 27 14:00:00 2004
+    - Fixed Apache::MVC version (Randal Schwartz)
+    - fixed template_args (Dave Howorth)
+    - New Maypole::Config documentation (Dave Howorth)
+    - Maypole::Model::Base::process() no more steals you the first
+      arg after fetching objects
+
 2.03  Tue Oct 26 13:00:00 2004
     - increased version number of Apache::MVC
     - fixed display_tables bug (Steve Simms)

@@ -30,16 +30,11 @@ This class stores all configuration data for your Maypole application.
 
 =head3 application_name
 
-This should be a string containing you applications name.
+This should be a string containing your application's name.
 
-=head3 view
+=head3 rows_per_page
 
-The view class for your Maypole Application. Defaults to "Maypole::View::TT"
-
-=head3 uri_base 
-
-This is the uri base that should be appended to your application when maypole 
-makes urls.
+This is the number of rows your application should display per page.
 
 =head3 tables
 
@@ -51,41 +46,50 @@ A hash containing a table to class mapping, if supported by model.
 
 =head3 template_root
 
-This is where your application can find it's templates.
+This is where your application can find its templates.
 
-=head3 rows_per_page
+=head3 uri_base
 
-This is the  number of rows your application should display per page.
+This is the URI base that should be prepended to your application when
+Maypole
+makes URLs.
+
+=head3 view
+
+The name of the view class for your Maypole Application. Defaults to
+"Maypole::View::TT".
 
 =head2 Model-Related
 
-=head3 display_tables 
+=head3 classes
 
-These are the tables that are public to your maypole application
+This config variable contains a list of your view classes. This is set
+up by the
+model class, and should not be changed in the view or the config.
 
-=head3 ok_tables
+=head3 display_tables
 
-These are the tables that maypole should care about
+These are the tables that are public to your Maypole application.
+Defaults to all the tables in the database.
 
-=head3 model
+=head3 dsn
 
-The model class for your Maypole Application. Defaults to "Maypole::View::CDBI"
+The DSN to your database. Follows standard DBD syntax.
 
 =head3 loader
 
-This is the loader object. It's set up by the CDBI model if it's not initialized before setup.
+This is the loader object (n.b. an instance, not a class name). It's set
+up by the CDBI model to an instance of "Class::DBI::Loader" if it's not
+initialized before calling setup().
 
-=head3 classes
+=head3 model
 
-This config variable contains a list of your view classes. This set up by the
-model class, and should not be changed in the view or the config.
+The name of the model class for your Maypole Application. Defaults to
+"Maypole::Model::CDBI".
 
-=head3 dsn
-The DSN to your database. Follows standard DBD syntax.
+=head3 ok_tables
 
-=head3 user
-
-Username to log into the database with
+These are the tables that Maypole should care about
 
 =head3 pass
 
@@ -93,17 +97,21 @@ Password for database user.
 
 =head3 opts
 
-Other options to the dbi connect call.
+Other options to the DBI connect call.
+
+=head3 user
+
+Username to log into the database with.
 
 =head1 SEE ALSO
 
 L<Maypole>
 
-=head1 MAINTAINER
-
-Sebastian Riedel, c<sri@oook.de>
-
 =head1 AUTHOR
+
+Sebastian Riedel, C<sri@oook.de>
+
+=head1 AUTHOR EMERITUS
 
 Simon Cozens, C<simon@cpan.org>
 

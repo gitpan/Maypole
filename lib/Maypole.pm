@@ -6,7 +6,7 @@ use warnings;
 use Maypole::Config;
 use Maypole::Constants;
 
-our $VERSION = '2.03';
+our $VERSION = '2.04';
 
 __PACKAGE__->mk_classdata($_) for qw( config init_done view_object );
 __PACKAGE__->mk_accessors(
@@ -59,7 +59,7 @@ sub handler {
     # See Maypole::Workflow before trying to understand this.
     my ( $class, $req ) = @_;
     $class->init unless $class->init_done;
-    my $r = bless { config => $class->config }, $class;
+    my $r = bless { template_args => {}, config => $class->config }, $class;
     $r->get_request($req);
     $r->parse_location();
     my $status = $r->handler_guts();
@@ -441,8 +441,8 @@ Simon Cozens, C<simon@cpan.org>
 =head1 THANKS TO
 
 Danijel Milicevic, Dave Slack, Jesse Sheidlower, Jody Belka, Marcus Ramberg,
-Mickael Joanne, Simon Flack, Steve Simms, Veljko Vidovic and all the others
-who've helped.
+Mickael Joanne, Randal Schwartz, Simon Flack, Steve Simms, Veljko Vidovic
+and all the others who've helped.
 
 =head1 LICENSE
 

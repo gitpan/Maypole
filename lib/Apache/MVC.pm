@@ -1,5 +1,7 @@
 package Apache::MVC;
 
+our $VERSION = '2.04';
+
 use strict;
 use warnings;
 
@@ -16,8 +18,6 @@ if (APACHE2) {
 }
 else { require Apache }
 require Apache::Request;
-
-our $VERSION = "2.03";
 
 sub get_request {
     my ( $self, $r ) = @_;
@@ -43,9 +43,10 @@ sub parse_args {
 sub send_output {
     my $r = shift;
     $r->{ar}->content_type(
-        $r->{content_type}  =~ m/^text/ ?
-	$r->{content_type} . "; charset=" . $r->{document_encoding} :
-	$r->{content_type} );
+          $r->{content_type} =~ m/^text/
+        ? $r->{content_type} . "; charset=" . $r->{document_encoding}
+        : $r->{content_type}
+    );
     $r->{ar}->headers_out->set( "Content-Length" => length $r->{output} );
     APACHE2 || $r->{ar}->send_http_header;
     $r->{ar}->print( $r->{output} );

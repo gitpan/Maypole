@@ -5,7 +5,7 @@ use UNIVERSAL::require;
 use Apache::Constants ":common";
 use strict;
 use warnings;
-our $VERSION = "1.0";
+our $VERSION = "1.1";
 __PACKAGE__->mk_classdata($_) for qw( config init_done view_object );
 __PACKAGE__->mk_accessors ( qw( ar params query objects model_class
 args action template ));
@@ -93,8 +93,8 @@ sub is_applicable {
 sub call_authenticate {
     my $self = shift;
     return $self->model_class->authenticate($self) if 
-        $self->model_class->can("authenticate");
-    return $self->authenticate();
+        $self->model_class->can("authenticate"); 
+    return $self->authenticate($self); # Interface consistency is a Good Thing
 }
 
 sub additional_data {}
@@ -135,7 +135,7 @@ this:
     package ProductDatabase;
     use base 'Maypole';
     __PACKAGE__->set_database("dbi:mysql:products");
-    BeerDB->config->{uri_base} = "http://your.site/catalogue/";
+    ProductDatabase->config->{uri_base} = "http://your.site/catalogue/";
     ProductDatabase::Product->has_a("category" => ProductDatabase::Category); 
     # ...
 

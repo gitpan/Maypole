@@ -34,7 +34,7 @@ sub _args {
     if ($class) { 
         $args{classmetadata} = {
             name => $class,
-            columns => [ $class->columns ],
+            columns => [ $class->display_columns ],
             colnames => { $class->column_names },
             related_accessors => [ $class->related($r) ],
             moniker => $class->moniker,
@@ -47,7 +47,7 @@ sub _args {
         if (@{$r->objects || []} > 1) { 
             $args{$r->model_class->plural_moniker} = $r->objects;
         } else {
-            ($args{$r->model_class->moniker}) = @{$r->objects};
+            ($args{$r->model_class->moniker}) = @{$r->objects ||[]};
         }
     }
 

@@ -11,15 +11,16 @@ t/1.t
 Makefile.PL
 README
 templates/beer/addnew
-templates/custom/header
 templates/custom/frontpage
-templates/factory/macros
+templates/custom/header
 templates/factory/addnew
+templates/factory/edit
 templates/factory/header
 templates/factory/list
-templates/factory/search_form
+templates/factory/macros
 templates/factory/navbar
-templates/factory/edit
+templates/factory/search_form
 templates/factory/view
+templates/factory/pager
 TODO
 META.yml                                 Module meta-data (added by MakeMaker)

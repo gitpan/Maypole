@@ -65,11 +65,14 @@ sub delete :Exported {
 sub adopt {
     my ($self, $child) = @_;
     $child->autoupdate(1);
-    $child->columns( Stringify => qw/ name / );
+    if (grep { $_ eq "name" } $child->columns) { # Common case
+        $child->columns( Stringify => qw/ name / );
+    } # Otherwise, work it out for yourself.
 }
 
 sub search :Exported {
-    return shift->SUPER::search(@_) if caller eq "Class::DBI"; # oops
+    return shift->SUPER::search(@_) if caller ne "Maypole::Model::Base";
+                                    # A real CDBI search.
     my ($self, $r) = @_;
     my %fields = map {$_ => 1 } $self->columns;
     my $oper = "like"; # For now
@@ -101,11 +104,13 @@ sub list :Exported {
 }
 
 sub setup_database {
-    my ($self, $config, $namespace, $dsn) = @_;
+    my ($self, $config, $namespace, $dsn, $u, $p) = @_;
     $config->{dsn} = $dsn;
     $config->{loader} = Class::DBI::Loader->new(
         namespace => $namespace,
-        dsn => $dsn
+        dsn => $dsn,
+        user => $u,
+        password => $p,
     );
     $config->{classes} = [ $config->{loader}->classes ];
     $config->{tables}  = [ $config->{loader}->tables ];

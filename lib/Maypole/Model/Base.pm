@@ -8,9 +8,20 @@ sub edit :Exported { }
 
 sub process {
     my ($class, $r) = @_;
-    $r->template( my $method = $r->action );
-    $r->objects([ $class->retrieve(shift @{$r->{args}}) ]);
+    my $method = $r->action;
+    return if $r->{template}; # Authentication has set this, we're done.
+
+    $r->{template} = $method;
+    my $obj = $class->retrieve( $r->{args}->[0] );
+    if ($obj) {
+        $r->objects([ $obj ]);
+        shift @{$r->{args}};
+    }
     $class->$method($r);
+}
+
+sub display_columns { 
+    sort shift->columns;
 }
 
 =head1 NAME
@@ -70,7 +81,9 @@ beers, so C<BeerDB::Brewery> needs to return C<beers>.
 
 =head2 columns
 
-This is a list of the columns in a table.
+This is a list of all the columns in a table. You may also override
+C<display_columns>, which is the list of columns you want to view, in
+the right order.
 
 =head2 table
 
@@ -109,7 +122,10 @@ Return a hash mapping column names with human-readable equivalents.
 
 =cut
 
-sub column_names { my $class = shift; map { $_ => ucfirst $_ } $class->columns }
+sub column_names { my $class = shift; map { 
+        my $col = $_;
+        $col =~ s/_+(\w)?/ \U\1/g;
+        $_ => ucfirst $col } $class->columns }
 
 =head2 description
 

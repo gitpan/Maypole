@@ -6,7 +6,7 @@ WriteMakefile(
     NAME              => 'Maypole',
     VERSION_FROM      => 'lib/Maypole.pm', # finds $VERSION
     PREREQ_PM         => {
-        Class::DBI::Loader => 0,
+        Class::DBI::Loader => '0.02',
         Class::DBI::AbstractSearch => 0,
         Class::DBI::Pager => 0,
         Class::DBI::Plugin::RetrieveAll => 0,

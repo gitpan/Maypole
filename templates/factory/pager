@@ -1,0 +1,27 @@
+[%#
+
+=head1 pager
+
+This controls the pager display at the bottom (by default) of the list
+and search views. It expects a C<pager> template argument which responds
+to the L<Data::Page> interface.
+
+#%]
+[%
+IF pager AND pager.first_page != pager.last_page;
+%]
+
+<P ALIGN="center">Pages: 
+[%
+     FOREACH num = [pager.first_page .. pager.last_page];
+          IF num == pager.current_page;
+            "["; num; "] ";
+          ELSE;
+            SET args = "?page=" _ num; # Order?
+            SET label = "[" _ num _ "]";
+          link(classmetadata.moniker, "list", args, label);
+          END;
+     END;
+%]
+</P>
+[% END %]

@@ -1,5 +1,13 @@
 Revision history for Perl extension Maypole 
 
+1.1   Wed Feb 25 10:29:25 GMT 2004
+    - Update CDBIL dependency
+    - Don't stringify to "name" if there isn't one
+    - Better support for authentication and template changes
+    - Full set of templates
+    - Allow passing of username and password to ->setup
+    - display_columns method
+
 1.0   Wed Feb 11 17:34:12 GMT 2004
     - Renamed from Apache::MVC to Maypole.
     - Clearer separation of model and view classes from controller

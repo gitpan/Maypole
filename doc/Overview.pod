@@ -1,0 +1,32 @@
+=head1 Overview of Maypole Documentation
+
+The Maypole documentation is arranged over several files; this is a good
+one to start with.
+
+Once you've read this, you should probably look at L<About.pod>, the
+guide to what Maypole is and how the Maypole request works. It also
+describes how to set up a simple CRUD web application in Maypole.
+
+The next two chapters are quite thorough, and you might want to skip
+over them if you already know how L<Class::DBI> and the L<Template>
+toolkit work. L<Model.pod> and L<View.pod> describe these technologies
+and their relationship to Maypole.
+
+Now we present the default actions and templates - the F<factory>
+templates - in L<StandardTemplates.pod>. When you have read these
+chapters, you are ready to start building more complex applications in
+Maypole than just a simple CRUD interface. L<Beer.pod> reintroduces the
+beer database application and shows how to move from the "magic" of the
+automatically supplied templates and actions to a customized application
+with user-specified actions.
+
+L<Request.pod> contains more information about the Maypole request
+object and provides some cookbook-style techniques: how to provide
+authentication, how to provide a REST interface, how to override various
+stages of the content generation process, and so on.
+
+The final chapters are examples of how to construct large web
+applications in Maypole: L<Flox.pod> describes a "social network" site
+similar to Friendster and Orkut; L<PetStore.pod> implements the Java/C#
+benchmark Pet Store application; and L<Recipe.pod> describes a kitchen
+management application.

@@ -21,13 +21,13 @@ WriteMakefile(
     }, # e.g., Module::Name => 1.1
     ($] >= 5.005 ?     ## Add these new keywords supported since 5.005
       (ABSTRACT_FROM  => 'lib/Apache/MVC.pm', # retrieve abstract from module
-       AUTHOR         => 'Simon Cozens <simon@nonet>') : ()),
+       AUTHOR         => 'Simon Cozens <simon@simon-cozens.org>') : ()),
 );
 
 if (!-e "t/beerdb.db") {
     print "Making SQLite DB\n";
-    require DBD::SQLite 
-        or die "No, wait, we don't have SQLite installed. Never mind\n";
+    eval { require DBD::SQLite };
+    die "No, wait, we don't have SQLite installed. Never mind\n" if $@;
     require DBI;
     my $dbh = DBI->connect("dbi:SQLite:dbname=t/beerdb.db");
 

@@ -1,33 +1,90 @@
+[%#
+
+=for doc
+
+The C<view> template takes some objects (usually just one) from
+C<objects> and displays the object's properties in a table. 
+
+=cut
+
+%#]
 [% PROCESS macros %]
 [% INCLUDE header %]
 
 [% FOR item = objects %]
-<h2> [% item.name %]</h2>
+[% SET string = item.stringify_column %]
+<h2> [% item.$string %]</h2>
 
 [% INCLUDE navbar %]
 
 <TABLE class="view">
-    <TR><TD class="field">Name</TD><TD> [% item.name %] </TD></TR>
+    <TR><TD class="field">[% classmetadata.colnames.$string %]</TD><TD> [% item.$string %] </TD></TR>
 [% 
     FOR col = classmetadata.columns.list;
-    NEXT IF col == "id" OR col == "name";
+    NEXT IF col == "id" OR col == string;
     NEXT UNLESS item.$col;
 %]
 
-<TR>
+[%# 
+
+=for doc
+
+It gets the displayable form of a column's name from the hash returned
+from the C<column_names> method:
+
+#%]
+
+    <TR>
     <TD class="field"> [% classmetadata.colnames.$col; %] </TD>
     <TD> [%
+
+#=cut
 
     IF col == "url";  # Possibly too much magic.
                 "<A HREF="; item.url; "> "; item.url; "</A>";
     ELSE;
-    maybe_link_view(item.$col); END;
-    %] </TD>
+
+#=for doc
+
+#One interesting macro used in this template is C<maybe_link_view>:
+
+        maybe_link_view(item.$col); 
+%] 
+
+[%#
+
+This tests whether or not the returned value is an object, and if so,
+creates a link to a page viewing that object; if not, it just displays
+the text as normal. The object is linked using its stringified name;
+by default this calls the C<name> method, or returns the object's ID
+if there is no C<name> method or other stringification method defined.
+
+=cut
+
+#%] 
+
+[% END; %]
+ </TD>
 </TR>
 [% END; %]
 </TABLE>
+
+[%#
+
+=for doc
+
+The C<view> template also displays a list of other objects related to the first
+one via C<has_many> style relationships; this is done by calling the
+C<related_accessors> method - see L<Model/related_accessors> - to return
+a list of has-many accessors. Next it calls each of those accessors, and
+displays the results in a table.
+
+#%]
 [%
     view_related(item);
+
+#=cut
+
     button(item, "edit");
     button(item, "delete");
 %]

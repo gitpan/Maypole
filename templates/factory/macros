@@ -31,6 +31,7 @@ command for that object. Otherwise, it just displays the data.
 #%]
 
 [%
+
 MACRO maybe_link_view(object) BLOCK;
     IF object.moniker; # It's an object, i.e. a has-a
         link(object.moniker, "view", object.id, object);
@@ -57,7 +58,7 @@ for some.
         "<td>";
         IF col == "url";
             "<A HREF="; item.url; "> "; item.url; "</A>";
-        ELSIF col == "name";
+        ELSIF col == item.stringify_column;
             maybe_link_view(item);
         ELSE;
             maybe_link_view(item.$col);

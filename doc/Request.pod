@@ -1,0 +1,9 @@
+=head1 Maypole Request Hacking Cookbook
+
+=head2 Changing how params are parsed
+
+=head2 Authentication
+
+=head2 REST
+
+=head2 Filling Content Yourself

@@ -35,17 +35,15 @@ sub related {
 sub do_edit :Exported {
     my ($self, $r) = @_;
     my $h = CGI::Untaint->new(%{$r->{params}});
-    my ($obj) = @{$r->objects};
+    my ($obj) = @{$r->objects || []};
     if ($obj) {
         # We have something to edit
         $obj->update_from_cgi($h);
-        warn "Updating an object ($obj) with ".Dumper($h); use Data::Dumper;
     } else {
         $obj = $self->create_from_cgi($h);
     }
     if (my %errors = $obj->cgi_update_errors) {
         # Set it up as it was:
-        warn "There were errors: ".Dumper(\%errors)."\n";
         $r->{template_args}{cgi_params} = $r->{params};
         $r->{template_args}{errors} = \%errors;
         $r->{template} = "edit";
@@ -56,18 +54,28 @@ sub do_edit :Exported {
 }
 
 sub delete :Exported {
+    return shift->SUPER::delete(@_) if caller ne "Maypole::Model::Base";
     my ($self, $r) = @_;
-    $_->SUPER::delete for @{ $r->objects };
+    $_->SUPER::delete for @{ $r->objects || [] };
     $r->objects([ $self->retrieve_all ]);
     $r->{template} = "list";
+    $self->list($r);
+}
+
+sub stringify_column {
+    my $class = shift;
+    return ($class->columns("Stringify"),
+                (grep { $_ ne "id" } $class->primary_columns),
+                (grep { $_ eq "name" } $class->columns)
+               )[0];
 }
 
 sub adopt {
     my ($self, $child) = @_;
     $child->autoupdate(1);
-    if (grep { $_ eq "name" } $child->columns) { # Common case
-        $child->columns( Stringify => qw/ name / );
-    } # Otherwise, work it out for yourself.
+    if (my $col = $child->stringify_column) {
+        $child->columns( Stringify => $col );
+    }
 }
 
 sub search :Exported {
@@ -76,28 +84,43 @@ sub search :Exported {
     my ($self, $r) = @_;
     my %fields = map {$_ => 1 } $self->columns;
     my $oper = "like"; # For now
-    use Carp; Carp::confess("Urgh") unless ref $r;
     my %params = %{$r->{params}};
     my %values = map { $_ => {$oper, $params{$_} } }
                  grep { $params{$_} and $fields{$_} } keys %params;
 
-    $r->objects([ %values ? $self->search_where(%values) : $self->retrieve_all ]);
     $r->template("list");
+    if (!%values) { return $self->list($r) }
+    $self = $self->do_pager($r);
+    my $order = $self->order($r);
+    $r->objects([ $self->search_where(\%values), 
+                  ($order ? { order => $order } : ())  
+                ]);
     $r->{template_args}{search} = 1;
+}
+
+sub do_pager {
+    my ($self, $r) = @_;
+    if ( my $rows = $r->config->{rows_per_page}) {
+        return $r->{template_args}{pager} = $self->pager($rows, $r->query->{page});
+    } else { return $self } 
+}
+
+sub order {
+    my ($self, $r) = @_;
+    my $order;
+    my %ok_columns = map {$_ => 1} $self->columns;
+    if ($order = $r->query->{order} and $ok_columns{$order}) {
+       $order .= ($r->query->{o2} eq "desc" && " DESC")
+    }
+    $order;
 }
 
 sub list :Exported {
     my ($self, $r) = @_;
-    my %ok_columns = map {$_ => 1} $self->columns;
-    if ( my $rows = $r->config->{rows_per_page}) {
-        $self = $self->pager($rows, $r->query->{page});
-        $r->{template_args}{pager} = $self;
-    } 
-    my $order;
-    if ($order = $r->query->{order} and $ok_columns{$order}) {
-        $r->objects([ $self->retrieve_all_sorted_by( $order.
-            ($r->query->{o2} eq "desc" && " DESC")
-        )]);
+    $self = $self->do_pager($r);
+    my $order = $self->order($r);
+    if ($order) { 
+        $r->objects([ $self->retrieve_all_sorted_by( $order )]);
     } else {
         $r->objects([ $self->retrieve_all ]);
     }

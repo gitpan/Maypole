@@ -1,0 +1,7 @@
+=head1 The Beer Database, Twice
+
+=head2 The big beer problem
+
+=head2 The easy way
+
+=head2 The hard way

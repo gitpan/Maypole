@@ -1,0 +1,12 @@
+
+=head1 Introduction to the Maypole Request Model
+
+=head2 What is MVC for web applications?
+
+=head2 What is Maypole?
+
+=head2 Phases of a Maypole request
+
+=head2 The model class
+
+=head2 The view class

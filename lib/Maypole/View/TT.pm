@@ -11,8 +11,8 @@ sub new { bless {}, shift } # Not worth having
 
 sub _tt {
     my ($self, $r) = @_;
-    my $root = $r->{ar}->document_root . "/". $r->{ar}->location;
-    warn "Root was $root";
+    # This bit sucks.
+    my $root = $r->{config}{template_root} || $r->get_template_root;
     Template->new({ INCLUDE_PATH => [
         $root,
         ($r->model_class && File::Spec->catdir($root, $r->model_class->moniker)),
@@ -63,10 +63,8 @@ sub process {
     $template->process($r->template, { $self->_args($r) }, \$output)
     || return $self->error($r, $template->error);
 
-    $r->{ar}->content_type("text/html");
-    $r->{ar}->headers_out->set("Content-Length" => length $output);
-    $r->{ar}->send_http_header;
-    $r->{ar}->print($output);
+    $r->{content_type} ||= "text/html";
+    $r->{output} = $output;
     return 200;
 }
 
@@ -74,8 +72,9 @@ sub error {
     my ($self, $r, $error) = @_;
     warn $error;
     if ($error =~ /not found$/) { return DECLINED }
-    $r->{ar}->send_http_header("text/plain");
-    $r->{ar}->print($error);
+    $r->{content_type} = "text/plain";
+    $r->{output} = $error;
+    $r->send_output;
     exit;
 }
 

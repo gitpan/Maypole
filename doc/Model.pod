@@ -1,0 +1,9 @@
+=head1 Maypole Model Classes
+
+=head2 Class::DBI
+
+=head2 Maypole::Model::CDBI
+
+=head2 What Maypole wants from a model
+
+=head2 Building your own model class

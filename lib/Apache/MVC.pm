@@ -14,7 +14,8 @@ sub parse_location {
     my $self = shift;
     $self->{path} = $self->{ar}->uri;
     my $loc = $self->{ar}->location;
-    $self->{path} =~ s/^$loc//; # I shouldn't need to do this?
+    no warnings 'uninitialized';
+    $self->{path} =~ s/^($loc)?\///;
     $self->{path} ||= "frontpage";
     my @pi = split /\//, $self->{path};
     shift @pi while @pi and !$pi[0];
@@ -24,6 +25,19 @@ sub parse_location {
 
     $self->{params} = { $self->{ar}->content };
     $self->{query}  = { $self->{ar}->args };
+}
+
+sub send_output {
+    my $r = shift;
+    $r->{ar}->content_type($r->{content_type});
+    $r->{ar}->headers_out->set("Content-Length" => length $r->{output});
+    $r->{ar}->send_http_header;
+    $r->{ar}->print($r->{output});
+}
+
+sub get_template_root {
+    my $r = shift;
+    $r->{ar}->document_root . "/". $r->{ar}->location;
 }
 
 1;

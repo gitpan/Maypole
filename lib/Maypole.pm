@@ -2,16 +2,20 @@ package Maypole;
 use base qw(Class::Accessor Class::Data::Inheritable);
 use attributes ();
 use UNIVERSAL::require;
-use Apache::Constants ":common";
 use strict;
 use warnings;
-our $VERSION = "1.1";
+our $VERSION = "1.2";
 __PACKAGE__->mk_classdata($_) for qw( config init_done view_object );
 __PACKAGE__->mk_accessors ( qw( ar params query objects model_class
 args action template ));
 __PACKAGE__->config({});
 __PACKAGE__->init_done(0);
 
+# Ape Apache::Constants interface
+use constant OK => 0;
+use constant DECLINED => -1;
+
+sub debug { 0 }
 
 sub setup {
     my $calling_class = shift;
@@ -56,17 +60,27 @@ sub handler {
     my $status = $r->is_applicable;
     if ($status == OK) { 
         $status = $r->call_authenticate;
+        if ($r->debug and $status != OK and $status != DECLINED) {
+            $r->view_object->error($r,
+                "Got unexpected status $status from calling authentication");
+        }
         return $status unless $status == OK;
         $r->additional_data();
     
         $r->model_class->process($r);
     } else { 
         # Otherwise, it's just a plain template.
+        $r->call_authenticate; # No harm in it
         delete $r->{model_class};
         $r->{path} =~ s{/}{}; # De-absolutify
         $r->template($r->{path});
     }
-    return $r->view_object->process($r);
+    $status = OK;
+    if (!$r->{output}) { # You might want to do it yourself
+        $status = $r->view_object->process($r);
+    }
+    $r->send_output;
+    return $status;
 }
 
 sub is_applicable {
@@ -74,17 +88,18 @@ sub is_applicable {
     my $config = $self->config;
     $config->{ok_tables} = {map {$_ => 1} @{$config->{display_tables}}};
     warn "We don't have that table ($self->{table})"
-        unless $config->{ok_tables}{$self->{table}};
+        if $self->debug and not $config->{ok_tables}{$self->{table}};
     return DECLINED() unless exists $config->{ok_tables}{$self->{table}};
 
     # Does the action method exist?
     my $cv = $self->model_class->can($self->{action});
-    warn "We don't have that action ($self->{action})" unless $cv;
+    warn "We don't have that action ($self->{action})" 
+        if $self->debug and not $cv;
     return DECLINED() unless $cv;
 
     # Is it exported?
     $self->{method_attribs} = join " ", attributes::get($cv);
-    do { warn "$self->{action} not exported";
+    do { warn "$self->{action} not exported" if $self->debug;
     return DECLINED() 
      } unless $self->{method_attribs} =~ /\bExported\b/i;
     return OK();
@@ -133,7 +148,7 @@ for the designers to customize, and then write an Apache handler like
 this:
 
     package ProductDatabase;
-    use base 'Maypole';
+    use base 'Apache::MVC';
     __PACKAGE__->set_database("dbi:mysql:products");
     ProductDatabase->config->{uri_base} = "http://your.site/catalogue/";
     ProductDatabase::Product->has_a("category" => ProductDatabase::Category); 
@@ -193,7 +208,7 @@ subclass the model class, and configure your class slightly differently:
 Then your top-level application package should change the model class:
 (Before calling C<setup>)
 
-    ProductDatabase->config->{model_class} = "ProductDatabase::Model";
+    ProductDatabase->config->{model} = "ProductDatabase::Model";
 
 (The C<:Exported> attribute means that the method can be called via the
 URL C</I<table>/supersearch/...>.)
@@ -218,14 +233,23 @@ class which does not specify how to communicate with the outside world.
 The most popular subclass of Maypole is L<Apache::MVC>, which interfaces
 the Maypole framework to Apache mod_perl.
 
-If you are implementing Maypole subclasses, you need to provide at least 
-the C<get_request> and C<parse_location> methods. See the
+If you are implementing Maypole subclasses, you need to provide at least
+the C<parse_location> and C<send_output> methods. You may also want to
+provide C<get_request> and C<get_template_root>. See the
 L<Maypole::Workflow> documentation for what these are expected to do.
 
 =cut
 
-sub get_request { die "Do not use Maypole directly; use Apache::MVC or similar" }
+sub get_template_root { "." }
+sub get_request { }
 sub parse_location { die "Do not use Maypole directly; use Apache::MVC or similar" }
+sub send_output{ die "Do not use Maypole directly; use Apache::MVC or similar" }
+
+=head1 SEE ALSO
+
+There's more documentation, examples, and a wiki at the Maypole web site:
+
+http://maypole.simon-cozens.org/
 
 =head1 AUTHOR
 

@@ -1,5 +1,17 @@
 Revision history for Perl extension Maypole 
 
+1.2   Thu Mar 25 12:35:21 GMT 2004
+    - Ensure safety when dereferencing any ->objects
+    - Support for the "frontpage" template
+    - Maypole itself no longer uses ->{ar}, which is now completely
+      refactored into the Apache::MVC class
+    - The beginnings of the documentation framework
+    - Support for paging and ordering in searches
+    - Stringify column changed from magic "name" to customizable
+      property
+    - Move BeerDB to ex/
+    - Fix SQLite dependency
+
 1.1   Wed Feb 25 10:29:25 GMT 2004
     - Update CDBIL dependency
     - Don't stringify to "name" if there isn't one

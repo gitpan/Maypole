@@ -12,6 +12,7 @@ sub process {
     return if $r->{template}; # Authentication has set this, we're done.
 
     $r->{template} = $method;
+    $r->objects([]);
     my $obj = $class->retrieve( $r->{args}->[0] );
     if ($obj) {
         $r->objects([ $obj ]);

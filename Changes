@@ -1,5 +1,9 @@
 Revision history for Perl extension Maypole 
 
+1.7   Sat Jul 17 20:15:26 BST 2004
+    - Emergency release - we lost the "use Maypole::Constants" from
+      CLI.pm somehow
+
 1.6   Fri Jul 16 23:51:21 BST 2004
     - Two very trivial fixes:
     - Put ::Plain in the MANIFEST, so it actually ships this time

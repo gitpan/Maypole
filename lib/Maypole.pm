@@ -4,7 +4,7 @@ use attributes ();
 use UNIVERSAL::require;
 use strict;
 use warnings;
-our $VERSION = "1.6";
+our $VERSION = "1.7";
 __PACKAGE__->mk_classdata($_) for qw( config init_done view_object );
 __PACKAGE__->mk_accessors ( qw( ar params query objects model_class
 args action template ));

@@ -21,10 +21,12 @@ sub paths {
 sub vars {
     my ($self, $r) = @_;
     my $class = $r->model_class;
+    my $base = $r->{config}->{uri_base};
+    $base =~ s/\/+$//;
     my %args = (
         request => $r,
         objects => $r->objects,
-        base    => $r->config->{uri_base},
+        base    => $base,
         config  => $r->config
         # ...
     ) ;

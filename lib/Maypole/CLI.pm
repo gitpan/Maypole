@@ -1,6 +1,7 @@
 package Maypole::CLI;
 use UNIVERSAL::require;
 use URI; use URI::QueryParam;
+use Maypole::Constants;
 
 use strict;
 use warnings;

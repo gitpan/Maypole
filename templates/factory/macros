@@ -7,7 +7,7 @@ system.
 
 =head2 link
 
-This creates an <A HREF="... to a command in the Apache::MVC system by
+This creates an <A HREF="..."> to a command in the Apache::MVC system by
 catenating the base URL, table, command, and any arguments.
 
 #%]
@@ -34,8 +34,8 @@ command for that object. Otherwise, it just displays the data.
 
 [%
 MACRO maybe_link_view(object) BLOCK;
-    IF object.table; # It's an object, i.e. a has-a
-        link(object.table, "view", object.id, object);
+    IF object.isa('Maypole::Model::Base');
+        link(object.table, "view", object.id.join('/'), object);
     ELSE;
         object;
     END;
@@ -62,7 +62,8 @@ for some.
         ELSIF col == item.stringify_column;
             maybe_link_view(item);
         ELSE;
-            maybe_link_view(item.$col);
+            accessor = item.accessor_name(col);
+            maybe_link_view(item.$accessor);
         END;
         "</td>";
     END;
@@ -81,8 +82,10 @@ This is a generic button, which performs an action on an object.
 
 #%]
 [% MACRO button(obj, action) BLOCK; %]
-<form class="actionform" action="[% base %]/[% obj.table %]/[% action %]/[% obj.id %]" method="post">
+[% IF obj.is_public(action) %]
+<form class="actionform" action="[% base %]/[% obj.table %]/[% action %]/[% obj.id.join('/') %]" method="post">
 <div class="field"><input class="actionbutton" type="submit" value="[% action %]" /></div></form>
+[% END %]
 [% END %]
 [%#
 
@@ -115,3 +118,57 @@ MACRO test_xxxx(myblock) BLOCK;
     END;
 END;
 %]
+[%#
+
+=head2 view_item
+
+This takes an object and and displays its properties in a table. 
+
+=cut
+
+#%]
+[% MACRO view_item(item) BLOCK; %]
+    [% SET string = item.stringify_column %]
+    <div id="title"> [% item.$string %]</div>
+    [% INCLUDE navbar %]
+    <table class="view">
+        <tr>
+            <td class="field">[% classmetadata.colnames.$string %]</td>
+            <td>[% item.$string %]</td>
+        </tr>
+        [% FOR col = classmetadata.columns.list;
+            NEXT IF col == "id" OR col == string;
+            NEXT UNLESS item.$col;
+        %]
+[%# 
+
+=for doc
+
+It gets the displayable form of a column's name from the hash returned
+from the C<column_names> method:
+
+#%]
+            <tr>
+                <td class="field">[% classmetadata.colnames.$col; %]</td>
+                <td>
+                    [% IF col == "url" && item.url;  # Possibly too much magic.
+                        '<a href="'; item.url; '"> '; item.url; '</a>';
+                    ELSE;
+                        maybe_link_view(item.$col); 
+                    END; %]
+[%#
+
+This tests whether or not the returned value is an object, and if so,
+creates a link to a page viewing that object; if not, it just displays
+the text as normal. The object is linked using its stringified name;
+by default this calls the C<name> method, or returns the object's ID
+if there is no C<name> method or other stringification method defined.
+
+=cut
+
+#%] 
+                </td>
+            </tr>
+        [% END; %]
+    </table>
+[% END %]

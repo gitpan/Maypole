@@ -1,10 +1,11 @@
 =head1 The Maypole iBuySpy Portal
 
-I think it's good fun to compare Maypole
+I think it's good fun to compare Maypole against other frameworks,
+so here's how to build the ASP.NET tutorial site in Maypole.
 
-We begin with a length process of planning and investigating the
+We begin with a lengthy process of planning and investigating the
 sources. Of prime interest is the database schema and the initial data,
-which we convert to a Mysql database. Converting MS SQL to Mysql is not fun.
+which we convert to a MySQL database. Converting MS SQL to MySQL is not fun.
 I shall spare you the gore. Especially the bit where the default insert IDs
 didn't match up between the tables.
 
@@ -36,7 +37,7 @@ This leads naturally to the following driver code:
     use Maypole::Application;
     Portal->setup("dbi:mysql:ibsportal");
     use Class::DBI::Loader::Relationship;
-    Portal->config->{loader}->relationship($_) for (
+    Portal->config->loader->relationship($_) for (
         "A module has a definition",  "A module has settings",
         "A tab has modules",          "A portal has tabs",
         "A role has a portal",        "A definition has a portal",
@@ -104,20 +105,20 @@ C</I<table>/I<action>/I<id>/I<arguments>>.
 
     sub parse_path {
         my $self = shift;
-        $self->{path} ||= "DesktopDefault.aspx";
-        return $self->SUPER::parse_path if not exists $pages{$self->{path}};
-        my $page = $pages{$self->{path}} ;
-        $self->{action} = $page->{action};
-        $self->{table} = $page->{table};
-        my %query = $self->{ar}->args;
-        $self->{args} = [ $query{tabid} || $query{ItemID} || 1];
+        $self->path("DesktopDefault.aspx") unless $self->path;
+        return $self->SUPER::parse_path if not exists $pages{$self->path};
+        my $page = $pages{$self->path} ;
+        $self->action($page->{action});
+        $self->table($page->{table});
+        my %query = $self->ar->args;
+        $self->args( [ $query{tabid} || $query{ItemID} || 1] );
     }
 
     1;
 
 Here we're overriding the C<parse_path> method which takes the C<path>
 slot from the request and populates the C<table>, C<action> and
-C<arguments> slots. If the user has asked for a page we don't know
+C<args> slots. If the user has asked for a page we don't know
 about, we ask the usual Maypole path handling method to give it a try;
 this will become important later on. We turn the default page,
 C<DesktopDefault.aspx>, into the equivalent of C</tab/view/1> unless
@@ -164,15 +165,16 @@ right?
 Dead right, but it was here that I got too clever. I guess it was the word
 "component" that set me off. I thought that since the page was made up of a
 large number of different modules, all requiring their own set of objects, I
-should use a seperate Maypole sub-request for each one, as shown in the
-"Component-based pages" recipe in L<Request.pod>.
+should use a separate Maypole sub-request for each one, as shown in the
+"Component-based pages" recipe in the
+L<Request Cookbook|Maypole::Manual::Request>.
 
 So this is what I did. I created a method in C<Portal::Module> that would
 set the template to the appropriate C<ascx> file:
 
     sub view_desktop :Exported {
         my ($self, $r) = @_;
-        $r->{template} = $r->objects->[0]->definition->DesktopSrc;
+        $r->template($r->objects->[0]->definition->DesktopSrc);
     }
 
 and changed the C<pane> macro to fire off a sub-request for each module:
@@ -318,15 +320,15 @@ tag with the appropriate values. This is only slightly difficult because
 we have to arrange the array of C<module.settings> into a hash of
 C<key_name> => C<setting> pairs. Frankly, I can't be bothered to do this
 in the template, so we'll add it into the C<template_args> again. This
-time C<addition_data> looks like:
+time C<additional_data> looks like:
 
     sub additional_data {
         my $r = shift;
-        shift->{template_args}{portal} = Portal::Portal->retrieve(2);
-        if ($r->{objects}->[0]->isa("Portal::Module")) {
-            $r->{template_args}{module_settings} =
+        shift->template_args->{portal} = Portal::Portal->retrieve(2);
+        if ($r->objects->[0]->isa("Portal::Module")) {
+            $r->template_args->{module_settings} =
                 { map { $_->key_name, $_->setting } 
-                  $r->{objects}->[0]->settings };
+                  $r->objects->[0]->settings };
         }
     }
 
@@ -344,4 +346,12 @@ tabs. It's fast, it's been developed rapidly, and it's less than 50 lines
 of Perl code so far. But it's not finished yet.
 
 =head2 Adding users
+
+...
+
+=head2 Links
+
+L<Contents|Maypole::Manual>,
+Next B<That's all folks! Time to start coding ...>,
+Previous L<Flox|Maypole::Manual::Flox>
 

@@ -17,7 +17,7 @@ Maypole::Model::CDBI - Model class based on Class::DBI
 
 =head1 DESCRIPTION
 
-This is a master model class which uses C<Class::DBI> to do all the hard
+This is a master model class which uses L<Class::DBI> to do all the hard
 work of fetching rows and representing them as objects. It is a good
 model to copy if you're replacing it with other database abstraction
 modules.
@@ -39,15 +39,17 @@ See L<Maypole::Model::Base> for these:
 
 =item setup_database
 
+=item fetch_objects
+
 =back 
 
-=head1 Additional Commands
+=head1 Additional Actions
 
 =over 
 
 =item delete
 
-Surprisingly, this command causes a database record to be forever lost.
+Unsuprisingly, this command causes a database record to be forever lost.
 
 =item search
 
@@ -95,27 +97,38 @@ sub do_edit : Exported {
     my $h        = CGI::Untaint->new( %{ $r->{params} } );
     my $creating = 0;
     my ($obj) = @{ $r->objects || [] };
+    my $fatal;
     if ($obj) {
-
         # We have something to edit
-        $obj->update_from_cgi( $h =>
-              { required => $r->{config}{ $r->{table} }{required_cols} || [], }
-        );
+        eval {
+            $obj->update_from_cgi( $h =>
+                { required => $r->{config}{ $r->{table} }{required_cols} || [], }
+            );
+        };
+        $fatal = $@;
     }
     else {
-        $obj =
-          $self->create_from_cgi( $h =>
-              { required => $r->{config}{ $r->{table} }{required_cols} || [], }
-          );
+        eval {
+            $obj =
+                $self->create_from_cgi( $h =>
+                    { required => $r->{config}{ $r->{table} }{required_cols} || [], }
+            );
+        };
+        $fatal = $@;
         $creating++;
     }
-    if ( my %errors = $obj->cgi_update_errors ) {
+    if ( my %errors = $fatal ? (FATAL => $fatal) : $obj->cgi_update_errors ) {
 
         # Set it up as it was:
         $r->{template_args}{cgi_params} = $r->{params};
         $r->{template_args}{errors}     = \%errors;
-        $r->{template}                  = "edit";
-        undef $obj if $creating;    # Couldn't create
+
+        if ($creating) {
+            undef $obj;
+            $r->template("addnew");
+        } else {
+            $r->template("edit");
+        }
     }
     else {
         $r->{template} = "view";
@@ -158,7 +171,7 @@ sub search : Exported {
     my $oper   = "like";                                # For now
     my %params = %{ $r->{params} };
     my %values = map { $_ => { $oper, $params{$_} } }
-      grep { defined $params{$_} and $fields{$_} } keys %params;
+      grep { length ($params{$_}) and $fields{$_} } keys %params;
 
     $r->template("list");
     if ( !%values ) { return $self->list($r) }
@@ -167,7 +180,7 @@ sub search : Exported {
     $r->objects(
         [
             $self->search_where(
-                \%values, ( $order ? { order => $order } : () )
+                \%values, ( $order ? { order_by => $order } : () )
             )
         ]
     );
@@ -206,12 +219,13 @@ sub list : Exported {
 }
 
 sub setup_database {
-    my ( $self, $config, $namespace, $dsn, $u, $p, $opts ) = @_;
+    my ( $class, $config, $namespace, $dsn, $u, $p, $opts ) = @_;
     $dsn  ||= $config->dsn;
     $u    ||= $config->user;
     $p    ||= $config->pass;
     $opts ||= $config->opts;
     $config->dsn($dsn);
+    warn "No DSN set in config" unless $dsn;
     $config->loader || $config->loader(
         Class::DBI::Loader->new(
             namespace => $namespace,
@@ -230,6 +244,17 @@ sub setup_database {
 sub class_of {
     my ( $self, $r, $table ) = @_;
     return $r->config->loader->_table2class($table);
+}
+
+sub fetch_objects {
+    my ($class, $r)=@_;
+    my @pcs = $class->primary_columns;
+    if ( $#pcs ) {
+    my %pks;
+        @pks{@pcs}=(@{$r->{args}});
+        return $class->retrieve( %pks );
+    }
+    return $class->retrieve( $r->{args}->[0] );
 }
 
 1;

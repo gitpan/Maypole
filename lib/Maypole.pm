@@ -5,13 +5,15 @@ use strict;
 use warnings;
 use Maypole::Config;
 use Maypole::Constants;
+use Maypole::Headers;
 
-our $VERSION = '2.04';
+our $VERSION = '2.05';
 
 __PACKAGE__->mk_classdata($_) for qw( config init_done view_object );
 __PACKAGE__->mk_accessors(
     qw( ar params query objects model_class template_args output path
-      args action template error document_encoding content_type table)
+        args action template error document_encoding content_type table
+        headers_in headers_out )
 );
 __PACKAGE__->config( Maypole::Config->new() );
 __PACKAGE__->init_done(0);
@@ -23,6 +25,7 @@ sub setup {
     $calling_class = ref $calling_class if ref $calling_class;
     {
         no strict 'refs';
+        no warnings 'redefine';
 
         # Naughty.
         *{ $calling_class . "::handler" } =
@@ -59,7 +62,13 @@ sub handler {
     # See Maypole::Workflow before trying to understand this.
     my ( $class, $req ) = @_;
     $class->init unless $class->init_done;
-    my $r = bless { template_args => {}, config => $class->config }, $class;
+
+    # Create the request object
+    my $r = bless {
+        template_args => {},
+        config        => $class->config
+    }, $class;
+    $r->headers_out(Maypole::Headers->new);
     $r->get_request($req);
     $r->parse_location();
     my $status = $r->handler_guts();
@@ -72,6 +81,7 @@ sub handler {
 sub handler_guts {
     my $r = shift;
     $r->model_class( $r->config->model->class_of( $r, $r->{table} ) );
+
     my $applicable = $r->is_applicable;
     unless ( $applicable == OK ) {
 
@@ -180,7 +190,26 @@ sub parse_path {
     shift @pi while @pi and !$pi[0];
     $self->{table}  = shift @pi;
     $self->{action} = shift @pi;
+    $self->{action} ||= "index";
     $self->{args}   = \@pi;
+}
+
+sub param { # like CGI::param(), but read-only
+    my $r = shift;
+    my ($key) = @_;
+    if (defined $key) {
+        unless (exists $r->{params}{$key}) {
+            return wantarray() ? () : undef;
+        }
+        my $val = $r->{params}{$key};
+        if (wantarray()) {
+            return ref $val ? @$val : $val;
+        } else {
+            return ref $val ? $val->[0] : $val;
+        }
+    } else {
+        return keys %{$r->{params}};
+    }
 }
 
 sub get_template_root { "." }
@@ -204,8 +233,22 @@ See L<Maypole::Application>.
 
 =head1 DESCRIPTION
 
-This documents the Maypole request object. For user documentation, see
-L<Maypole::Manual>.
+This documents the Maypole request object. See the L<Maypole::Manual>, for a
+detailed guide to using Maypole.
+
+Maypole is a Perl web application framework to Java's struts. It is 
+essentially completely abstracted, and so doesn't know anything about
+how to talk to the outside world.
+
+To use it, you need to create a package which represents your entire
+application. In our example above, this is the C<BeerDB> package.
+
+This needs to first use L<Maypole::Application> which will make your package
+inherit from the appropriate platform driver such as C<Apache::MVC> or
+C<CGI::Maypole>, and then call setup.  This sets up the model classes and
+configures your application. The default model class for Maypole uses
+L<Class::DBI> to map a database to classes, but this can be changed by altering
+configuration. (B<Before> calling setup.)
 
 =head2 CLASS METHODS
 
@@ -274,6 +317,14 @@ A list of remaining parts of the request path after table and action
 have been
 removed
 
+=head3 headers_in
+
+A L<Maypole::Headers> object containing HTTP headers for the request
+
+=head3 headers_out
+
+A L<HTTP::Headers> object that contains HTTP headers for the output
+
 =head3 parse_args
 
 Turns post data and query string paramaters into a hash of C<params>.
@@ -282,12 +333,15 @@ You should only need to define this method if you are writing a new
 Maypole
 backend.
 
+=head3 param
+
+An accessor for request parameters. It behaves similarly to CGI::param() for
+accessing CGI parameters.
+
 =head3 params
 
-Returns a hash of request parameters. The source of the parameters may
-vary
-depending on the Maypole backend, but they are usually populated from
-request
+Returns a hash of request parameters. The source of the parameters may vary
+depending on the Maypole backend, but they are usually populated from request
 query string and POST data.
 
 B<Note:> Where muliple values of a parameter were supplied, the
@@ -297,7 +351,7 @@ will be an array reference.
 
 =head3 get_template_root
 
-Implimentation-specific path to template root.
+Implementation-specific path to template root.
 
 You should only need to define this method if you are writing a new
 Maypole
@@ -314,7 +368,7 @@ or CGI request object, it defaults to blank.
 
 Returns a Maypole::Constant to indicate whether the request is valid.
 
-The default implimentation checks that C<$r-E<gt>table> is publicly
+The default implementation checks that C<$r-E<gt>table> is publicly
 accessible
 and that the model class is configured to handle the C<$r-E<gt>action>
 
@@ -324,7 +378,7 @@ Returns a Maypole::Constant to indicate whether the user is
 authenticated for
 the Maypole request.
 
-The default implimentation returns C<OK>
+The default implementation returns C<OK>
 
 =head3 model_class
 
@@ -403,9 +457,9 @@ authenticate method of your Maypole application.
 
 =head3 call_exception
 
-This model is called to catch exceptions, first after authenticate
-,then after processing the model class, and finally to check for
-exceptions from the view class.
+This model is called to catch exceptions, first after authenticate, then after
+processing the model class, and finally to check for exceptions from the view
+class.
 
 This method first checks if the relevant model class
 can handle exceptions the user, or falls back to the default
@@ -423,20 +477,20 @@ This is the core of maypole. You don't want to know.
 
 =head1 SEE ALSO
 
-There's more documentation, examples, and a wiki at the Maypole web
-site:
+There's more documentation, examples, and a information on our mailing lists
+at the Maypole web site:
 
-http://maypole.perl.org/
+L<http://maypole.perl.org/>
 
-L<Maypole::Application>,L<Apache::MVC>, L<CGI::Maypole>.
+L<Maypole::Application>, L<Apache::MVC>, L<CGI::Maypole>.
 
 =head1 AUTHOR
 
-Sebastian Riedel, c<sri@oook.de>
+Maypole is currently maintained by Simon Flack C<simonflk#cpan.org>
 
 =head1 AUTHOR EMERITUS
 
-Simon Cozens, C<simon@cpan.org>
+Simon Cozens, C<simon#cpan.org>
 
 =head1 THANKS TO
 

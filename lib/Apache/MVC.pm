@@ -1,17 +1,19 @@
 package Apache::MVC;
 
-our $VERSION = '2.04';
+our $VERSION = '2.05';
 
 use strict;
 use warnings;
 
 use base 'Maypole';
 use mod_perl;
+use Maypole::Headers;
 
 use constant APACHE2 => $mod_perl::VERSION >= 1.99;
 
 if (APACHE2) {
     require Apache2;
+    require Apache::RequestIO;
     require Apache::RequestRec;
     require Apache::RequestUtil;
     require APR::URI;
@@ -26,9 +28,20 @@ sub get_request {
 
 sub parse_location {
     my $self = shift;
+
+    # Reconstruct the request headers
+    $self->headers_in(Maypole::Headers->new);
+    my %headers;
+    if (APACHE2) { %headers = %{$self->{ar}->headers_in};
+    } else { %headers = $self->{ar}->headers_in; }
+    for (keys %headers) {
+        $self->headers_in->set($_, $headers{$_});
+    }
+
     $self->{path} = $self->{ar}->uri;
     my $loc = $self->{ar}->location;
     no warnings 'uninitialized';
+    $self->{path} .= '/' if $self->{path} eq $loc;
     $self->{path} =~ s/^($loc)?\///;
     $self->parse_path;
     $self->parse_args;
@@ -47,7 +60,15 @@ sub send_output {
         ? $r->{content_type} . "; charset=" . $r->{document_encoding}
         : $r->{content_type}
     );
-    $r->{ar}->headers_out->set( "Content-Length" => length $r->{output} );
+    $r->{ar}->headers_out->set(
+        "Content-Length" => do { use bytes; length $r->{output} }
+    );
+
+    foreach ($r->headers_out->field_names) {
+        next if /^Content-(Type|Length)/;
+        $r->{ar}->headers_out->set($_ => $r->headers_out->get($_));
+    }
+
     APACHE2 || $r->{ar}->send_http_header;
     $r->{ar}->print( $r->{output} );
 }
@@ -88,47 +109,9 @@ Apache::MVC - Apache front-end to Maypole
 
 =head1 DESCRIPTION
 
-Maypole is a Perl web application framework to Java's struts. It is 
-essentially completely abstracted, and so doesn't know anything about
-how to talk to the outside world. C<Apache::MVC> is a mod_perl based
-subclass of Maypole.
-
-To use it, you need to create a package which represents your entire
-application. In our example above, this is the C<BeerDB> package.
-
-This needs to first inherit from C<Apache::MVC>, and then call setup.
-This will give your package an Apache-compatible C<handler> subroutine,
-and then pass any parameters onto the C<setup_database> method of the
-model class. The default model class for Maypole uses L<Class::DBI> to 
-map a database to classes, but this can be changed by messing with the
-configuration. (B<Before> calling setup.)
-
-Next, you should configure your application through the C<config>
-method. Configuration parameters at present are:
-
-=over
-
-=item uri_base
-
-You B<must> specify this; it is the base URI of the application, which
-will be used to construct links.
-
-=item display_tables
-
-If you do not want all of the tables in the database to be accessible,
-then set this to a list of only the ones you want to display
-
-=item rows_per_page
-
-List output is paged if you set this to a positive number of rows.
-
-=back
-
-You should also set up relationships between your classes, such that,
-for instance, calling C<brewery> on a C<BeerDB::Beer> object returns an
-object representing its associated brewery.
-
-For a full example, see the included "beer database" application.
+A mod_perl platform driver for Maypole. Your application can inherit from
+Apache::MVC directly, but it is recommended that you use
+L<Maypole::Application>.
 
 =head1 INSTALLATION
 
@@ -184,3 +167,5 @@ Screwed up by Sebastian Riedel, C<sri@oook.de>
 =head1 LICENSE
 
 You may distribute this code under the same terms as Perl itself.
+
+=cut

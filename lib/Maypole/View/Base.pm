@@ -3,6 +3,7 @@ use File::Spec;
 use UNIVERSAL::moniker;
 use strict;
 use Maypole::Constants;
+use Carp;
 
 sub new { bless {}, shift }    # By default, do nothing.
 
@@ -34,17 +35,17 @@ sub vars {
           # ...
     );
     if ($class) {
-        $args{classmetadata} = {
-            name              => $class,
-            table             => $class->table,
-            columns           => [ $class->display_columns ],
-            list_columns      => [ $class->list_columns ],
-            colnames          => { $class->column_names },
-            related_accessors => [ $class->related($r) ],
-            moniker           => $class->moniker,
-            plural            => $class->plural_moniker,
-            cgi               => { $class->to_cgi },
-        };
+        my $classmeta = $args{classmetadata} ||= {};
+        $classmeta->{name}              ||= $class;
+        $classmeta->{description}       ||= $class->description;
+        $classmeta->{table}             ||= $class->table;
+        $classmeta->{columns}           ||= [ $class->display_columns ];
+        $classmeta->{list_columns}      ||= [ $class->list_columns ];
+        $classmeta->{colnames}          ||= { $class->column_names };
+        $classmeta->{related_accessors} ||= [ $class->related($r) ];
+        $classmeta->{moniker}           ||= $class->moniker;
+        $classmeta->{plural}            ||= $class->plural_moniker;
+        $classmeta->{cgi}               ||= { $class->to_cgi };
 
         # User-friendliness facility for custom template writers.
         if ( @{ $r->objects || [] } > 1 ) {
@@ -56,6 +57,8 @@ sub vars {
     }
 
     # Overrides
+    local $r->{template_args} = $r->{template_args};
+    delete $r->{template_args}{classmetadata}; # already overrides
     %args = ( %args, %{ $r->{template_args} || {} } );
     %args;
 }
@@ -70,8 +73,9 @@ sub process {
 }
 
 sub error {
-    my ( $self, $r ) = @_;
-    warn $r->{error};
+    my ( $self, $r, $desc ) = @_;
+    $desc = $desc ? "$desc: " : "";
+    carp $desc . $r->{error};
     if ( $r->{error} =~ /not found$/ ) {
 
         # This is a rough test to see whether or not we're a template or
@@ -113,27 +117,28 @@ sub template { die shift() . " didn't define a decent template method!" }
 
 =head1 NAME
 
-Maypole::View::Base - Base cl
+Maypole::View::Base - Base class for view classes
 
 =head1 DESCRIPTION
 
 This is the base class for Maypole view classes. This is an abstract class
-meant to define the interface, and can't be used directly.
+that defines the interface, and can't be used directly.
 
 =head2 process
 
-This is the engine of this module. It populates all the relevant variables
-and calls the requested action.
+This is the entry point for the view. It templates the request and returns a
+C<Maypole::Constant> indicate success or failure for the view phase.
 
-Anyone subclassing this for a different database abstraction mechanism
-needs to provide the following methods:
+Anyone subclassing this for a different rendering mechanism needs to provide
+the following methods:
 
-=head2 template 
+=head2 template
 
-In this method you do the actual processing of your template. it should use L<paths> 
-to search for components, and provide the templates with easy access to the contents
-of L<vars>. It should put the result in $r->{output} and return OK if processing was
-sucessfull, or populate $r->{error} and return ERROR if it fails.
+In this method you do the actual processing of your template. it should use
+L<paths> to search for components, and provide the templates with easy access
+to the contents of L<vars>. It should put the result in C<$r-E<gt>output> and
+return C<OK> if processing was sucessfull, or populate C<$r-E<gt>error> and
+return C<ERROR> if it fails.
 
 =head1 Other overrides
 
@@ -146,14 +151,14 @@ during view initialization.
 
 =head2 paths
 
-Returns search paths for templates. the default method returns factory, custom and
-<tablename> under the configured template root.
+Returns search paths for templates. the default method returns factory, custom
+and E<lt>tablenameE<gt> under the configured template root.
 
 =head2 vars
 
-returns a hash of data the template should have access to. The default one populates
-classmetadata if there is a class, as well as setting the data objects by name if 
-there is one or more objects available.
+returns a hash of data the template should have access to. The default one
+populates classmetadata if there is a table class, as well as setting the data
+objects by name if there is one or more objects available.
 
 =head2 error
 

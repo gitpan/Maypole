@@ -15,9 +15,7 @@ sub process {
     return if $r->{template};    # Authentication has set this, we're done.
 
     $r->{template} = $method;
-    $r->objects( [] );
-    my $obj = $class->retrieve( $r->{args}->[0] );
-    $r->objects( [$obj] ) if $obj;
+    $r->objects([ $class->fetch_objects($r) ]);
     $class->$method( $r, $obj, @{ $r->{args} } );
 }
 
@@ -36,12 +34,12 @@ Maypole::Model::Base - Base class for model classes
 =head1 DESCRIPTION
 
 This is the base class for Maypole data models. This is an abstract class
-meant to define the interface, and can't be used directly.
+that defines the interface, and can't be used directly.
 
 =head2 process
 
-This is the engine of this module. It populates all the relevant variables
-and calls the requested action.
+This is the engine of this module. Given the request object, it populates
+all the relevant variables and calls the requested action.
 
 Anyone subclassing this for a different database abstraction mechanism
 needs to provide the following methods:
@@ -53,8 +51,8 @@ needs to provide the following methods:
 Uses the user-defined data in C<@data> to specify a database- for
 example, by passing in a DSN. The model class should open the database,
 and create a class for each table in the database. These classes will
-then be C<adopt>ed. It should also populate C<< $config->{tables} >> and
-C<< $config->{classes} >> with the names of the classes and tables
+then be C<adopt>ed. It should also populate C<< $config->tables >> and
+C<< $config->classes >> with the names of the classes and tables
 respectively. The classes should be placed under the specified
 namespace. For instance, C<beer> should be mapped to the class
 C<BeerDB::Beer>.
@@ -65,14 +63,16 @@ C<BeerDB::Beer>.
 
 This maps between a table name and its associated class.
 
-=head2 retrieve
+=head2 fetch_objects
 
-This turns an ID into an object of the appropriate class.
+This class method is passed a request object and is expected to return an
+object of the appropriate table class from information stored in the request
+object.
 
 =head2 adopt
 
-This is called on an model class representing a table and allows the
-master model class to do any set-up required. 
+This class method is passed the name of a model class that represensts a table
+and allows the master model class to do any set-up required.
 
 =head2 columns
 
@@ -87,8 +87,9 @@ This is the name of the table.
 
 sub class_of       { die "This is an abstract method" }
 sub setup_database { die "This is an abstract method" }
+sub fetch_objects { die "This is an abstract method" }
 
-=head2 Commands
+=head2 Actions
 
 =over
 
@@ -106,13 +107,13 @@ sub do_edit { die "This is an abstract method" }
 
 =item list
 
-The C<list> method should fill C<< $r-> objects >> with all of the
+The C<list> method should fill C<$r-E<gt>objects> with all of the
 objects in the class. You may want to page this using C<Data::Page> or
 similar.
 
 =item edit
 
-Empty Action
+Empty Action.
 
 =item view
 
@@ -144,7 +145,7 @@ following methods:
 
 =head2 display_columns
 
-Returns a list of columns to display in the model. by default returns
+Returns a list of columns to display in the model. By default returns
 all columns in alphabetical order. Override this in base classes to
 change ordering, or elect not to show columns.
 
@@ -178,7 +179,7 @@ sub description { "A poorly defined class" }
 =head2 is_public
 
 should return true if a certain action is supported, or false otherwise. 
-Defaults to checking if the sub has the :Exported attribute.
+Defaults to checking if the sub has the C<:Exported> attribute.
 
 =cut
 
@@ -206,3 +207,5 @@ sub related {
 }
 
 1;
+
+

@@ -1,10 +1,13 @@
 =pod
 
-=head1 NAME
+=head1 Maypole's Request Workflow
 
-Maypole::Manual::Workflow - Describes the progress of a request through Maypole
+This chapter describes the progress of a request through Maypole.
 
-=head1 SYNOPSIS
+An application based on C<Maypole> provides an Apache or CGI handler,
+and eventually delivers a page. This document explains how that happens,
+and how to influence it. We'll use the C<BeerDB> project as our example.
+Here's a diagram that gives an overview:
 
                               config $h
                                   |
@@ -26,18 +29,11 @@ Maypole::Manual::Workflow - Describes the progress of a request through Maypole
                                   |
                      $r->view_object->process($r)
 
-
-=head1 DESCRIPTION
-
-An application based on C<Maypole> will provide an Apache handler,
-and eventually deliver a page. This document explains how that happens,
-and how to influence it. We'll use the C<BeerDB> project as our example.
-
 =head2 Initialize class
 
-When the first request comes in, the class will call its own
-C<init> method. This creates a new view object, sets up inheritance
-relationships between the model classes and their parent, and so on.
+When the first request comes in, the application class will call its own
+C<init> method, inherited from L<Maypole>.
+This creates a new view object.
 
 =head2 Construction
 
@@ -89,31 +85,30 @@ or whatever other codes for permissions problems.
 We then look for an appropriate C<authenticate> method to call; first
 it will try calling the C<authenticate> method of the model class, or,
 if that does not exist, the C<authenticate> method on itself. By
-default, this allows access to everyone for everything. Similarly, this
-should return an Apache status code.
+default, this allows access to everyone for everything.
+Your C<authenticate> methods must return an Apache status code: C<OK> or
+C<DECLINED>. These codes are defined by the L<Maypole::Constants>
+module, which is automatically used by your application.
 
 =head2 Add any additional data to the request
 
-The open-ended C<additional_data> method allows any additional fiddling
+You can write an C<additional_data> method to do any additional fiddling
 with the request object before it is despatched. Specifically, it allows
 you to add to the C<template_args> slot, which is a hash of arguments to
-be added to the template.
+be added to the template, like this:
+
+    sub additional_data {
+        my $self = shift;
+        $self->{template_args}{answer} = 42;
+    }
+
+which adds a new template variable C<answer> with the value 42.
 
 =head2 Ask model for widget set
 
 Asking the model class to C<process> the current request allows it to do
 any work it needs for the given command, and populate the C<objects> and
 C<template> slots of the request. 
-
-=head2 Ask view to process template
-
-Now the view class has its C<process> method called, finds the
-appropriate templates, passes the C<objects> and any additional data to
-the template, and pushes the output to the web server.
-
-We will go into more detail about these last two phases.
-
-=head1 Model class processing
 
 The model's C<process> method is usually a thin wrapper around the
 action that we have selected. It sets the template name to the name of
@@ -128,9 +123,13 @@ the request object. This method will usually do any actions which are
 required, including modifying the list of objects to be passed to the
 template, or the name of the template to be called.
 
-=head1 Template class processing
+=head2 Ask view to process template
 
-Finally, the template processor is handed the objects, the template
+Now the view class has its C<process> method called. It finds the
+appropriate templates and calls the L<Template Toolkit|Template>
+processor.
+
+The template processor is handed the objects, the template
 name, and various other bits and pieces, and tries to find the right
 template. It does this by looking first for C</beer/foo>: that is, a
 specific template appropriate to the class. Next, it looks at
@@ -138,63 +137,21 @@ C</custom/foo>, a local modification, before looking for
 C</factory/foo>, one of the default templates that came with
 C<Maypole>.
 
+The view puts the template's output in the C<$r-E<gt>{output}> slot. The
+application's C<handler> method calls the C<send_output> method to push
+it to the web server.
+
 =head2 Default template arguments
 
-The following things are passed to the Template Toolkit template by
-default:
+If you're looking for the list of variables that are passed to the
+Template Toolkit template by default, you'll find it in the
+L<View|Maypole::Manual::View> chapter.
 
-=over 3
+=head2 Links
 
-=item request
-
-The whole C<Maypole> request object, for people getting really dirty
-with the templates.
-
-=item objects
-
-The objects handed to us by the model.
-
-=item base
-
-The base URL of the application.
-
-=item config
-
-The whole configuration hash for the application.
-
-=item classmetadata
-
-A hash consisting of:
-
-C<name> - The name of the model class for the request: e.g. C<BeerDB::Beer>.
-
-C<columns> - The names of the columns in this class.
-
-C<colnames> - A hash mapping between the database's idea of a column
-name and a human-readable equivalent. (C<abv> should be mapped to
-C<A.B.V.>, perhaps.)
-
-C<related_accessors> - A list of accessors which are not exactly fields
-in the table but are related by a has-many relationship. For instance,
-breweries have many beers, so C<beers> would appear in the list.
-
-C<moniker> - The human-readable name for the class: C<beer>.
-
-C<plural> - The same, only plural: C<beers>.
-
-C<cgi> - A hash mapping columns and C<HTML::Element> objects
-representing a form field for editing that column.
-
-C<description> - (Perhaps) a user-supplied description of the class.
-
-=back
-
-Additionally, depending on the number of objects, there will be an alias
-for the C<objects> slot with the name of the moniker or plural moniker.
-
-That sounds a bit tricky, but what it means is that if you look at
-C</beer/view/4> then C<beer> will be populated with a C<BeerDB::Beer>
-object with ID 4. On the other hand, if you look at C</beer/list> you
-can get all the beers in C<beers> as well as in C<objects>.
+L<Contents|Maypole::Manual>,
+Next L<The Beer Database Revisited|Maypole::Manual::Beer>,
+Previous
+L<Standard Templates and Actions|Maypole::Manual::StandardTemplates>
 
 

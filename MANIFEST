@@ -7,6 +7,7 @@ lib/Maypole/Application.pm
 lib/Maypole/CLI.pm
 lib/Maypole/Config.pm
 lib/Maypole/Constants.pm
+lib/Maypole/Headers.pm
 lib/Maypole/Manual.pod
 lib/Maypole/Manual/About.pod
 lib/Maypole/Manual/Beer.pod
@@ -27,6 +28,11 @@ MANIFEST
 MANIFEST.SKIP
 META.yml			Module meta-data (added by MakeMaker)
 README
+t/constants.t
+t/maypole.t
+t/apache_mvc.t
+t/cgi_maypole.t
+t/headers.t
 t/01basics.t
 t/02pod.t
 t/03podcoverage.t
@@ -41,6 +47,7 @@ templates/factory/footer
 templates/factory/frontpage
 templates/factory/header
 templates/factory/list
+templates/factory/login
 templates/factory/macros
 templates/factory/maypole
 templates/factory/navbar
@@ -49,4 +56,3 @@ templates/factory/search_form
 templates/factory/title
 templates/factory/view
 templates/maypole.css
-TODO

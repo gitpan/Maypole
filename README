@@ -1,187 +1,36 @@
 NAME
     Maypole - MVC web application framework
 
-SYNOPSIS
-    See Maypole::Application.
-
 DESCRIPTION
-    This documents the Maypole request object. For user documentation, see
-    Maypole::Manual.
+    Maypole is a Perl framework for MVC-oriented web applications, similar
+    to Jakarta's Struts. Maypole is designed to minimize coding requirements
+    for creating simple web interfaces to databases, while remaining flexible
+    enough to support enterprise web applications.
 
-  CLASS METHODS
-   config
-    Returns the Maypole::Config object
+QUICK START
+    Maypole ships with a basic demo application, the Beer Database.
+    Please see the Maypole manual. You can access the manual by executing the
+    following command after installing Maypole:
 
-   setup
-        My::App->setup($data_source, $user, $password, \%attr);
+        perldoc Maypole::Manual
 
-    Initialise the maypole application and model classes. Your application
-    should call this after setting configuration via "config"
+    Or try the following URL:
 
-   init
-    You should not call this directly, but you may wish to override this to
-    add application-specific initialisation.
+        http://search.cpan.org/perldoc?Maypole::Manual
 
-   view_object
-    Get/set the Maypole::View object
+SUPPORT
+    Maypole is supported by a community of users on the Maypole mailing lists.
 
-   debug
-        sub My::App::debug {1}
+    Join the mailing list at http://lists.netthink.co.uk/listinfo/maypole
 
-    Returns the debugging flag. Override this in your application class to
-    enable/disable debugging.
-
-  INSTANCE METHODS
-   parse_location
-    Turns the backend request (e.g. Apache::MVC, Maypole, CGI) into a
-    Maypole request. It does this by setting the "path", and invoking
-    "parse_path" and "parse_args".
-
-    You should only need to define this method if you are writing a new
-    Maypole backend.
-
-   path
-    Returns the request path
-
-   parse_path
-    Parses the request path and sets the "args", "action" and "table"
-    properties
-
-   table
-    The table part of the Maypole request path
-
-   action
-    The action part of the Maypole request path
-
-   args
-    A list of remaining parts of the request path after table and action
-    have been removed
-
-   parse_args
-    Turns post data and query string paramaters into a hash of "params".
-
-    You should only need to define this method if you are writing a new
-    Maypole backend.
-
-   params
-    Returns a hash of request parameters. The source of the parameters may
-    vary depending on the Maypole backend, but they are usually populated
-    from request query string and POST data.
-
-    Note: Where muliple values of a parameter were supplied, the "params"
-    value will be an array reference.
-
-   get_template_root
-    Implimentation-specific path to template root.
-
-    You should only need to define this method if you are writing a new
-    Maypole backend. Otherwise, see "template_root" in Maypole::Config
-
-   get_request
-    You should only need to define this method if you are writing a new
-    Maypole backend. It should return something that looks like an Apache or
-    CGI request object, it defaults to blank.
-
-   is_applicable
-    Returns a Maypole::Constant to indicate whether the request is valid.
-
-    The default implimentation checks that "$r->table" is publicly
-    accessible and that the model class is configured to handle the
-    "$r->action"
-
-   authenticate
-    Returns a Maypole::Constant to indicate whether the user is
-    authenticated for the Maypole request.
-
-    The default implimentation returns "OK"
-
-   model_class
-    Returns the perl package name that will serve as the model for the
-    request. It corresponds to the request "table" attribute.
-
-   additional_data
-    Called before the model processes the request, this method gives you a
-    chance to do some processing for each request, for example, manipulating
-    "template_args".
-
-   objects
-    Get/set a list of model objects. The objects will be accessible in the
-    view templates.
-
-    If the first item in "$r->args" can be "retrieve()"d by the model class,
-    it will be removed from "args" and the retrieved object will be added to
-    the "objects" list. See Maypole::Model for more information.
-
-   template_args
-        $r->template_args->{foo} = 'bar';
-
-    Get/set a hash of template variables.
-
-   template
-    Get/set the template to be used by the view. By default, it returns
-    "$r->action"
-
-   exception
-    This method is called if any exceptions are raised during the
-    authentication or model/view processing. It should accept the exception
-    as a parameter and return a Maypole::Constant to indicate whether the
-    request should continue to be processed.
-
-   error
-    Get/set a request error
-
-   output
-    Get/set the response output. This is usually populated by the view
-    class. You can skip view processing by setting the "output".
-
-   document_encoding
-    Get/set the output encoding. Default: utf-8.
-
-   content_type
-    Get/set the output content type. Default: text/html
-
-   send_output
-    Sends the output and additional headers to the user.
-
-   call_authenticate
-    This method first checks if the relevant model class can authenticate
-    the user, or falls back to the default authenticate method of your
-    Maypole application.
-
-   call_exception
-    This model is called to catch exceptions, first after authenticate ,then
-    after processing the model class, and finally to check for exceptions
-    from the view class.
-
-    This method first checks if the relevant model class can handle
-    exceptions the user, or falls back to the default exception method of
-    your Maypole application.
-
-   handler
-    This method sets up the class if it's not done yet, sets some defaults
-    and leaves the dirty work to handler_guts.
-
-   handler_guts
-    This is the core of maypole. You don't want to know.
-
-SEE ALSO
-    There's more documentation, examples, and a wiki at the Maypole web
-    site:
-
-    http://maypole.perl.org/
-
-    Maypole::Application,Apache::MVC, CGI::Maypole.
+LINKS
+    http://maypole.perl.org - Maypole's home. tips & tricks, mailing list
 
 AUTHOR
-    Sebastian Riedel, c<sri@oook.de>
+    Maypole is currently maintained by Simon Flack, C<simonflk#cpan.org>
 
 AUTHOR EMERITUS
-    Simon Cozens, "simon@cpan.org"
-
-THANKS TO
-    Danijel Milicevic, Dave Slack, Jesse Sheidlower, Jody Belka, Marcus
-    Ramberg, Mickael Joanne, Simon Flack, Veljko Vidovic and all the others
-    who've helped.
+    Simon Cozens, C<simon#cpan.org>
 
 LICENSE
     You may distribute this code under the same terms as Perl itself.

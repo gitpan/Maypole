@@ -1,6 +1,9 @@
 =head1 Maypole Model Classes
 
-=head2 Class::DBI
+Maypole's model classes provide an interface to your data store.
+In principle Maypole can connect to pretty much any data source,
+but the default model is based on the popular L<Class::DBI> object
+interface that uses the near-universal L<DBI> Perl interface to databases.
 
 =head2 Maypole::Model::CDBI
 
@@ -14,15 +17,14 @@ your driver class, you'll say something like this:
     BeerDB->setup("dbi:mysql:beerdb");
 
 C<setup> is a Maypole method, and it hands its parameter to the model
-class. In our case, the model class is a DBI connect string, because
+class. In our case, the argument is a DBI connect string, because
 that's what C<Maypole::Model::CDBI>, the C<Class::DBI>-based model
 expects. C<Maypole::Model::CDBI> has a method called C<setup_database>
 that creates all the C<Class::DBI> table classes after connecting to the
 database with that connect string. It does this by using
 C<Class::DBI::Loader>, a utility module which asks a database
 about its schema and sets up classes such as C<BeerDB::Beer> to inherit
-from C<Class::DBI>. This is just doing automatically what we did
-manually in our examples above.
+from C<Class::DBI>.
 
 Now it gets interesting. The names of these classes are stashed away in
 the application's configuration, and then Maypole forcibly has these
@@ -42,11 +44,12 @@ make writing Maypole applications a lot easier:
     use Class::DBI::Plugin::RetrieveAll;
     use Class::DBI::Pager;
 
-We'll meet most of these goodies in L<StandardTemplates.pod>, where we
-explain how C<Maypole::Model::CDBI> works.
+We'll meet most of these goodies in the
+L<Standard Templates and Actions|Maypole::Manual::StandardTemplates>
+chapter, where we explain how C<Maypole::Model::CDBI> works.
 
 The second reason why we want our table classes to inherit from
-C<Maypole::Model::CDBI> is because C<CDBI> provides a useful set of 
+C<Maypole::Model::CDBI> is because it provides a useful set of 
 default actions. So what's an action, and why are they useful?
 
 =head2 Extending a model class with actions
@@ -64,13 +67,13 @@ C<BeerDB::Brewery-E<gt>delete(20)>. Now, it's slightly more complex than
 that. Firstly because it doesn't actually pass the parameter C<20>, but
 it passes an object representing row 20 in the database, but we can
 gloss over that for the second. No, the real issue is that Maypole does
-not allow you to call any method in the table class; that would be
+not allow you to call just any method in the table class; that would be
 somewhat insecure. 
 
 Instead, Maypole makes a distinction between the kind of methods that
 only the class itself and other Perl code can call, and the kind of
 methods that anyone can call from a URL. This latter set of methods are
-called B<exported> methods, and exporting is done with by means of Perl
+called B<exported> methods, and exporting is done by means of Perl
 attributes. You define a method to be exported like so:
 
     sub drink :Exported {
@@ -81,6 +84,7 @@ sometimes called an B<action>.
 
 Maypole model classes like C<Maypole::Model::CDBI> come with a
 relatively handy set of actions which are all you need to set up a CRUD
+(Create, Read, Update, Delete)
 database front-end: viewing a row in a database, editing it, adding a
 new one, deleting, and so on. The most important thing about Maypole,
 though, is that it doesn't stop there. You can add your own.
@@ -91,7 +95,7 @@ C<BeerDB::Beer> package, and put some additional actions in there.
     package BeerDB::Beer;
     sub top_five :Exported {
         my ($class, $r) = @_;
-        $r->{objects} = [ ($r->retrieve_all_sorted_by("score"))[-5..-1] ];
+        $r->objects([ ($r->retrieve_all_sorted_by("score"))[-5..-1] ]);
     }
 
 Our action is called as a class method with the Maypole request object.
@@ -102,8 +106,15 @@ view class will come along and process the C<top_five> template with
 these five beers.
 
 We'll look more at how to put together actions in the
-L<StandardTemplates.pod> chapter and our case studies.
+L<Standard Templates and Actions|Maypole::Manual::StandardTemplates>
+chapter and our case studies.
 
 =head2 What Maypole wants from a model
 
 =head2 Building your own model class
+
+=head2 Links
+
+L<Contents|Maypole::Manual>,
+Next L<Maypole View Classes|Maypole::Manual::View>,
+Previous L<Introduction to Maypole|Maypole::Manual::About>

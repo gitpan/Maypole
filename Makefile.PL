@@ -21,27 +21,39 @@ WriteMakefile(
         UNIVERSAL::require               => 0,
         URI::QueryParam                  => 0,
         CGI::Simple                      => 0,
+        HTTP::Headers                    => 1.59,
         Template                         => 0,
         Template::Plugin::Class          => 0,
+        Test::MockModule                 => 0,
     },    # e.g., Module::Name => 1.1
     (
         $] >= 5.005
         ?    ## Add these new keywords supported since 5.005
           (
             ABSTRACT_FROM => 'lib/Maypole.pm',   # retrieve abstract from module
-            AUTHOR => 'Simon Cozens <simon@simon-cozens.org>'
+            AUTHOR => 'Simon flack <simonflk#cpan.org>'
           )
         : ()
     ),
 );
 
+sub has_module {
+    my ($module, $version) = @_;
+    (my $file = "$module.pm") =~ s/::/\//g;
+    eval {require $file} or return;
+    return ($module->VERSION || 0) >= $version;
+}
+
 if ( !-e "t/beerdb.db" ) {
     print "Making SQLite DB\n";
-    eval { require DBD::SQLite };
-    die "No, wait, we don't have SQLite installed. Never mind\n" if $@;
+    my $driver = 'SQLite';
+    eval { require DBD::SQLite } or do {
+        print "Error loading DBD::SQLite, trying DBD::SQLite2\n";
+        eval {require DBD::SQLite2} ? $driver = 'SQLite2'
+            : die "DBD::SQLite2 is not installed";
+    };
     require DBI;
-    my $dbh = DBI->connect("dbi:SQLite:dbname=t/beerdb.db");
-
+    my $dbh = DBI->connect("dbi:$driver:dbname=t/beerdb.db");
     my $sql = join( '', (<DATA>) );
 
     for my $statement ( split /;/, $sql ) {

@@ -5,14 +5,16 @@ use attributes ();
 use strict;
 use warnings;
 
+our $VERSION = "1." . sprintf "%04d", q$Rev: 324 $ =~ /: (\d+)/;
+
 # Public accessors.
 __PACKAGE__->mk_accessors(
-    qw( view uri_base template_root model loader display_tables ok_tables
-      rows_per_page dsn user pass opts application_name)
+     qw( view view_options uri_base template_root model loader display_tables
+         ok_tables rows_per_page dsn user pass opts application_name)
 );
 
 # Should only be modified by model.
-__PACKAGE__->mk_ro_accessors(qw( classes tables table_to_class));
+__PACKAGE__->mk_ro_accessors(qw( classes tables));
 
 1;
 
@@ -32,17 +34,17 @@ This class stores all configuration data for your Maypole application.
 
 This should be a string containing your application's name.
 
+Optional. Is used in the factory templates.
+
 =head3 rows_per_page
 
 This is the number of rows your application should display per page.
 
+Optional.
+
 =head3 tables
 
 Contains a list of all tables, if supported by model.
-
-=head3 table_to_class
-
-A hash containing a table to class mapping, if supported by model.
 
 =head3 template_root
 
@@ -50,14 +52,18 @@ This is where your application can find its templates.
 
 =head3 uri_base
 
-This is the URI base that should be prepended to your application when
-Maypole
+This is the URI base that should be prepended to your application when Maypole
 makes URLs.
 
 =head3 view
 
 The name of the view class for your Maypole Application. Defaults to
 "Maypole::View::TT".
+
+=head3 view_options
+
+A hash of configuration options for the view class. Consult the documentation
+for your chosen view class for information on available configuration options.
 
 =head2 Model-Related
 
@@ -69,8 +75,8 @@ model class, and should not be changed in the view or the config.
 
 =head3 display_tables
 
-These are the tables that are public to your Maypole application.
-Defaults to all the tables in the database.
+This is a list of the tables that are public to your Maypole 
+application. Defaults to all the tables in the database.
 
 =head3 dsn
 
@@ -89,7 +95,8 @@ The name of the model class for your Maypole Application. Defaults to
 
 =head3 ok_tables
 
-These are the tables that Maypole should care about
+This is a hash of the public tables. It is populated automatically by 
+Maypole from the list in display_tables and should not be changed.
 
 =head3 pass
 
@@ -102,6 +109,16 @@ Other options to the DBI connect call.
 =head3 user
 
 Username to log into the database with.
+
+=head2 Adding additional configuration data
+
+If your modules need to store additional configuration data for their 
+own use or to make available to templates, add a line like this to your 
+module:
+
+   Maypole::Config->mk_accessors(qw(variable or variables));
+
+Care is needed to avoid conflicting variable names.
 
 =head1 SEE ALSO
 

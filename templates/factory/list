@@ -8,7 +8,7 @@
 [% END %]
 [% INCLUDE navbar %]
 <div class="list">
-    <table id="matrix" width="100%" >
+    <table id="matrix">
         <tr>
             [% FOR col = classmetadata.list_columns.list;
                 NEXT IF col == "id";
@@ -17,20 +17,20 @@
                 SET additional = additional _ "&page=" _ pager.current_page
                     IF pager;
                 SET additional = additional _ "&o2=desc" 
-                IF col == request.query.order and request.query.o2 != "desc";
+                IF col == request.params.order and request.params.o2 != "desc";
                 SET action = "list";
                 FOR name = classmetadata.columns.list;
                   IF request.query.$name;
                     SET additional =
                         additional  _ "&" _ name _ "=" _
-                        request.query.$name;
+                        request.params.$name;
                     SET action = "search";
                   END;
                 END;
                 link(classmetadata.table, action, additional,
                     classmetadata.colnames.$col);
-                IF col == request.query.order;
-                    IF request.query.o2 != "desc";
+                IF col == request.params.order;
+                    IF request.params.o2 != "desc";
                         "&darr;";
                     ELSE;
                         "&uarr;";

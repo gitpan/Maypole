@@ -4,23 +4,25 @@ use strict;
 use warnings;
 use UNIVERSAL::require;
 use Maypole;
+use Maypole::Config;
 
 our @ISA;
+our $VERSION = '2.05';
 
 sub import {
     my ( $self, @plugins ) = @_;
     my $caller = caller(0);
     no strict 'refs';
     push @{"${caller}::ISA"}, $self;
-    foreach (@plugins) {
-        if    (/^\-Setup$/) { $caller->setup }
+    my $autosetup=0;
+    foreach (sort @plugins) {
+        if    (/^\-Setup$/) { $autosetup++; }
         elsif (/^\-Debug$/) {
             *{"$caller\::debug"} = sub { 1 };
             warn "Debugging enabled";
         }
         elsif (/^-.*$/) { warn "Unknown flag: $_" }
         else {
-
             # The plugin caller should be our application class
             eval "package $caller; require Maypole::Plugin::$_";
             if ($@) { warn qq(Loading plugin "Maypole::Plugin::$_" failed: $@) }
@@ -30,6 +32,9 @@ sub import {
             }
         }
     }
+
+    $caller->config(Maypole::Config->new);
+    $caller->setup() if $autosetup;
 }
 
 if ( $ENV{MOD_PERL} ) {
@@ -45,7 +50,7 @@ else {
 
 =head1 NAME
 
-Maypole::Application - Maypole Universal Frontend
+Maypole::Application - Universal Maypole Frontend
 
 =head1 SYNOPSIS
 
@@ -82,6 +87,10 @@ is equivalent to
     use Maypole::Application;
     MyApp->setup;
 
+Note that no options are passed to C<setup()>. You must ensure that the
+required model config parameters are set in C<MyApp-E<gt>config>. See
+L<Maypole::Config> for more information.
+
 =head2 -Debug
 
     use Maypole::Application qw(-Debug);
@@ -99,3 +108,5 @@ Idea by Marcus Ramberg, C<marcus@thefeed.no>
 =head1 LICENSE
 
 You may distribute this code under the same terms as Perl itself.
+
+=cut

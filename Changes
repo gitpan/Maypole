@@ -1,9 +1,63 @@
-Revision history for Perl extension Maypole 
+This file documents the revision history for Perl extension Maypole.
+For information about current developments and future releases, see:
+    http://maypole.perl.org/?TheRoadmap
+
+2.05  Fri Dec 24 03:20:00 2004
+    - Revised and updated documentation. Many thanks to Dave Howorth for his
+      hard work and 120kb documentation patches.
+    - Added support for request and response HTTP headers with
+      $r->headers_in & $r->headers_out (Maypole::Headers)
+    - Support for compound primary keys for Maypole::Model::CDBI classes
+    - Template toolkit objects are configurable with M::Config->view_options
+    - Templating performance should be improved when running Maypole with
+      mod_perl since compiled templates remain in memory. CGI users can use
+      TT2's COMPILE_DIR or COMPILE_EXT options with
+      Maypole::Config->view_options to improve performance
+
+    Internal changes:
+    - Added a new override for the model: fetch_objects(). 
+    - 'classmetadata' template variables can now be overriden individually
+    - New unit tests for Maypole, CGI::Maypole, Maypole::Headers, and others.
+      More to come.
+
+    Fixes:
+    - Maypole::CLI is more tolerant of trailing slashes in the request/uri_base
+    - fixed a bug in CGI::Maypole::parse_location() (Dave Howorth)
+    - Also applied that fix to Apache::MVC (Marcus Ramberg)
+    - some fixes for Maypole::Config, Maypole::Model::Base and
+      Maypole::Model::CDBI::Plain (Dave Howorth)
+    - Documented adding new accessors to Maypole::Config
+    - Added Apache::RequestIO to Apache::MVC (michael#diaspora.gen.nz)
+    - Applied patch to fix length of utf8 documents.
+    - support compound primary keys in CDBI fetch_objects.
+    - Check if has_a actually points to a Maypole::Model (Dave Howorth)
+    - Make test suite work with DBD::SQLite2
+    - default search() action removes empty fields from search parameters
+    - #6622 - Maypole::Application will create a separate Maypole::Config for
+      each application (instead of the current workaround for multiple apps
+      under mod_perl)
+    - #7643 - improve M::V::Base's error() messages. prefix error with label,
+      and carp()
+    - #7651 - minor POD improvements in M::M::CDBI (Dave Howorth)
+    - #7834 - minor POD update in M::M::CDBI (Kevin Connor)
+    - #7917 - if do_edit fails for object creation, try again with the correct
+      template (addnew)
+    - #7930 - handle Class::DBI constraint failures in do_edit. 
+
+    Templates:
+    - add support for compound primary keys in factory templates
+      (Dagfinn Ilmari Mannsåker)
+    - Only show buttons for public actions.
+      (Dagfinn Ilmari Mannsåker)
+    - Split the meat of the view template off to a view_item macro.
+    - New login template
+    - Other assorted css/template fixes
+
 
 2.04  Tue Oct 27 14:00:00 2004
-    - Fixed Apache::MVC version (Randal Schwartz)
+    - fixed Apache::MVC version (Randal Schwartz)
     - fixed template_args (Dave Howorth)
-    - New Maypole::Config documentation (Dave Howorth)
+    - new Maypole::Config documentation (Dave Howorth)
     - Maypole::Model::Base::process() no more steals you the first
       arg after fetching objects
 
@@ -12,7 +66,7 @@ Revision history for Perl extension Maypole
     - fixed display_tables bug (Steve Simms)
     - fixed templates, now again XHTML compliant
     - documentation fix (Dave Howorth)
-    - Only set charset for text/*
+    - only set charset for text/*
 
 2.02  Mon Oct 25 13:00:00 2004
     - Fixed charset in http header.

@@ -1,7 +1,8 @@
 =head1 The Beer Database, Twice
 
-We briefly introduced the "beer database" example in the L<About.pod>
-material, where we presented its driver class as a fait accompli. Where
+We briefly introduced the "beer database" example in the
+L<Introduction to Maypole|Maypole::Manual::About> chapter, where we
+presented its driver class, C<BeerDB.pm>, as a fait accompli. Where
 did all that code come from, and what does it actually mean?
 
 =head2 The big beer problem
@@ -45,11 +46,11 @@ it; it looks like this.
 
     package BeerDB;
     use Maypole::Application;
-    BeerDB->set_database("dbi:SQLite:t/beerdb.db");
-    BeerDB->config->{uri_base} = "http://localhost/beerdb";
-    BeerDB->config->{template_root} = "/path/to/templates";
-    BeerDB->config->{rows_per_page} = 10;
-    BeerDB->config->{display_tables} = [qw[beer brewery pub style]];
+    BeerDB->setup("dbi:SQLite:t/beerdb.db");
+    BeerDB->config->uri_base("http://localhost/beerdb");
+    BeerDB->config->template_root("/path/to/templates");
+    BeerDB->config->rows_per_page(10);
+    BeerDB->config->display_tables([qw[beer brewery pub style]]);
     BeerDB::Brewery->untaint_columns( printable => [qw/name notes url/] );
     BeerDB::Style->untaint_columns( printable => [qw/name notes/] );
     BeerDB::Beer->untaint_columns(
@@ -83,18 +84,19 @@ it's a relatively small class which defines how the whole application is
 going to run. 
 
 The second line says that our front-end is going to be
-C<Maypole::Application>, it automatically detects if you're using
-mod_perl or CGI and loads everything neccessary for you.
+L<Maypole::Application>, it automatically detects if you're using
+mod_perl or CGI and loads everything necessary for you.
 
 Thirdly we're going to need to set up our database with the given DBI
 connection string. Now the core of Maypole itself doesn't know about
-DBI; as we explained in L<Model.pod>, this argument is passed to our
+DBI; as we explained in the L<Model|Maypole::Manual::Model> chapter,
+this argument is passed to our
 model class wholesale. As we haven't said anything about a model
-class, we get the default one, C<Maypole::Model::CDBI>, which takes a
+class, we get the default one, L<Maypole::Model::CDBI>, which takes a
 DBI connect string. So this one line declares that we're using a C<CDBI>
 model class and it sets up the database for us. In the same way, we
 don't say that we want a particular view class, so we get the default
-C<Maypole::View::TT>.
+L<Maypole::View::TT>.
 
 At this point, everything is in place; we have our driver class, it uses
 a front-end, we have a model class and a view class, and we have a data
@@ -104,14 +106,18 @@ source.
 
 The next of our four sections is the configuration for the application itself.
 
-    BeerDB->config->{uri_base} = "http://localhost/beerdb/";
-    BeerDB->config->{rows_per_page} = 10;
-    BeerDB->config->{display_tables} = [qw[beer brewery pub style]];
+    BeerDB->config->uri_base("http://localhost/beerdb");
+    BeerDB->config->template_root("/path/to/templates");
+    BeerDB->config->rows_per_page(10);
+    BeerDB->config->display_tables([qw[beer brewery pub style]]);
 
-Maypole provides a method called C<config> which returns a hash reference
-of the application's whole configuration. We can use this to set some
+Maypole provides a method called C<config> which returns an object that
+holds the application's whole configuration. We can use this to set some
 parameters; the C<uri_base> is used as the canonical URL of the base
 of this application, and Maypole uses it to construct links.
+
+We also tell Maypole where we keep our template files, using
+C<template_root>.
 
 By defining C<rows_per_page>, we say that any listings we do with the
 C<list> and C<search> templates should be arranged in sets of pages, with
@@ -137,8 +143,10 @@ The next section is the following set of lines:
         date => [ qw/date/],
     );
 
-As explained in L<StandardTemplates.pod>, this is an set of instructions to
-C<Class::DBI::FromCGI> regarding how the given columns should be edited.
+As explained in the
+L<Standard Templates|Maypole::Manual::StandardTemplates> chapter,
+this is an set of instructions to
+L<Class::DBI::FromCGI> regarding how the given columns should be edited.
 If we didn't have this section, we'd be able to view and delete records,
 but adding and editing them wouldn't work. It took me ages to work that
 one out.
@@ -150,9 +158,9 @@ each other. This is done so that, for instance, when displaying a beer,
 the brewery does not appear as an integer like "2" but as the name of
 the brewery from the C<brewery> table with an ID of 2.
 
-The usual C<Class::DBI> way to do this involves the C<has_a> and
+The usual L<Class::DBI> way to do this involves the C<has_a> and
 C<has_many> methods, but I can never remember how to use them, so I came
-up with the C<Class::DBI::Loader::Relationship> module; this was another
+up with the L<Class::DBI::Loader::Relationship> module; this was another
 yak that needed shaving on the way to the beer database:
 
     use Class::DBI::Loader::Relationship;
@@ -162,7 +170,7 @@ yak that needed shaving on the way to the beer database:
         "a pub has beers on handpumps");
     1;
 
-C<CDBIL::Relationship> acts on a C<Class::DBI::Loader> object and
+C<CDBIL::Relationship> acts on a L<Class::DBI::Loader> object and
 defines relationships between tables in a fairly free-form style.
 The equivalent in ordinary C<Class::DBI> would be:
 
@@ -195,7 +203,7 @@ The first thing we ought to look into is the names of the columns; most
 of them are fine, but that "Abv" column stands out. I'd rather that was
 "A.B.V.". Maypole uses the C<column_names> method to map between the
 names of the columns in the database to the names it displays in the
-default templates. This is provided by C<Maypole::Model::Base>, and
+default templates. This is provided by L<Maypole::Model::Base>, and
 normally, it does a pretty good job; it turns C<model_number> into
 "Model Number", for instance, but there was no way it could guess that
 C<abv> was an abbreviation. Since it returns a hash, the easiest way
@@ -207,7 +215,20 @@ right, and then override the bits it got wrong:
         (shift->SUPER::column_names(), abv => "A.B.V.")
     }
 
-Similarly, the order of columns is a bit wonky. We can fix this by
+There's something to be aware of here: where are you going to type that
+code? You can just put it in F<BeerDB.pm>. Perl will be happy with that,
+though you might want to put an extra pair of braces around it to limit
+the scope of that package declaration. Alternatively, you might think
+it's neater to put it in a file called F<BeerDB/Beer.pm>, which is the
+natural home for the package. This would certainly be a good idea if you
+have a lot of other code to add to the C<BeerDB::Beer> package. But if
+you do that, you will have to tell Perl to load the F<BeerDB/Beer.pm>
+file by adding a line to F<BeerDB.pm>:
+
+    BeerDB::Beer->require;
+
+For another example of customization, the order of columns is a bit
+wonky. We can fix this by
 overriding the C<display_columns> method; this is also a good way to
 hide away any columns we don't want to have displayed, in the same way
 as declaring the C<display_tables> configuration parameter let us hide
@@ -219,7 +240,7 @@ away tables we weren't using:
 
 Hey, have you noticed that we haven't done anything with the
 beers/handpumps/pubs thing yet? Good, I was hoping that you hadn't.
-Ayway, this is because Maypole can't tell easily that a C<BeerDB::Beer>
+Anyway, this is because Maypole can't tell easily that a C<BeerDB::Beer>
 object can call C<pubs> to get a list of pubs. Not yet, at least; we're
 working on it. In the interim, we can explicitly tell Maypole which
 accessors are related to the C<BeerDB::Beer> class like so:
@@ -227,3 +248,10 @@ accessors are related to the C<BeerDB::Beer> class like so:
     sub related { "pubs" }
 
 Now when we view a beer, we'll have a list of the pubs that it's on at.
+
+=head2 Links
+
+L<Contents|Maypole::Manual>,
+Next L<The Request Cookbook|Maypole::Manual::Request>,
+Previous L<Maypole's Request Workflow|Maypole::Manual::Workflow>
+

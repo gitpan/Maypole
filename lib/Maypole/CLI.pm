@@ -29,9 +29,10 @@ sub get_template_root { $ENV{MAYPOLE_TEMPLATES} || "." }
 sub parse_location {
     my $self = shift;
     my $url  = URI->new( shift @ARGV );
-    my $root = URI->new( $self->config->uri_base )->path;
+    (my $uri_base = $self->config->uri_base) =~ s:/$::;
+    my $root = URI->new( $uri_base )->path;
     $self->{path} = $url->path;
-    $self->{path} =~ s/^$root//i if $root;
+    $self->{path} =~ s:^$root/?::i if $root;
     $self->parse_path;
     $self->parse_args($url);
 }
@@ -46,7 +47,7 @@ sub send_output { $buffer = shift->{output} }
 
 sub call_url {
     my $self = shift;
-    @ARGV = @_;
+    local @ARGV = @_;
     $package->handler() == OK and return $buffer;
 }
 

@@ -16,7 +16,8 @@ university student population.
 
 Flox is still in, uh, flux, but it does the essentials. We're going to
 see how it was put together, and how the techniques shown in the
-L<Request.pod> chapter can help to create a sophisticated web
+L<Request Cookbook|Maypole::Manual::Request> can help to
+create a sophisticated web
 application. Of course, I didn't have this manual available at the time,
 so it took a bit longer than it should have done...
 
@@ -24,7 +25,7 @@ so it took a bit longer than it should have done...
 
 Any Maypole application should start with two things: a database schema,
 and some idea of what the pages involved are going to look like.
-Usually, these pages will be tying to displaying or editing some element
+Usually, these pages will be displaying or editing some element
 of the database, so these two concepts should come hand in hand.
 
 When I started looking at social networking sites, I began by
@@ -69,7 +70,7 @@ and communities, and end up with a schema like so:
         expires date
     );
 
-Plus the definition of our two auxilliary tables:
+Plus the definition of our two auxiliary tables:
 
     CREATE TABLE affiliation (
         id int not null auto_increment primary key,
@@ -137,27 +138,26 @@ database:
     package Flox;
     use Maypole::Application;
     Flox->setup("dbi:mysql:flox");
-    Flox->config->{display_tables} = [qw[user invitation connection]];
+    Flox->config->display_tables([qw[user invitation connection]]);
     1;
 
 Very simple, as these things are meant to be. Now let's build on it.
 
-=head2 Authentication
+=head2 Users and Authentication
 
 The concept of a current user is absolutely critical in a site like
 Flox; it represents "me", the viewer of the page, as the site explores
 the connections in my world. We've described the authentication hacks
-briefly in the L<Request.pod> chapter, but now it's time to go into a
-little more detail about how user handling is done.
-
-XXX
+briefly in the L<Request Cookbook|Maypole::Manual::Request>,
+but now it's time to go into a little more detail about how user
+handling is done.
 
 We also want to be able to refer to the current user from the templates,
-so we use the overridable C<additional_data> method to give us a C<my>
-template variable:
+so we use the overridable C<additional_data> method in the driver class
+to give us a C<my> template variable:
 
     sub additional_data { 
-        my $r = shift; $r->{template_args}{my} = $r->{user}; 
+        my $r = shift; $r->template_args->{my} = $r->user; 
     }
 
 I've called it C<my> rather than C<me> because we it lets us check 
@@ -178,30 +178,30 @@ C<$r-E<gt>{user}> in there if not:
 
     sub view :Exported {
         my ($class, $r) = @_;
-        $r->{objects} = [ $r->{user} ] unless @{$r->{objects}||[]};
+        $r->objects([ $r->user ]) unless @{ $r->objects || [] };
     }
 
 Maypole, unfortunately, is very good at making programming boring. The
 downside of having to write very little code at all is that we now have
 to spend most of our time writing nice HTML for the templates.
 
-XXX
+=head2 Pictures of Users
 
 The next stage is viewing the user's photo. Assuming we've got the photo
 stored in the database already (which is a reasonable assumption for the
 moment since we don't have a way to upload a photo quite yet) then we
-can use the a variation of the "Displaying pictures" hack from the 
-Requests chapter:
+can use a variation of the "Displaying pictures" hack from the 
+L<Request Cookbook|Maypole::Manual::Request>:
 
     sub view_picture :Exported {
         my ($self, $r) = @_;
-        my $user = $r->{objects}->[0] || $r->{user};
-        if ($r->{content_type} = $user->photo_type) {
-           $r->{output} = $user->photo;
+        my $user = $r->objects->[0] || $r->user;
+        if ($r->content_type($user->photo_type)) {
+           $r->output($user->photo);
         } else {
            # Read no-photo photo
-           $r->{content_type} = "image/png";
-           $r->{output} = slurp_file("images/no-photo.png");
+           $r->content_type("image/png");
+           $r->output(slurp_file("images/no-photo.png"));
         }
     }
 
@@ -215,14 +215,14 @@ and allows us to write the content out directly.
 
 In our template, we can now say
 
-    <IMG SRC="/user/view_picture/[% user.id %]">
+    <IMG SRC="[%base%]/user/view_picture/[% user.id %]">
 
 and the appropriate user's mugshot will appear.
 
 However, if we're throwing big chunks of data around like C<photo>, it's
 now worth optimizing the C<User> class to ensure that only pertitent
 data is fetched by default, and C<photo> and friends are only fetched on
-demand. The "lazy population" section of C<Class::DBI>'s man page
+demand. The "lazy population" section of L<Class::DBI>'s man page
 explains how to group the columns by usage so that we can optimize
 fetches:
 
@@ -252,9 +252,7 @@ can do as much or as little of such optimization as you want or need.
 So now we can view users and their photos. It's time to allow the users
 to edit their profiles and upload a new photo.
 
-=head2 Editing users
-
-XXX Editing a profile
+=head2 Editing user profiles
 
 I introduced Flox to a bunch of friends and told them to be as ruthless
 as possible in finding bugs and trying to break it. And break it they
@@ -278,8 +276,8 @@ sensible size:
     use constant MAX_IMAGE_SIZE => 512 * 1024;
     sub do_upload :Exported {
         my ($class, $r) = @_;
-        my $user = $r->{user};
-        my $upload = $r->{ar}->upload("picture");
+        my $user = $r->user;
+        my $upload = $r->ar->upload("picture");
         if ($upload) {
             my $ct = $upload->info("Content-type");
             return $r->error("Unknown image file type $ct")
@@ -294,12 +292,12 @@ sensible size:
             my ($x, $y) = imgsize(\$image);
             return $r->error("Image too big! ($x, $y) Maximum size is 350x350")
                 if $y > 350 or $x > 350;
-            $r->{user}->photo_type($ct);
-            $r->{user}->photo($image);
+            $r->user->photo_type($ct);
+            $r->user->photo($image);
         }
 
         $r->objects([ $user ]);
-        $r->{template} = "view";
+        $r->template("view");
     }
 
 Now we've gone as far as we want to go about user editing at the moment.
@@ -308,8 +306,8 @@ other people involved, and registering connections between users.
 
 =head2 Invitations
 
-We need to do two things to invitations working: first provide a way to
-issue an invitation, and then provide a way to accept it. Since what
+We need to do two things to make invitations work: first provide a way
+to issue an invitation, and then provide a way to accept it. Since what
 we're doing in issuing an invitation is essentially creating a new
 one, we'll use our usual practice of having a page to display the form
 to offer an invitation, and then use a C<do_edit> method to actually do
@@ -325,7 +323,8 @@ and the template proceeds as normal:
     <FORM ACTION="[%base%]/invitation/do_edit/" METHOD="post">
     <TABLE>
 
-Now we use the "Catching errors in a form" recipe from L<Request.pod> and
+Now we use the "Catching errors in a form" recipe from the
+L<Request Cookbook|Maypole::Manual::Request> and
 write our form template:
 
     <TR><TD>
@@ -354,24 +353,26 @@ we handle the untainting manually, because there are a surprising number of
 things we need to check before we actually do the create. So here's the
 untainting of the parameters:
 
-    my ($self, $r) = @_;
-    my $h = CGI::Untaint->new(%{$r->{params}});
-    my (%errors, %ex);
-    for (qw( email forename surname )) {
-        $ex{$_} = $h->extract(
-                "-as_".($_ eq "email" ? "email" : "printable") => $_
-        ) or $errors{$_} = $h->error;
-    }
+    sub do_edit :Exported {
+        my ($self, $r) = @_;
+        my $h = CGI::Untaint->new(%{$r->params});
+        my (%errors, %ex);
+        for (qw( email forename surname )) {
+            $ex{$_} = $h->extract(
+                    "-as_".($_ eq "email" ? "email" : "printable") => $_
+            ) or $errors{$_} = $h->error;
+        }
 
 Next, we do the usual dance of throwing the user back at the form in case
 of errors:
 
-    if (keys %errors) {
-        $r->{template_args}{message} = "There was something wrong with that...";
-        $r->{template_args}{errors} = \%errors;
-        $r->{template} = "issue";
-        return;
-    }
+        if (keys %errors) {
+            $r->template_args->{message} =
+                "There was something wrong with that...";
+            $r->template_args->{errors} = \%errors;
+            $r->template("issue");
+            return;
+        }
 
 We've introduced a new template variable here, C<message>, which we'll use
 to display any important messages to the user.
@@ -381,23 +382,23 @@ with that email address. If we have, and they're a real user, then we
 abort the invite progress and instead redirect them to viewing that user's 
 profile.
 
-    my ($user) = Flox::User->search({ email => $ex{email} });
-    if ($user) {
-        if ($user->status eq "real") {
-            $r->{template_args}{message} =
-                "That user already seems to exist on Flox. ".
-                "Is this the one you meant?";
+        my ($user) = Flox::User->search({ email => $ex{email} });
+        if ($user) {
+            if ($user->status eq "real") {
+                $r->template_args->{message} =
+                    "That user already seems to exist on Flox. ".
+                    "Is this the one you meant?";
 
-            $self->redirect_to_user($r,$user);
-        } 
+                $self->redirect_to_user($r, $user);
+            } 
 
 Where C<redirect_to_user> looks like this:
 
     sub redirect_to_user {
         my ($self, $r, $user) = @_;
-        $r->{objects} = [ $user ];
-        $r->{template} = "view";
-        $r->{model_class} = "Flox::User"; # Naughty.
+        $r->objects([ $user ]);
+        $r->template("view");
+        $r->model_class("Flox::User"); # Naughty.
     }
 
 This is, as the comment quite rightly points out, naughty. We're currently
@@ -412,31 +413,32 @@ C<message> in there as well, so this will have to do. This isn't good practice;
 we put it into a subroutine so that we can fix it up if we find a better way
 to do it.
 
-Anyway, this is what we should do if a user already exists on the system
+Anyway back in the C<do_edit> action, 
+this is what we should do if a user already exists on the system
 and has accepted an invite already. What if we're trying to invite a user but
 someone else has invited them first and they haven't replied yet?
 
-         } else {
-            # Put it back to the form
-            $r->{template_args}{message} =
-            "That user has already been invited; ".
-            "please wait for them to accept";
-            $r->{template} = "issue";
+             } else {
+                # Put it back to the form
+                $r->template_args->{message} =
+                    "That user has already been invited; " .
+                    "please wait for them to accept";
+                $r->template("issue");
+             }
+             return;
         }
-        return;
-    }
 
 Race conditions suck.
 
 Okay. Now we know that the user doesn't exist, and so can create the new 
 one:
 
-    my $new_user = Flox::User->create({
-        email => $ex{email},
-        first_name => $ex{forename},
-        last_name  => $ex{surname},
-        status => "invitee"
-    });
+        my $new_user = Flox::User->create({
+            email      => $ex{email},
+            first_name => $ex{forename},
+            last_name  => $ex{surname},
+            status     => "invitee"
+        });
 
 We want to give the invitee a URL that they can go to in order to
 accept the invite. Now we don't just want the IDs of our invites to
@@ -444,28 +446,29 @@ be sequential, since someone could get one invite, and then guess the
 rest of the invite codes. We provide a relatively secure MD5 hash as
 the invite ID:
 
-    my $random = md5_hex(time.(0+{}).$$.rand);
+        my $random = md5_hex(time.(0+{}).$$.rand);
 
 For additional security, we're going to have the URL in the form
 C</invitation/accept/I<id>/I<from_id>/I<to_id>>, encoding the user ids
 of the two users. Now we can send email to the invitee to ask them to
 visit that URL:
 
-    my $newid = $new_user->id;
-    my $myid  = $r->{user}->id;
-    _send_mail(to => $ex{email}, url => "$random/$myid/$newid", 
-               user => $r->{user});
+        my $newid = $new_user->id;
+        my $myid  = $r->user->id;
+        _send_mail(to   => $ex{email},
+                   url  => "$random/$myid/$newid", 
+                   user => $r->user);
 
 I'm not going to show the C<_send_mail> routine, since it's boring.
 We haven't actually created the C<Invitation> object yet, so let's
 do that now.
 
-    Flox::Invitation->create({
-        id => $random,
-        issuer => $r->{user},
-        recipient => $new_user,
-        expires => Time::Piece->new(time + LIFETIME)->datetime
-    });
+        Flox::Invitation->create({
+            id        => $random,
+            issuer    => $r->user,
+            recipient => $new_user,
+            expires   => Time::Piece->new(time + LIFETIME)->datetime
+        });
 
 You can also imagine a daily cron job that cleans up the C<Invitation>
 table looking for invitations that ever got replied to within their
@@ -481,7 +484,7 @@ our hands.
 Anyway, now we've got the invitation created, we can go back to whence we
 came: viewing the original user:
 
-    $self->redirect_to_user($r, $r->{user});
+        $self->redirect_to_user($r, $r->user);
 
 Now our invitee has an email, and goes B<click> on the URL. What happens?
 
@@ -489,4 +492,14 @@ XXX
 
 =head2 Friendship Connections
 
-=head2 
+XXX
+
+=head2 Links
+
+The source for Flox is available at
+L<http://cvs.simon-cozens.org/viewcvs.cgi/flox>.
+
+L<Contents|Maypole::Manual>,
+Next L<The Maypole iBuySpy Portal|Maypole::Manual::BuySpy>,
+Previous L<Maypole Request Hacking Cookbook|Maypole::Manual::Request>
+

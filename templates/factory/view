@@ -11,49 +11,7 @@ C<objects> and displays the object's properties in a table.
 [% PROCESS macros %]
 [% INCLUDE header %]
 [% FOR item = objects %]
-    [% SET string = item.stringify_column %]
-    <div id="title"> [% item.$string %]</div>
-    [% INCLUDE navbar %]
-    <table class="view">
-        <tr>
-            <td class="field">[% classmetadata.colnames.$string %]</td>
-            <td>[% item.$string %]</td>
-        </tr>
-        [% FOR col = classmetadata.columns.list;
-            NEXT IF col == "id" OR col == string;
-            NEXT UNLESS item.$col;
-        %]
-[%# 
-
-=for doc
-
-It gets the displayable form of a column's name from the hash returned
-from the C<column_names> method:
-
-#%]
-            <tr>
-                <td class="field">[% classmetadata.colnames.$col; %]</td>
-                <td>
-                    [% IF col == "url" && item.url;  # Possibly too much magic.
-                        '<a href="'; item.url; '"> '; item.url; '</a>';
-                    ELSE;
-                        maybe_link_view(item.$col); 
-                    END; %]
-[%#
-
-This tests whether or not the returned value is an object, and if so,
-creates a link to a page viewing that object; if not, it just displays
-the text as normal. The object is linked using its stringified name;
-by default this calls the C<name> method, or returns the object's ID
-if there is no C<name> method or other stringification method defined.
-
-=cut
-
-#%] 
-                </td>
-            </tr>
-        [% END; %]
-    </table>
+[% view_item(item); %]
 [%#
 
 =for doc

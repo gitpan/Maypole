@@ -158,6 +158,8 @@ table {
     background-color: #ffffff;
 }
 
+#matrix { width: 100%; }
+
 #matrix th {
     background-color: #b5cadc;
     border: 1px solid #778;
@@ -321,13 +323,17 @@ label .field {
 }
 
 .actions {
-white-space: nowrap;
+    white-space: nowrap;
 }
 
 .field {
     display:inline;
-    background-color: #fff;
 }
+
+#login { width: 400px; }
+
+#login input[type=text] { width: 150px; }
+#login input[type=password] { width: 150px; }
 
 .pager {
     font: 11px Arial, Helvetica, sans-serif;
@@ -367,3 +373,4 @@ white-space: nowrap;
     border-color: #036;
     text-decoration: none;
 }
+

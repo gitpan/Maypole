@@ -11,6 +11,7 @@
         <meta http-equiv="Content-Type" content="text/html; charset=[% 
 	    request.document_encoding
 	%]"/>
+	<base href="[% config.uri_base%]"/>
         <link title="Maypole" href="/maypole.css" type="text/css"
             rel="stylesheet"/>
    </head>

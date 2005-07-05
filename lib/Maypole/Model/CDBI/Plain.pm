@@ -1,5 +1,7 @@
 package Maypole::Model::CDBI::Plain;
+use Maypole::Config;
 use base 'Maypole::Model::CDBI';
+use strict;
 
 Maypole::Config->mk_accessors(qw(table_to_class));
 

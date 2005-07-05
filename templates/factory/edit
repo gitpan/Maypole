@@ -26,11 +26,12 @@ form similar to L<addnew> but with the current values filled in.
     IF errors.$col; 
        '<span class="error">'; errors.$col;'</span>';
     END;
-    END;
-    '<input type="submit" name="edit" value="edit"/>';
-    "</fieldset></form>";
-    
     END %]
+    <input type="submit" name="edit" value="edit"/>
+    <input type="hidden" name="__form_id" value="[% request.make_random_id %]">
+    </fieldset></form>
+    
+    [% END %]
 [% ELSE %]
 [% INCLUDE addnew %]
 [% END %]

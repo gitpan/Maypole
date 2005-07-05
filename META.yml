@@ -1,7 +1,7 @@
 # http://module-build.sourceforge.net/META-spec.html
 #XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
 name:         Maypole
-version:      2.09
+version:      2.10_pre1
 version_from: lib/Maypole.pm
 installdirs:  site
 requires:
@@ -16,6 +16,7 @@ requires:
     Class::DBI::Pager:             0
     Class::DBI::Plugin::RetrieveAll: 0
     Class::DBI::SQLite:            0
+    Digest::MD5:                   0
     HTTP::Headers:                 1.59
     Template:                      0
     Template::Plugin::Class:       0

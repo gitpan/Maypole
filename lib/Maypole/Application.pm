@@ -12,26 +12,43 @@ our $VERSION = '2.09';
 sub import {
     my ( $class, @plugins ) = @_;
     my $caller = caller(0);
+    
+    my $frontend = 'Apache::MVC' if $ENV{MOD_PERL};
+    
+    my $masonx;
+    if ( grep { /^MasonX$/ } @plugins )
+    {
+        $masonx++;
+        @plugins = grep { ! /^MasonX$/ } @plugins;
+        $frontend = 'MasonX::Maypole';
+    }
+    
+    $frontend ||= 'CGI::Maypole';
+    
+    $frontend->require or die "Loading $frontend frontend failed: $@";
+    push @ISA, $frontend;
 
     my $autosetup=0;
     my @plugin_modules;
     {
         foreach (@plugins) {
             if    (/^\-Setup$/) { $autosetup++; }
-            elsif (/^\-Debug$/) {
+            elsif (/^\-Debug(\d*)$/) {
+                my $d = $1 || 1;
                 no strict 'refs';
-                *{"$caller\::debug"} = sub { 1 };
-                warn "Debugging enabled";
+                *{"$caller\::debug"} = sub { $d };
+                warn "Debugging (level $d) enabled for $caller";
             }
             elsif (/^-.*$/) { warn "Unknown flag: $_" }
             else {
                 my $plugin = "Maypole::Plugin::$_";
                 if ($plugin->require) {
                     push @plugin_modules, "Maypole::Plugin::$_";
-                    warn "Loaded plugin: $plugin"
+		    unshift @ISA, "Maypole::Plugin::$_";
+                    warn "Loaded plugin: $plugin for $caller"
                         if $caller->can('debug') && $caller->debug;
                 } else {
-                    warn qq(Loading plugin "$plugin" failed: )
+                    die qq(Loading plugin "$plugin" for $caller failed: )
                         . $UNIVERSAL::require::ERROR;
                 }
             }
@@ -40,16 +57,8 @@ sub import {
     no strict 'refs';
     push @{"${caller}::ISA"}, @plugin_modules, $class;
     $caller->config(Maypole::Config->new);
+    $caller->config->masonx({}) if $masonx;
     $caller->setup() if $autosetup;
-}
-
-if ( $ENV{MOD_PERL} ) {
-    Apache::MVC->require or die "Loading Apache frontend failed: $@";
-    push @ISA, 'Apache::MVC';
-}
-else {
-    CGI::Maypole->require or die "Loading CGI frontend failed: $@";
-    push @ISA, 'CGI::Maypole';
 }
 
 1;
@@ -68,9 +77,11 @@ Maypole::Application - Universal Maypole Frontend
 
     use Maypole::Application qw(Config::YAML Loader -Setup -Debug);
 
+    use Maypole::Application qw(-Debug2 MasonX AutoUntaint);
+
 =head1 DESCRIPTION
 
-This is a universal frontend for mod_perl1, mod_perl2 and CGI.
+This is a universal frontend for mod_perl1, mod_perl2, HTML::Mason and CGI.
 
 You can omit the Maypole::Plugin:: prefix from plugins.
 So Maypole::Plugin::Config::YAML becomes Config::YAML.
@@ -105,6 +116,8 @@ is equivalent to
 
     use Maypole::Application;
     sub debug { 1 }
+
+You can specify a higher debug level by saying C<-Debug2> etc. 
 
 =head1 AUTHOR
 

@@ -35,6 +35,7 @@ table.
 
     [% END; %]
     <input type="submit" name="create" value="create"/>
+    <input type="hidden" name="__form_id" value="[% request.make_random_id %]">
 </fieldset>
 </form>
 </div>

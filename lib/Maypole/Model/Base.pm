@@ -1,5 +1,6 @@
 package Maypole::Model::Base;
 
+use strict;
 use Maypole::Constants;
 use attributes ();
 

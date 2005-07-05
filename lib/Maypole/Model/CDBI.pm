@@ -202,12 +202,12 @@ sub do_pager {
 
 sub order {
     my ( $self, $r ) = @_;
-    my $order;
     my %ok_columns = map { $_ => 1 } $self->columns;
-    if ( $order = $r->query->{order} and $ok_columns{$order} ) {
-        $order .= ( $r->query->{o2} eq "desc" && " DESC" );
-    }
-    $order;
+    my $q = $r->query;
+    my $order = $q->{order};
+    return unless $order and $ok_columns{$order};
+    $order .= ' DESC' if $q->{o2} and $q->{o2} eq 'desc';
+    return $order;
 }
 
 sub list : Exported {
@@ -236,7 +236,7 @@ sub setup_database {
             dsn       => $dsn,
             user      => $u,
             password  => $p,
-            options   => $opts,
+	    %$opts,
         )
     );
     $config->{classes} = [ $config->{loader}->classes ];

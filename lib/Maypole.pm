@@ -7,7 +7,7 @@ use Maypole::Config;
 use Maypole::Constants;
 use Maypole::Headers;
 
-our $VERSION = '2.09';
+our $VERSION = '2.10_pre1';
 
 __PACKAGE__->mk_classdata($_) for qw( config init_done view_object );
 __PACKAGE__->mk_accessors(
@@ -34,7 +34,7 @@ sub setup {
     my $config = $calling_class->config;
     $config->model || $config->model("Maypole::Model::CDBI");
     $config->model->require;
-    die "Couldn't load the model class $config->model: $@" if $@;
+    die "Couldn't load the model class $config->{model}: $@" if $@;
     $config->model->setup_database( $config, $calling_class, @_ );
     for my $subclass ( @{ $config->classes } ) {
         no strict 'refs';
@@ -222,6 +222,13 @@ sub send_output {
     die "Do not use Maypole directly; use Apache::MVC or similar";
 }
 
+# Session and Repeat Submission Handling
+
+sub make_random_id {
+    use Maypole::Session;
+    return Maypole::Session::generate_unique_id();
+}
+
 =head1 NAME
 
 Maypole - MVC web application framework
@@ -235,7 +242,7 @@ See L<Maypole::Application>.
 This documents the Maypole request object. See the L<Maypole::Manual>, for a
 detailed guide to using Maypole.
 
-Maypole is a Perl web application framework to Java's struts. It is 
+Maypole is a Perl web application framework similar to Java's struts. It is 
 essentially completely abstracted, and so doesn't know anything about
 how to talk to the outside world.
 
@@ -464,6 +471,9 @@ This method first checks if the relevant model class
 can handle exceptions the user, or falls back to the default
 exception method of your Maypole application.
 
+=head3 make_random_id
+
+returns a unique id for this request can be used to prevent or detect repeat submissions.
 
 =head3 handler
 

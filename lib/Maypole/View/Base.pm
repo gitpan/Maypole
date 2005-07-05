@@ -10,16 +10,26 @@ sub new { bless {}, shift }    # By default, do nothing.
 sub paths {
     my ( $self, $r ) = @_;
     my $root = $r->config->template_root || $r->get_template_root;
-    return (
-        $root,
-        (
-            $r->model_class
-              && File::Spec->catdir( $root, $r->model_class->moniker )
-        ),
-        File::Spec->catdir( $root, "custom" ),
-        File::Spec->catdir( $root, "factory" )
-    );
+    if(ref($root) ne 'ARRAY') {
+	$root = [ $root ];
+    }
+    my @output = ();
+    foreach my $path (@$root) {
+	push(@output, $path);
+	push(@output,
+	     (
+              $r->model_class
+	      && File::Spec->catdir( $path, $r->model_class->moniker )
+	      )
+	     );
+	push(@output, File::Spec->catdir( $path, "custom" ));
+	push(@output, File::Spec->catdir( $path, "factory" ));
+    }
+    return @output;
 }
+
+
+
 
 sub vars {
     my ( $self, $r ) = @_;

@@ -25,6 +25,7 @@ WriteMakefile(
         Template                         => 0,
         Template::Plugin::Class          => 0,
         Test::MockModule                 => 0,
+	Digest::MD5			 => 0,
     },    # e.g., Module::Name => 1.1
     (
         $] >= 5.005

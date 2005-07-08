@@ -19,6 +19,7 @@ lib/Maypole/Manual/Request.pod
 lib/Maypole/Manual/StandardTemplates.pod
 lib/Maypole/Manual/View.pod
 lib/Maypole/Manual/Workflow.pod
+lib/Maypole/Manual/Plugins.pod
 lib/Maypole/Model/Base.pm
 lib/Maypole/Model/CDBI.pm
 lib/Maypole/Model/CDBI/Plain.pm

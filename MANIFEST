@@ -8,6 +8,7 @@ lib/Maypole/CLI.pm
 lib/Maypole/Config.pm
 lib/Maypole/Constants.pm
 lib/Maypole/Headers.pm
+lib/Maypole/Session.pm
 lib/Maypole/Manual.pod
 lib/Maypole/Manual/About.pod
 lib/Maypole/Manual/Beer.pod

@@ -6,7 +6,7 @@ sub debug { $ENV{BEERDB_DEBUG} }
 # This is the sample application.  Change this to the path to your
 # database. (or use mysql or something)
 use constant DBI_DRIVER => 'SQLite';
-use constant DATASOURCE => 't/beerdb.db';
+use constant DATASOURCE => $ENV{BEERDB_DATASOURCE} || 't/beerdb.db';
 
 BEGIN {
     my $dbi_driver = DBI_DRIVER;
@@ -25,10 +25,13 @@ BEGIN {
 # Give it a name.
 BeerDB->config->application_name('The Beer Database');
 
-# Change this to the root of the web space.
-BeerDB->config->uri_base("http://localhost/beerdb/");
-#BeerDB->config->uri_base("http://neo.trinity-house.org.uk/beerdb/");
+# Change this to the root of the web site for your maypole application.
+BeerDB->config->uri_base( $ENV{BEERDB_BASE} || "http://localhost/beerdb/" );
 
+# Change this to the htdoc root for your maypole application.
+BeerDB->config->template_root( $ENV{BEERDB_TEMPLATE_ROOT} ) if $ENV{BEERDB_TEMPLATE_ROOT};
+
+# Specify the rows per page in search results, lists, etc : 10 is a nice round number
 BeerDB->config->rows_per_page(10);
 
 # Handpumps should not show up.

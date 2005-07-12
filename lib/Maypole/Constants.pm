@@ -5,7 +5,7 @@ use constant OK       => 0;
 use constant DECLINED => -1;
 use constant ERROR    => -1;
 our @EXPORT = qw(OK DECLINED ERROR);
-our $VERSION = "1." . sprintf "%04d", q$Rev: 337 $ =~ /: (\d+)/;
+our $VERSION = "1." . sprintf "%04d", q$Rev: 354 $ =~ /: (\d+)/;
 
 1;
 
@@ -43,7 +43,7 @@ L<Maypole>
 
 =head1 MAINTAINER
 
-Sebastian Riedel, c<sri@oook.de>
+Aaron Trevena, c<teejay@droogs.org>
 
 =head1 AUTHOR
 

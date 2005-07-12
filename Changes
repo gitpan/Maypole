@@ -2,7 +2,7 @@ This file documents the revision history for Perl extension Maypole.
 For information about current developments and future releases, see:
     http://maypole.perl.org/?TheRoadmap
 
-2.10 Tues 5 Jul 2005
+2.10_pre3 Tues 12 Jul 2005
     Multiple Template Paths added ( http://rt.cpan.org/NoAuth/Bug.html?id=13447 )
     Small fix to templates/factory/frontpage ( http://rt.cpan.org/NoAuth/Bug.html?id=11236 )
     MasonX support in Maypole::Application ( https://rt.cpan.org/NoAuth/Bug.html?id=12383 )

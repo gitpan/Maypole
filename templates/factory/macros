@@ -59,7 +59,7 @@ for some.
         "<td>";
         IF col == "url" AND item.url;
             '<a href="'; item.url; '"> '; item.url; '</a>';
-        ELSIF col == item.stringify_column;
+        ELSIF col == classmetadata.stringify_column;
             maybe_link_view(item);
         ELSE;
             accessor = item.accessor_name(col);
@@ -128,7 +128,7 @@ This takes an object and and displays its properties in a table.
 
 #%]
 [% MACRO view_item(item) BLOCK; %]
-    [% SET string = item.stringify_column %]
+    [% SET string = classmetadata.stringifycolumn %]
     <div id="title"> [% item.$string %]</div>
     [% INCLUDE navbar %]
     <table class="view">

@@ -2,7 +2,7 @@ This file documents the revision history for Perl extension Maypole.
 For information about current developments and future releases, see:
     http://maypole.perl.org/?TheRoadmap
 
-2.10_pre3 Tues 12 Jul 2005
+2.10 Tue 19 Jul 2005
     Multiple Template Paths added ( http://rt.cpan.org/NoAuth/Bug.html?id=13447 )
     Small fix to templates/factory/frontpage ( http://rt.cpan.org/NoAuth/Bug.html?id=11236 )
     MasonX support in Maypole::Application ( https://rt.cpan.org/NoAuth/Bug.html?id=12383 )
@@ -11,6 +11,9 @@ For information about current developments and future releases, see:
     Fix to setup_database in Maypole::Model::CDBI ( Bug #12384 )
     Fix to plugin to allow Maypole::Plugin::Config::YAML to work
     Fix to Maypole::Model::CDBI order sub from list
+    Improvement to primary display column using CDBI
+    Improved efficiency of finding stringified columns using new classmetadata field
+    Fixed BeerDB to untaint pub fields
 
     Additional Requirements : Digest::MD5
 

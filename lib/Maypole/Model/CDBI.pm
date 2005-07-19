@@ -152,6 +152,7 @@ sub stringify_column {
     my $class = shift;
     return (
         $class->columns("Stringify"),
+        ( grep { /^(name|title)$/i } $class->columns ),
         ( grep { /(name|title)/i } $class->columns ),
         ( grep { !/id$/i } $class->primary_columns ),
     )[0];

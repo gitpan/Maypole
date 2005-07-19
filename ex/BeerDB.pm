@@ -43,6 +43,8 @@ BeerDB::Beer->untaint_columns(
     integer => [qw/style brewery score/],
     date =>[ qw/date/],
 );
+BeerDB::Pub->untaint_columns(printable => [qw/name notes url/]);
+
 BeerDB->config->{loader}->relationship($_) for (
     "a brewery produces beers",
     "a style defines beers",

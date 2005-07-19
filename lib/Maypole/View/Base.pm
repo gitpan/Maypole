@@ -55,6 +55,7 @@ sub vars {
         $classmeta->{moniker}           ||= $class->moniker;
         $classmeta->{plural}            ||= $class->plural_moniker;
         $classmeta->{cgi}               ||= { $class->to_cgi };
+	$classmeta->{stringify_column}  ||= $class->stringify_column;
 
         # User-friendliness facility for custom template writers.
         if ( @{ $r->objects || [] } > 1 ) {

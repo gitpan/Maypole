@@ -2,11 +2,12 @@ package BeerDB;
 use Maypole::Application;
 use Class::DBI::Loader::Relationship;
 
-sub debug { $ENV{BEERDB_DEBUG} }
+sub debug { $ENV{BEERDB_DEBUG} || 0 }
 # This is the sample application.  Change this to the path to your
 # database. (or use mysql or something)
 use constant DBI_DRIVER => 'SQLite';
 use constant DATASOURCE => $ENV{BEERDB_DATASOURCE} || 't/beerdb.db';
+
 
 BEGIN {
     my $dbi_driver = DBI_DRIVER;

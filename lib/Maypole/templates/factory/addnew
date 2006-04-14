@@ -30,12 +30,12 @@ table.
             elem.as_XML; %]
 	    </label>
         [% IF errors.$col %]
-           <span class="error">[% errors.$col %]</span>
+           <span class="error">[% errors.$col | html  %]</span>
         [% END %]
 
     [% END; %]
-    <input type="submit" name="create" value="create"/>
-    <input type="hidden" name="__form_id" value="[% request.make_random_id %]">
+    <input type="submit" name="create" value="create" />
+    <input type="hidden" name="__form_id" value="[% request.make_random_id %]" />
 </fieldset>
 </form>
 </div>

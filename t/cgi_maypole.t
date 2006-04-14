@@ -108,11 +108,13 @@ SKIP: {
     };
     diag $@ if $@;
 
-    $compare = join "\cM\cJ", 'Content-length: 12',
-        'X-bender: kiss my shiny metal ass',
+    my $CL = 'Content-length: 12';
+    my $XB = 'X-bender: kiss my shiny metal ass';
+    my $nl = "\cM\cJ";
+    my $re = join $nl, "($CL$nl$XB)|($XB$nl$CL)",
         'Content-Type: text/plain; charset=iso8859-1',
         '', 'Hello World!';
-    is($stdout, $compare, '... prints output, including custom headers');
+    like($stdout, qr/$re/, '... prints output, including custom headers');
 }
 
 # get_template_root()

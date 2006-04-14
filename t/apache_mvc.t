@@ -3,7 +3,7 @@ use strict;
 use Test::More;
 BEGIN {
     if (eval { require Apache::Request }) {
-        plan tests => 2;
+        plan tests => 3;
     } else {
         Test::More->import(skip_all =>"Apache::Request is not installed: $@");
     }
@@ -11,6 +11,7 @@ BEGIN {
 
 require_ok('Apache::MVC');
 ok($Apache::MVC::VERSION, 'defines $VERSION');
+ok(Apache::MVC->can('ar'), 'defines an "ar" accessor');
 # defines $VERSION
 # uses mod_perl
 # @ISA = 'Maypole'

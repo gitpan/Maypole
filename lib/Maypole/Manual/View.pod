@@ -408,6 +408,23 @@ C<template_args> hash in the request object, and supply its value:
 You can also override the value of any of the standard variables by
 giving their name as the key.
 
+=head2 Accessing other classes
+
+When building a frontpage, login or other template that isn't directly
+linked to a particular table, (and therefore it's class,) that you wish to
+use, you can access the classes directly.
+
+When using C<Maypole::View::TT> you are reccomended to use Richard Clamp's
+incredibly useful Template::Plugin::Class -- see the and Template::Plugin::Class
+and C<Maypole::View::TT> documentation for details.
+
+Mason and MasonX views also allow you to pull in arbitary classes, see
+the relevent Mason and Plugin/View documentation for details.
+
+If you are using HTML::Template you are out of luck on this front due
+to philosophy and architecture this templating system cannot call code,
+and only reads the data provided when the template is processed.
+
 =head2 Other view classes
 
 Please note that these template variables, C<config>, C<classmetadata>,
@@ -551,3 +568,5 @@ Patches are always welcome!
 L<Contents|Maypole::Manual>,
 Next L<Standard Templates and Actions|Maypole::Manual::StandardTemplates>,
 Previous L<Maypole Model Classes|Maypole::Manual::Model>,
+
+=cut

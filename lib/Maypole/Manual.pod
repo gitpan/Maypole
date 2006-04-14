@@ -71,6 +71,15 @@ This document also introduces the theory behind Maypole's
 actions and templates, showing you how to write your own
 so that you can have a highly customized application.
 
+=item L<Maypole::Manual::Plugins> - writing Maypole plugins
+
+Useful information for plugin authors. 
+
+=item L<Maypole::Manual::Terminology> - pinning down usage
+
+As well as defining common terms used in Maypole discussions, this document 
+briefly discusses the MVC-ness of Maypole. 
+
 =item L<Maypole::Manual::Workflow> - Description of the Request Workflow 
 
 This is a technical document that describes the progress of a
@@ -83,7 +92,7 @@ and not to most of those who are using it.
 This document gives a close look at the Beer database that
 was introduced in L<Maypole::Manual::About>.
 
-=item L<Maypole::Manual::Request> - The Request Cookbook 
+=item L<Maypole::Manual::Cookbook> - The Maypole Cookbook 
 
 This extensive document is Maypole's main "How do I do X?" FAQ.
 It provides a wide variety of cookbook-like techniques that

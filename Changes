@@ -2,6 +2,98 @@ This file documents the revision history for Perl extension Maypole.
 For information about current developments and future releases, see:
     http://maypole.perl.org/?TheRoadmap
 
+2.11 
+
+Deprecated:
+    Directly accessing the attributes of the request object, or the parameters 
+    in $r->params, or anything else, is DEPRECATED and likely to break in future 
+    releases. Be good, and use proper method calls.
+
+Incompatible API changes:
+    Maypole:
+	 - is_applicable() deprecated for is_model_applicable(). is_applicable is
+         an alias for is_model_applicable now.        
+    Maypole::Model
+	- delete and search actions are now deprecated - use do_search and do_delete
+	  instead
+    Maypole::View
+	- table name rather than moniker is used to find templates
+
+API additions and enhancements:
+    Maypole::Application:
+    	- -Init flag (wishlist 14123)
+        - recognises Maypole::HTTPD and installs Maypole::HTTPD::Frontend
+            as its frontend
+    Maypole::Headers:
+    	add() alias to push() (wishlist 14142)
+    Maypole:
+        - get_session() method (no-op)
+        - get_user() method (no-op)
+        - get_session() is called during handler_guts() before authenticate()
+        - new preprocess_path() method added and called by parse_path(), 
+	        parse_path() will leave any properties set by preprocess_path() in 
+            place
+        - start_request_hook() added
+        - status() attribute added (though only used by start_request_hook() 
+            so far)
+        - setup() split into setup(), setup_model(), and load_model_subclass()
+        - added new path processing methods for ssl and default table/action
+        - added make_path() 
+        - added make_uri()
+	- improved exception handling
+	- now uses File::MMagic::XS to guess mime type of output unless already set
+	- new component method provides Maypole::Component functionality
+     Maypole::Model
+	- do_delete, do_search in place of delete/search actions
+     Maypole::View::TT:
+	- new report_error method
+	- new embedded error report page in __DATA__
+     Templates:
+        - Improved pager macro/include
+	- Improved factory templates
+        - added the status() attribute, although it's not used in many places 
+            yet
+     Maypole::Model::CDBI
+	- improved error messages in do_edit action
+
+Bug fixes:
+    Fix to cgi_maypole.t (bug 11346)
+    Fix to TT error reporting (bug 13991)
+    Template xhtml validation (bug 13975)
+    Apache2 fixes in Apache::MVC (bug 13888)
+    Fixed inheritance issues in Mp::Application - Mp::App now manipulates the 
+        caller's @ISA directly, and doesn't inject itself into the chain (bugs 
+        12923 & 14120)
+    Improved Template error reporting (14133)
+    Maypole::Session::generate_unique_id() now returns the id (bug 14124)
+    Moved ar accessor to Apache::MVC (bug 14014)
+    Refactored core to support further development in 2.11 and onwards
+    Fixed related_class() method (bug 14566)
+    Added a cgi() attribute in Maypole::CGI
+    Factory templates now less vulnerable to XSS (bug 16659)
+    Reduced risk of XSS in factory templates (bug 16659)
+    model search/delete methods in model and subclassing the cdbi mode (bug 16661)
+    fixed problems with stringify_self and untaint missing ignore columns (bug 15678)
+    fixed Maypole::Model::CDBI::Plain to JustWork(TM) with plain CDBI Classes (bug 16977)
+    some silent death scenarios resolved
+
+Documentation:
+    Fix to documentation for CGI::Maypole (bug 7263)
+    Simplified Net::Amazon example (bug 14073)
+    Numerous major and minor updates to docs.
+    Renamed Maypole::Manual::Request to Maypole::Manual::Cookbook
+	Added Maypole::Manual::Install, with material removed from 
+	    Maypole::Manual::About
+	Added Maypole::Manual::Inheritance
+	Added Maypole::Manual::Terminology
+        - updated Maypole::Manual::View
+        - updated Maypole::View:TT
+
+Requirements:
+   HTTP::Body now required
+   CGI::Untaint >= 1.26 now required rather than >= 0
+
+
 2.10 Tue 19 Jul 2005
     Multiple Template Paths added ( http://rt.cpan.org/NoAuth/Bug.html?id=13447 )
     Small fix to templates/factory/frontpage ( http://rt.cpan.org/NoAuth/Bug.html?id=11236 )

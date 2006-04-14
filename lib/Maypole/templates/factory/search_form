@@ -3,7 +3,7 @@
 <fieldset>
 <legend>Search</legend>
         [% FOR col = classmetadata.columns;
-            NEXT IF col == "id";
+            NEXT IF col == "id" OR col == classmetadata.table _ "_id";
          %]
 	    <label>
                 <span class="field">[% classmetadata.colnames.$col; %]</span>

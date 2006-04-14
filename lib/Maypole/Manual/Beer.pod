@@ -185,11 +185,14 @@ The equivalent in ordinary C<Class::DBI> would be:
 
        BeerDB::Handpump->has_a(beer => "BeerDB::Beer");
        BeerDB::Handpump->has_a(pub => "BeerDB::Pub");
-       BeerDB::Pub->has_many(beers => [ BeerDB::Handpump => 'beer' ]);
-       BeerDB::Beer->has_many(pubs => [ BeerDB::Handpump => 'pub' ]);
+       BeerDB::Pub->has_many(beers => [ 'BeerDB::Handpump' => 'beer' ]);
+       BeerDB::Beer->has_many(pubs => [ 'BeerDB::Handpump' => 'pub' ]);
 
 Maypole's default templates will use this information to display, for
 instance, a list of a brewery's beers on the brewery view page.
+
+Note the quoting in 'BeerDB::Handpump' => 'beer', if you forget to quote the
+left side when using strict you will get compilation errors.
 
 This is the complete beer database application; Maypole's default templates
 and the actions in the view class do the rest. But what if we want to do a

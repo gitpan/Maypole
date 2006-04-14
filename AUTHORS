@@ -3,17 +3,20 @@ AUTHORS
 
 The following people have written and documented Maypole:
 
-Simon Cozens - Original Author
-Sebastian Riedel - Maintainer
-Simon Flack - Maintainer
-Aaron Trevena - Maintainer
-Dave Howarth - Contributor
+Simon Cozens - Author Emeritus
+Sebastian Riedel - Maintainer (1.x to 2.x)
+Simon Flack - Maintainer ( 2.x to 2.9 )
+Aaron Trevena - Maintainer (2.10 to present)
+Dave Howorth - Developer
+David Baird - Developer
 
 Thanks also to for fixes and other contributions:
 
 Randal Schwartz
 Jester
-David Baird
-David Howorth
 Marcus Ramberg
 Steven Simms
+Kevin Connor
+Dagfinn Ilmari Mannsåker
+Danijel Milicevic
+Dave Slack

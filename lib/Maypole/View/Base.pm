@@ -19,12 +19,13 @@ sub paths {
 	push(@output,
 	     (
               $r->model_class
-	      && File::Spec->catdir( $path, $r->model_class->moniker )
+	      && File::Spec->catdir( $path, $r->model_class->table )
 	      )
 	     );
 	push(@output, File::Spec->catdir( $path, "custom" ));
 	push(@output, File::Spec->catdir( $path, "factory" ));
     }
+
     return @output;
 }
 
@@ -73,8 +74,6 @@ sub vars {
 
 sub process {
     my ( $self, $r ) = @_;
-    $r->{content_type}      ||= "text/html";
-    $r->{document_encoding} ||= "utf-8";
     my $status = $self->template($r);
     return $self->error($r) if $status != OK;
     return OK;
@@ -83,38 +82,41 @@ sub process {
 sub error {
     my ( $self, $r, $desc ) = @_;
     $desc = $desc ? "$desc: " : "";
-    carp $desc . $r->{error};
     if ( $r->{error} =~ /not found$/ ) {
-
+	warn "template not found error : ", $r->{error};
         # This is a rough test to see whether or not we're a template or
         # a static page
         return -1 unless @{ $r->{objects} || [] };
 
+	my $template_error = $r->{error};
         $r->{error} = <<EOF;
+<h1> Template not found </h1>
 
-<H1> Template not found </H1>
+A template was not found while processing the following request:
 
-This template was not found while processing the following request:
+<strong>@{[$r->{action}]}</strong> on table
+<strong>@{[ $r->{table} ]}</strong> with objects:
 
-<B>@{[$r->{action}]}</B> on table <B>@{[ $r->{table} ]}</B> with objects:
-
-<PRE>
+<pre>
 @{[join "\n", @{$r->{objects}}]}
-</PRE>
+</pre>
 
-Looking for template <B>@{[$r->{template}]}</B> in paths:
 
-<PRE>
+The main template is <strong>@{[$r->{template}]}</strong>.
+The template subsystem's error message was
+<pre>
+$template_error
+</pre>
+We looked in paths:
+
+<pre>
 @{[ join "\n", $self->paths($r) ]}
-</PRE>
+</pre>
 EOF
         $r->{content_type} = "text/html";
         $r->{output}       = $r->{error};
         return OK;
     }
-    $r->{content_type} = "text/plain";
-    $r->{output}       = $r->{error};
-    $r->send_output;
     return ERROR;
 }
 

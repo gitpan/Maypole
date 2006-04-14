@@ -16,7 +16,7 @@ MACRO link(table, command, additional, label) BLOCK;
     SET lnk = base _ "/" _ table _ "/" _ command _ "/" _ additional;
     lnk = lnk | uri | html;
     '<a href="' _ lnk _ '">';
-    label;
+    label | html;
     "</a>";
 END;
 %]
@@ -37,7 +37,7 @@ MACRO maybe_link_view(object) BLOCK;
     IF object.isa('Maypole::Model::Base');
         link(object.table, "view", object.id.join('/'), object);
     ELSE;
-        object;
+        object | html ;
     END;
 END;
 %]
@@ -55,16 +55,21 @@ for some.
 #%]
 [% MACRO display_line(item) BLOCK;
     FOR col = classmetadata.list_columns;
-        NEXT IF col == "id";
+	NEXT IF col == "id" OR col == classmetadata.table _ "_id";
+	col_obj = item.find_column(col);
         "<td>";
         IF col == "url" AND item.url;
-            '<a href="'; item.url; '"> '; item.url; '</a>';
+            '<a href="'; item.url | html ; '"> '; item.url; '</a>';
         ELSIF col == classmetadata.stringify_column;
             maybe_link_view(item);
-        ELSE;
-            accessor = item.accessor_name(col);
+ 		ELSIF col_obj; # its a real column
+            accessor = item.accessor_name_for(col_obj) ||
+			           item.accessor_name(col_obj); # deprecated in cdbi
             maybe_link_view(item.$accessor);
+        ELSE; 
+            item.$col;
         END;
+
         "</td>";
     END;
     '<td class="actions">';
@@ -128,16 +133,16 @@ This takes an object and and displays its properties in a table.
 
 #%]
 [% MACRO view_item(item) BLOCK; %]
-    [% SET string = classmetadata.stringifycolumn %]
-    <div id="title"> [% item.$string %]</div>
+    [% SET string = classmetadata.stringify_column %]
+    <div id="title"> [% item.$string | html %]</div>
     [% INCLUDE navbar %]
     <table class="view">
         <tr>
             <td class="field">[% classmetadata.colnames.$string %]</td>
-            <td>[% item.$string %]</td>
+            <td>[% item.$string | html %]</td>
         </tr>
         [% FOR col = classmetadata.columns.list;
-            NEXT IF col == "id" OR col == string;
+            NEXT IF col == "id" OR col == string OR col == classmetadata.table _ "_id";;
             NEXT UNLESS item.$col;
         %]
 [%# 
@@ -152,7 +157,7 @@ from the C<column_names> method:
                 <td class="field">[% classmetadata.colnames.$col; %]</td>
                 <td>
                     [% IF col == "url" && item.url;  # Possibly too much magic.
-                        '<a href="'; item.url; '"> '; item.url; '</a>';
+                        '<a href="'; item.url | html ; '"> '; item.url; '</a>';
                     ELSE;
                         maybe_link_view(item.$col); 
                     END; %]

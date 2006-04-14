@@ -4,11 +4,22 @@ use strict;
 use Maypole::Constants;
 use attributes ();
 
+# don't know why this is a global - drb
 our %remember;
 
-sub MODIFY_CODE_ATTRIBUTES { $remember{ $_[1] } = $_[2]; () }
+sub MODIFY_CODE_ATTRIBUTES 
+{ 
+    shift; # class name not used
+    my ($coderef, @attrs) = @_;
+    
+    $remember{$coderef} = \@attrs; 
+    
+    # previous version took care to return an empty array, not sure why, 
+    # but shall cargo cult it until know better
+    return; 
+}
 
-sub FETCH_CODE_ATTRIBUTES { $remember{ $_[1] } || () }
+sub FETCH_CODE_ATTRIBUTES { @{ $remember{$_[1]} || [] } }
 
 sub process {
     my ( $class, $r ) = @_;
@@ -18,6 +29,7 @@ sub process {
     $r->{template} = $method;
     my $obj = $class->fetch_objects($r);
     $r->objects([$obj]) if $obj;
+    
     $class->$method( $r, $obj, @{ $r->{args} } );
 }
 
@@ -178,15 +190,38 @@ Defaults to checking if the sub has the C<:Exported> attribute.
 =cut
 
 sub is_public {
-    my ( $self, $action ) = @_;
+    my ( $self, $action, $attrs ) = @_;
     my $cv = $self->can($action);
-    return 0 unless $cv;
-    my $attrs = join " ", (attributes::get($cv) || ());
+    warn "is_public failed . action is $action. self is $self" and return 0 unless $cv;
+
+    my %attrs = (ref $attrs) ?  %$attrs : map {$_ => 1} $self->method_attrs($action,$cv) ;
+
     do {
-        warn "$action not exported" if Maypole->debug;
-        return 0;
-    } unless $attrs =~ /\bExported\b/i;
+	warn "is_public failed. $action not exported. attributes are : ", %attrs;
+	return 0;
+    } unless $attrs{Exported};
     return 1;
+}
+
+
+
+=head2 method_attrs
+
+Returns the list of attributes defined for a method. Maypole itself only
+defines the C<Exported> attribute. 
+
+=cut
+
+sub method_attrs {
+    my ($class, $method, $cv) = @_;
+    
+    $cv ||= $class->can($method);
+    
+    return unless $cv;
+    
+    my @attrs = attributes::get($cv);
+
+    return @attrs;
 }
 
 =head2 related

@@ -4,7 +4,7 @@ use base 'HTTP::Headers';
 use strict;
 use warnings;
 
-our $VERSION = "1." . sprintf "%04d", q$Rev: 324 $ =~ /: (\d+)/;
+our $VERSION = "1." . sprintf "%04d", q$Rev: 376 $ =~ /: (\d+)/;
 
 sub get {
     shift->header(shift);
@@ -13,6 +13,8 @@ sub get {
 sub set {
     shift->header(@_);
 }
+
+*add = \&push; # useful for Apache::Session::Wrapper support
 
 sub push {
     shift->push_header(@_);
@@ -83,6 +85,10 @@ An alias to C<HTTP::Headers-E<gt>header>
 Add a value to the field named C<$header>. Previous values are maintained.
 
 An alias to C<HTTP::Headers-E<gt>push_header>
+
+=item add
+
+Alias to C<push> - useful for C<Apache::Session::Wrapper> support, in CGI mode.
 
 =item init($header =C<gt> $value)
 

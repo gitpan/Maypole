@@ -5,20 +5,6 @@ use strict;
 
 Maypole::Config->mk_accessors(qw(table_to_class));
 
-sub setup_database {
-    my ( $self, $config, $namespace, $classes ) = @_;
-    $config->{classes}        = $classes;
-    $config->{table_to_class} = { map { $_->table => $_ } @$classes };
-    $config->{tables}         = [ keys %{ $config->{table_to_class} } ];
-}
-
-sub class_of {
-    my ( $self, $r, $table ) = @_;
-    return $r->config->{table_to_class}->{$table};
-}
-
-1;
-
 =head1 NAME
 
 Maypole::Model::CDBI::Plain - Class::DBI model without ::Loader
@@ -26,9 +12,7 @@ Maypole::Model::CDBI::Plain - Class::DBI model without ::Loader
 =head1 SYNOPSIS
 
     package Foo;
-    use base 'Maypole::Application';
-    use Foo::SomeTable;
-    use Foo::Other::Table;
+    use 'Maypole::Application';
 
     Foo->config->model("Maypole::Model::CDBI::Plain");
     Foo->setup([qw/ Foo::SomeTable Foo::Other::Table /]);
@@ -42,15 +26,63 @@ tables and set up the inheritance relationships as normal.
 
 =head1 METHODS
 
-=over 4
+=head2 setup
 
-=item setup_database
+  This method is inherited from Maypole::Model::Base and calls setup_database,
+  which uses Class::DBI::Loader to create and load Class::DBI classes from
+  the given database schema.
 
-=item  class_of
+=head2 setup_database
 
-=back
-
-See L<Maypole::Model::Base>
+  This method loads the model classes for the application
 
 =cut
+
+
+
+sub setup_database {
+    my ( $self, $config, $namespace, $classes ) = @_;
+    $config->{classes}        = $classes;
+    foreach my $class (@$classes) { $namespace->load_model_subclass($class); }
+    $namespace->model_classes_loaded(1);
+    $config->{table_to_class} = { map { $_->table => $_ } @$classes };
+    $config->{tables}         = [ keys %{ $config->{table_to_class} } ];
+}
+
+=head2 class_of
+
+  returns class for given table
+
+=cut
+
+sub class_of {
+    my ( $self, $r, $table ) = @_;
+    return $r->config->{table_to_class}->{$table};
+}
+
+=head2 adopt
+
+This class method is passed the name of a model class that represensts a table
+and allows the master model class to do any set-up required.
+
+=cut
+
+sub adopt {
+    my ( $self, $child ) = @_;
+    if ( my $col = $child->stringify_column ) {
+        $child->columns( Stringify => $col );
+    }
+}
+
+=head1 SEE ALSO
+
+L<Maypole::Model::Base>
+
+L<Maypole::Model::CDBI>
+
+=cut
+
+
+1;
+
 

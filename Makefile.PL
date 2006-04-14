@@ -16,23 +16,29 @@ WriteMakefile(
         Class::DBI::Loader::Relationship => 0,
         Class::DBI                       => 0.96,
         Class::DBI::SQLite               => 0,
-        CGI::Untaint                     => 0,
+        CGI::Untaint                     => 1.26,
+	CGI::Untaint::date		 => 0,
+	CGI::Untaint::email		 => 0,
         UNIVERSAL::moniker               => 0,
         UNIVERSAL::require               => 0,
+        URI                              => 0,
         URI::QueryParam                  => 0,
         CGI::Simple                      => 0,
         HTTP::Headers                    => 1.59,
+ 	HTTP::Body			 => 0.5,
         Template                         => 0,
         Template::Plugin::Class          => 0,
         Test::MockModule                 => 0,
-	Digest::MD5			 => 0,
+        Digest::MD5			 => 0,
+	File::MMagic::XS		=> 0.08,
+	Class::DBI::Plugin::Type	=> 0,
     },    # e.g., Module::Name => 1.1
     (
         $] >= 5.005
         ?    ## Add these new keywords supported since 5.005
           (
             ABSTRACT_FROM => 'lib/Maypole.pm',   # retrieve abstract from module
-            AUTHOR => 'Simon flack <simonflk#cpan.org>'
+            AUTHOR => 'Aaron TEEJAY Trevena <teejay#droogs.org>'
           )
         : ()
     ),

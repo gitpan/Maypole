@@ -1,13 +1,16 @@
-# vim:ft=perl
+#!/usr/bin/perl -w
 use Test::More;
 use lib 'ex'; # Where BeerDB should live
 BEGIN {
+    $ENV{BEERDB_DEBUG} = 2;
+
     eval { require BeerDB };
     Test::More->import( skip_all =>
         "SQLite not working or BeerDB module could not be loaded: $@"
     ) if $@;
 
-    plan tests => 15;
+    plan tests => 18;
+    
 }
 use Maypole::CLI qw(BeerDB);
 use Maypole::Constants;
@@ -42,3 +45,7 @@ is($classdata{list_columns}, 'score name price style brewery url',
    'classdata.list_columns');
 is ($classdata{related_accessors},'pubs','classdata.related_accessors');
 
+# test Maypole::load_custom_class()
+can_ok(BeerDB::Beer => 'fooey');     # defined in BeerDB::Beer
+can_ok(BeerDB::Beer => 'floob');     # defined in BeerDB::Base
+is_deeply( [@BeerDB::Beer::ISA], [qw/Maypole::Model::CDBI Class::DBI::SQLite BeerDB::Base/] );

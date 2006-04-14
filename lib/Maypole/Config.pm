@@ -5,7 +5,7 @@ use attributes ();
 use strict;
 use warnings;
 
-our $VERSION = "1." . sprintf "%04d", q$Rev: 333 $ =~ /: (\d+)/;
+our $VERSION = "1." . sprintf "%04d", q$Rev: 334 $ =~ /: (\d+)/;
 
 # Public accessors.
 __PACKAGE__->mk_accessors(

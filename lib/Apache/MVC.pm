@@ -5,6 +5,9 @@ our $VERSION = '2.11';
 use strict;
 use warnings;
 
+use URI;
+use URI::QueryParam;
+
 use base 'Maypole';
 use Maypole::Headers;
 use Maypole::Constants;
@@ -14,10 +17,7 @@ __PACKAGE__->mk_accessors( qw( ar ) );
 our $MODPERL2;
 our $modperl_version;
 
-# pjs -- fixed to use standard way from perl.apache.org
 BEGIN {
-    #eval 'use Apache;'; # could fuck shit up if you have some file na
-    # named Apache.pm in your path forex CGI/Apache.pm
     $MODPERL2  = ( exists $ENV{MOD_PERL_API_VERSION} and
                         $ENV{MOD_PERL_API_VERSION} >= 2 );
     if ($MODPERL2) {
@@ -40,8 +40,6 @@ BEGIN {
     }
 
 }
-
-
 
 =head1 NAME
 
@@ -122,7 +120,6 @@ sub parse_location {
         $path =~ s/^($loc)?\///;
     }
     $self->path($path);
-    
     $self->parse_path;
     $self->parse_args;
 }
@@ -141,8 +138,6 @@ sub parse_args {
 
 =cut
 
-# FIXME: use headers_in to gather host and other information?
-# pjs 4-7-06 fixed so it works but did not fix headers_in issue  
 sub redirect_request
 {
   my $r = shift;
@@ -164,7 +159,6 @@ sub redirect_request
 
   $r->ar->status($status);
   $r->ar->headers_out->set('Location' => $redirect_url);
-  #$r->output("");
   return OK;
 }
 
@@ -230,6 +224,23 @@ sub _mod_perl_args {
     } else {
       my $body = $self->_prepare_body($apr);
       %args = %{$body->param};
+      my $uri = URI->new($self->ar->uri);
+      foreach my $key ($uri->query_param) {
+	if (ref $args{$key}) {
+	  push (@{$args{$key}}, $uri->query_param($key));
+	} else {
+	  if ($args{$key}) {
+	    $args{$key} = [ $args{$key}, $uri->query_param($key) ];
+	  } else {
+	    my @args = $uri->query_param($key);
+	    if (scalar @args > 1) {
+	      $args{$key} = [ $uri->query_param($key) ];
+	    } else {
+	      $args{$key} = $uri->query_param($key);
+	    }
+	  }
+	}
+      }
     }
     return %args;
 }

@@ -12,7 +12,7 @@ use URI::QueryParam;
 use NEXT;
 use File::MMagic::XS qw(:compat);
 
-our $VERSION = '2.11_pre1';
+our $VERSION = '2.11_pre2';
 our $mmagic = File::MMagic::XS->new();
 
 # proposed privacy conventions:
@@ -453,20 +453,14 @@ sub handler : method  {
   $self->status(Maypole::Constants::OK()); # set the default
   $self->__call_hook('start_request_hook');
   return $self->status unless $self->status == Maypole::Constants::OK();
-    
   die "status undefined after start_request_hook()" unless defined
     $self->status;
-    
   $self->get_session;
   $self->get_user;
-    
   my $status = $self->handler_guts;
-
   return $status unless $status == OK;
-
   # TODO: require send_output to return a status code
   $self->send_output;
-
   return $status;
 }
 

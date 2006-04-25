@@ -11,7 +11,6 @@ WriteMakefile(
         Class::DBI::AbstractSearch       => 0,
         Class::DBI::Pager                => 0,
         Class::DBI::Plugin::RetrieveAll  => 0,
-        Class::DBI::AsForm               => 2.2,
         Class::DBI::FromCGI              => 0.94,
         Class::DBI::Loader::Relationship => 0,
         Class::DBI                       => 0.96,

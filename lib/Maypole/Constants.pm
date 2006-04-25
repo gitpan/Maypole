@@ -3,9 +3,9 @@ use strict;
 use base 'Exporter';
 use constant OK       => 0;
 use constant DECLINED => -1;
-use constant ERROR    => -1;
+use constant ERROR    => 500;
 our @EXPORT = qw(OK DECLINED ERROR);
-our $VERSION = "1." . sprintf "%04d", q$Rev: 355 $ =~ /: (\d+)/;
+our $VERSION = "1." . sprintf "%04d", q$Rev: 483 $ =~ /: (\d+)/;
 
 1;
 

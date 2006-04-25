@@ -9,6 +9,9 @@ Deprecated:
     in $r->params, or anything else, is DEPRECATED and likely to break in future 
     releases. Be good, and use proper method calls.
 
+    Maypole no longer uses Class::DBI::AsForm, instead Maypole::Model::CDBI::AsForm
+    has replaced it.
+
 Incompatible API changes:
     Maypole:
 	 - is_applicable() deprecated for is_model_applicable(). is_applicable is

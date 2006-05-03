@@ -12,7 +12,7 @@ use URI::QueryParam;
 use NEXT;
 use File::MMagic::XS qw(:compat);
 
-our $VERSION = '2.11_pre2';
+our $VERSION = '2.11_pre3';
 our $mmagic = File::MMagic::XS->new();
 
 # proposed privacy conventions:
@@ -401,11 +401,16 @@ Constructs a very minimal new Maypole request object.
 sub new
 {
     my ($class) = @_;
-    
     my $self = bless {
-        template_args => {},
         config        => $class->config,
     }, $class;
+
+	$self->stash({});
+	$self->params({});
+	$self->query({});
+	$self->template_args({});
+	$self->args([]);
+	$self->objects([]);
     
     return $self;
 }
@@ -486,7 +491,14 @@ to the method
 
 sub component {
     my ( $r, $path ) = @_;
-    my $self = bless { parent => $r, config => $r->{config}, template_args => {}, }, ref $r;
+    my $self = bless { parent => $r, config => $r->{config}, } , ref $r;
+	$self->stash({});
+	$self->params({});
+	$self->query({});
+	$self->template_args({});
+	$self->args([]);
+	$self->objects([]);
+
     $self->get_user;
     my $url = URI->new($path);
     warn "path : $path\n";

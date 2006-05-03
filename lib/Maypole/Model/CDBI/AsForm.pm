@@ -31,7 +31,7 @@ our @EXPORT =
 		_to_foreign_inputs _to_enum_select _to_bool_select
 		_to_hidden _to_link_hidden _rename_foreign_input _to_readonly
 		_options_from_objects _options_from_arrays _options_from_hashes 
-		_options_from_array _options_from_hash _to_select_or_create
+		_options_from_array _options_from_hash 
     );
 				
 our $VERSION = '.10'; 
@@ -383,8 +383,6 @@ Override at will.
 
 sub _field_from_how {
 	my ($self, $field, $how, $args) = @_;
-	#if (ref $how) { $args = $how; $how = undef; }
-#warn "In filed from how . filed is $field how is $how. args ar e" . Dumper($args) . " \n";
 	return unless $how;
 	$args ||= {};
 	no strict 'refs';
@@ -408,7 +406,6 @@ For has_a it will give select box
 
 sub _field_from_relationship {
 	my ($self, $field, $args) = @_;
-#warn "In filed from rel . filed is $field \n";
 	return unless $field;
 	my $rel_meta = $self->related_meta('r',$field) || return; 
 	my $rel_name = $rel_meta->{name};
@@ -418,7 +415,6 @@ sub _field_from_relationship {
 	my $fclass_is_cdbi = $fclass ? $fclass->isa('Class::DBI') : 0;
 
 	# maybe has_a select 
-	#warn "Dumper of relmeta. " . Dumper($rel_meta);
 	if ($rel_meta->{name} eq 'has_a' and $fclass_is_cdbi) {
 	    # This condictions allows for trumping of the has_a args
 		if  (not $rel_meta->{args}{no_select} and not $args->{no_select}) 
@@ -473,10 +469,8 @@ sub _field_from_column {
 	my ($self, $field, $args) = @_;
 	return unless $field;
 	my $class = ref $self || $self;
-	#warn "Class is $class\n";
 	# Get column type	
     unless ($args->{column_type}) { 
-			$args->{column_type} = $class->column_type($field);
     	if ($class->can('column_type')) {
 			$args->{column_type} = $class->column_type($field);
 		}	
@@ -489,7 +483,7 @@ sub _field_from_column {
     my $type = $args->{column_type};
 
 	return $self->_to_textfield($field, $args)
-		if $type  and $type =~ /(VAR)?CHAR/i;  #common type
+		if $type  and $type =~ /^(VAR)?CHAR/i;  #common type
 	return $self->_to_textarea($field, $args)
 		if $type and $type =~ /^(TEXT|BLOB)$/i;
 	return $self->_to_enum_select($field, $args)  
@@ -530,6 +524,8 @@ sub _to_textarea {
 
 sub _to_textfield {
     my ($self, $col, $args ) = @_;
+    use Carp qw/confess/;
+    confess "No col passed to _to_textfield" unless $col;
     $args ||= {};
     my $val  = $args->{value}; 
     my $name = $args->{name} || $col; 
@@ -542,7 +538,6 @@ sub _to_textfield {
             $val = $self->can($col) ? $self->$col : ''; # in case it is a virtual column
             if (ref $val) {
 				if (my $meta = $self->related_meta('',$col)) {
-				#warn "Meta for $col";
                		if (my $code = $meta->{args}{deflate4edit} || $meta->{args}{deflate} ) {
                     	$val  = ref $code ? &$code($val) : $val->$code;
 					}
@@ -555,7 +550,6 @@ sub _to_textfield {
 					}
                	}
 				else {
-					#warn "No meta for $col but ref $val.\n";
 					$val  = $val->id if $val->isa("Class::DBI"); 
                }
         	}
@@ -566,9 +560,11 @@ sub _to_textfield {
            	$val = '' unless defined $val;
         }
     }
-    my $a = HTML::Element->new("input", type => "text", name => $name, value =>
-								$val);
-
+	my $a;
+	# THIS If section is neccessary or you end up with "value" for a vaiue
+	# if val is 
+	$val = '' unless defined $val; 
+   	$a = HTML::Element->new("input", type => "text", name => $name, value =>$val);
     $OLD_STYLE && return $a->as_HTML;
     $a;
 }
@@ -722,9 +718,8 @@ sub _to_select {
 
 	# Get items to select from
     $args->{items} = _select_items($args);
-    #warn "Items selecting from are " . Dumper($args->{items});
-#use Data::Dumper;
-#warn "Just got items. They are  " . Dumper($args->{items});
+	#use Data::Dumper;
+	#warn "Just got items. They are  " . Dumper($args->{items});
 
 	# Make select HTML element
 	$a = $self->_select_guts($col, $args);
@@ -776,7 +771,7 @@ sub _select_items {
 	$sql .=	" WHERE " . $args->{where}   if $args->{where};
 	$sql .= " ORDER BY " . $args->{order_by} if $args->{order_by};
 	$sql .= " LIMIT " . $args->{limit} if $args->{limit};
-#warn "_select_items sql is : $sql";
+	#warn "_select_items sql is : $sql";
 
 	return $fclass->db_Main->selectall_arrayref($sql);
 
@@ -786,19 +781,16 @@ sub _select_items {
 # Makes a readonly input box out of column's value
 # No args makes object to readonly
 sub _to_readonly {
-    my ($self, $col, $val) = @_;
-    if (! $col) { # object to readonly
+    my ($self, $col, $args) = @_;
+    my $val = $args->{value};
+    if (not defined $val ) { # object to readonly
+    	$self->_croak("AsForm: To readonly field called as class method without a value") unless ref $self; 
         $val = $self->id;
         $col = $self->primary_column;
     }
-    unless (defined $val) {
-        $self->_croak("Cannot get value in _to_readonly .")
-            unless ref $self;
-        $val = $self->$col;
-    }
     my $a = HTML::Element->new('input', 'type' => 'text', readonly => '1',
         'name' => $col, 'value'=>$val);
-$OLD_STYLE && return $a->as_HTML;
+	$OLD_STYLE && return $a->as_HTML;
     $a;
 }
 
@@ -853,7 +845,6 @@ TODO -- test without bool string.
 # TCODO fix this mess with args
 sub _to_bool_select {
     my ($self, $col, $args) = @_;
-	#warn "In to_bool select\n";
 	my $type = $args->{column_type};
 	my @bool_text = ('No', 'Yes');	
 	if ($type =~ /BOOL\((.+?)\)/i) {
@@ -1157,6 +1148,8 @@ sub _select_guts {
 Private method to makes a options out of  objects. It attempts to call each
 objects stringify method specified in $args->{stringify} as the content. Otherwise the default stringification prevails.
 
+*Note only  single primary keys supported
+
 =cut
 sub _options_from_objects {
     my ($self, $items, $args) = @_;
@@ -1183,8 +1176,9 @@ sub _options_from_arrays {
 	    my @pks; # for future multiple key support
 	    push @pks, shift @$item foreach $class->columns('Primary');
 		my $id = $pks[0];
-		$id =~ ~ s/^0+//;  # In case zerofill is on .
-		my $opt = HTML::Element->new("option", value => $id );
+		$id =~ s/^0+//;  # In case zerofill is on .
+		my $val = defined $id ? $id : '';
+		my $opt = HTML::Element->new("option", value =>$val);
 		$opt->attr(selected => "selected") if $selected->{$id};
 		
 		my $content = ($class and $stringify and $class->can($stringify)) ? 
@@ -1202,7 +1196,8 @@ sub _options_from_array {
     my $selected = $args->{selected} || {};
     my @res;
     for (@$items) {
-        my $opt = HTML::Element->new("option", value => $_ );
+		my $val = defined $_ ? $_ : '';
+        my $opt = HTML::Element->new("option", value => $val);
         #$opt->attr(selected => "selected") if $selected =~/^$id$/;
         $opt->attr(selected => "selected") if $selected->{$_};
         $opt->push_content( $_ );
@@ -1219,7 +1214,8 @@ sub _options_from_hash {
     my @values = values %$items;
     # hash Key is the option content  and the hash value is option value
     for (sort keys %$items) {
-        my $opt = HTML::Element->new("option", value => $items->{$_} );
+		my $val = defined $items->{$_} ? $items->{$_} : '';
+        my $opt = HTML::Element->new("option", value => $val);
         #$opt->attr(selected => "selected") if $selected =~/^$id$/;
         $opt->attr(selected => "selected") if $selected->{$items->{$_}};
         $opt->push_content( $_ );
@@ -1237,8 +1233,8 @@ sub _options_from_hashes {
 	my $stringify = $args->{stringify} || '';
 	my @res;
 	for (@$items) {
-		my $val = $_->{$pk};
-		my $opt = HTML::Element->new("option", value => $val );
+		my $val = defined $_->{$pk} ? $_->{$pk} : '';
+		my $opt = HTML::Element->new("option", value => $val);
 		$opt->attr(selected => "selected") if $selected->{$val};
 		my $content = ($fclass and $stringify and $fclass->can($stringify)) ? 
 		              $fclass->$stringify($_) : 
@@ -1249,16 +1245,17 @@ sub _options_from_hashes {
 	return @res;
 }
 
-sub _to_select_or_create {
-	my ($self, $col, $args) = @_;
-	$args->{name} ||= $col;
-	my $select = $self->to_field($col, 'select', $args);
-	$args->{name} = "create_" . $args->{name};
-	my $create = $self->to_field($col, 'foreign_inputs', $args);
-	$create->{'__select_or_create__'} = 
-		$self->to_field('__select_or_create__',{ name => '__select_or_create__' , value => 1 } );
-	return ($select, $create);
-}
+# TODO -- Maybe
+#sub _to_select_or_create {
+#	my ($self, $col, $args) = @_;
+#	$args->{name} ||= $col;
+#	my $select = $self->to_field($col, 'select', $args);
+#	$args->{name} = "create_" . $args->{name};
+#	my $create = $self->to_field($col, 'foreign_inputs', $args);
+#	$create->{'__select_or_create__'} = 
+#		$self->to_field('__select_or_create__',{ name => '__select_or_create__' , value => 1 } );
+#	return ($select, $create);
+#}
 	
 # 
 # checkboxes: if no data in hand (ie called as class method), replace

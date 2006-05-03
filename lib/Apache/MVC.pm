@@ -93,7 +93,11 @@ functionality. See L<Maypole> for these:
 
 sub get_request {
     my ($self, $r) = @_;
-    my $ar = ($MODPERL2) ? $r : Apache::Request->instance($r);
+    my $ar;
+    if ($MODPERL2) {
+    	$ar = eval {require Apache2::Request} ? Apache2::Request->new($r) : $r;
+	}
+    else { $ar = Apache::Request->instance($r); }
     $self->ar($ar);
 }
 
@@ -224,7 +228,7 @@ sub _mod_perl_args {
     } else {
       my $body = $self->_prepare_body($apr);
       %args = %{$body->param};
-      my $uri = URI->new($self->ar->uri);
+      my $uri = URI->new($self->ar->unparsed_uri);
       foreach my $key ($uri->query_param) {
 	if (ref $args{$key}) {
 	  push (@{$args{$key}}, $uri->query_param($key));

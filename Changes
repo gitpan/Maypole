@@ -13,9 +13,11 @@ Deprecated:
     has replaced it.
 
 Incompatible API changes:
-    Maypole:
+    Maypole
 	 - is_applicable() deprecated for is_model_applicable(). is_applicable is
-         an alias for is_model_applicable now.        
+         an alias for is_model_applicable now.
+    Maypole::Constants
+	 - ERROR constant now 500, previously -1 (bug #18901)
     Maypole::Model
 	- delete and search actions are now deprecated - use do_search and do_delete
 	  instead
@@ -79,6 +81,7 @@ Bug fixes:
     fixed problems with stringify_self and untaint missing ignore columns (bug 15678)
     fixed Maypole::Model::CDBI::Plain to JustWork(TM) with plain CDBI Classes (bug 16977)
     some silent death scenarios resolved
+	Now initializes template_args, stash, parmas, objects and others to correct data type. (bug 15147)
 
 Documentation:
     Fix to documentation for CGI::Maypole (bug 7263)

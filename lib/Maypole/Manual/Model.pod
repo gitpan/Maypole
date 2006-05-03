@@ -41,8 +41,8 @@ make writing Maypole applications a lot easier:
 
     package Maypole::Model::CDBI;
     use base qw(Maypole::Model::Base Class::DBI);
-    use Class::DBI::AsForm;
-    use Class::DBI::FromCGI;
+    use Maypole::Model::CDBI::AsForm;
+    use Class::DBI::FromCGI;  # probabyly broken . 
     use Class::DBI::Loader;
     use Class::DBI::AbstractSearch;
     use Class::DBI::Plugin::RetrieveAll;

@@ -271,7 +271,7 @@ template view
 =head3 F<edit>
 
 The F<edit> template is pretty much the same as F<view>, but it uses 
-L<Class::DBI::AsForm>'s
+L<Maypole::Model::CDBI::AsForm>'s
 C<to_field> method on each column of an object to return a C<HTML::Element>
 object representing a form element to edit that property. These elements
 are then rendered to HTML with C<as_HTML> or to XHTML with C<as_XML>.

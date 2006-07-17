@@ -138,7 +138,7 @@ This takes an object and and displays its properties in a table.
     [% INCLUDE navbar %]
     <table class="view">
         <tr>
-            <td class="field">[% classmetadata.colnames.$string %]</td>
+            <td class="field">[% classmetadata.colnames.$string  %]</td>
             <td>[% item.$string | html %]</td>
         </tr>
         [% FOR col = classmetadata.columns.list;
@@ -154,11 +154,18 @@ from the C<column_names> method:
 
 #%]
             <tr>
-                <td class="field">[% classmetadata.colnames.$col; %]</td>
+                <td class="field">[% classmetadata.colnames.$col || 
+                     col | ucfirst | replace('_',' '); %]</td>
                 <td>
                     [% IF col == "url" && item.url;  # Possibly too much magic.
                         '<a href="'; item.url | html ; '"> '; item.url; '</a>';
+					ELSIF item.$col.size > 1; # has_many column
+						FOR thing IN item.$col; 
+							maybe_link_view(thing);",  ";
+						 END;
+
                     ELSE;
+					
                         maybe_link_view(item.$col); 
                     END; %]
 [%#

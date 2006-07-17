@@ -306,10 +306,9 @@ warn "Tests 49 to 53\n\n";
 # is_model_applicable()
 {
 TODO: {
-        local $TODO = "test needs fixing";
-
+    local $TODO = "test needs fixing";
+    $r->config->ok_tables([qw(one two)]);
     $r->config->display_tables([qw(one two)]);
-    $r->config->ok_tables(undef);
     $r->model_class($table_class);
     $r->table('one');
     $r->action('unittest');
@@ -317,18 +316,18 @@ TODO: {
     $mock_model->mock('is_public', sub {0});
     my $true_false = $r->is_model_applicable;
     is($true_false, 0,
-    '... returns 0 unless model_class->is_public(action)');
+       '... returns 0 unless model_class->is_public(action)');
     $mock_model->mock('is_public', sub {$is_public = \@_; 1});
     $true_false = $r->is_model_applicable;
     is($true_false, 1, '... returns 1 if table is in ok_tables');
     is_deeply($is_public, [$r->model_class, 'unittest'],
-            '... calls model_class->is_public with request action');
+	      '... calls model_class->is_public with request action');
     is_deeply($r->config->ok_tables, {one => 1, two => 1},
-            '... config->ok_tables defaults to config->display_tables');
+	      '... config->ok_tables defaults to config->display_tables');
     delete $r->config->ok_tables->{one};
     $true_false = $r->is_model_applicable;
     is($true_false, 0, '... returns 0 unless $r->table is in ok_tables');
-    }
+  }
 }
 
 # Tests 54 - 58

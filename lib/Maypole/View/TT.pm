@@ -49,6 +49,9 @@ sub template {
 sub report_error {
     my ($self, $r, $error, $type) = @_;
     my $output;
+
+    warn "self : $self, r : $r, error : $error, type : $type\n";
+
     # Need to be very careful here.
     my $tt = Template->new;
     unless (ref $r->{config}) {
@@ -57,10 +60,11 @@ sub report_error {
       $r->{config} ||= {};
     }
     if ($tt->process(\$error_template,
-		     { err_type => $type, error => $error, 
-		       config => { (%{$r->{config}}) },
-		       request => $r, # We have that at least
-        eval{$self->vars($r)} }, \$output )) {
+		     { err_type => $type, error => $error,
+		       config => $r->{config},
+		       request => $r,
+		       paths => $self->paths($r),
+		       eval{$self->vars($r)} }, \$output )) {
         $r->{output} = $output;
         if ($tt->error) { $r->{output} = "<html><body>Even the error template
         errored - ".$tt->error."</body></html>"; }
@@ -399,23 +403,27 @@ the path "[% request.path %]". The error text returned was:
 
 <h2> Request details </h2>
 
-<table> 
-    [% FOR thing = ["model_class", "table", "template", "path",
+<table width="85%" cellspacing="2" cellpadding="1">
+    [% FOR attribute = ["model_class", "table", "template", "path",
     "content_type", "document_encoding", "action", "args", "objects"] %]
-    <tr> <td class="lhs"> [%thing %] </td> <td class="rhs"> [%
-    request.$thing.list.join(" , ") %] </td></tr>
+    <tr> <td class="lhs" width="35%"> <b>[% attribute %]</b> </td> <td class="rhs" width="65%"> [%
+    request.$attribute.list.join(" , ") %] </td></tr>
     [% END %]
 </table>
 
+<h2> Website / Template Paths </h2>
+<table width="85%" cellspacing="2" cellpadding="1">
+<tr><td class="lhs" width="35%"> <b>Base URI</b> </td><td class="rhs" width="65%">[% request.config.uri_base %]</td></tr>
+<tr><td class="lhs" width="35%"> <b>Paths</b> </td><td class="rhs" width="65%"> [% paths %] </td></tr>
+</table>
+
 <h2> Application configuration </h2>
-<table> 
-    [% FOR thing = config.keys %]
-    <tr> <td class="lhs"> [%thing %] </td> <td class="rhs"> [% 
-    config.$thing.list.join(" , ") %] </td></tr>
-    [% END %]
+<table width="85%" cellspacing="2" cellpadding="1">
+    <tr><td class="lhs"  width="35%"> <b>Model </b> </td><td class="rhs" width="65%"> [% request.config.model %] </td></tr>
+    <tr><td class="lhs"  width="35%"> <b>View </b> </td><td class="rhs" width="65%"> [% request.config.view %] </td></tr>
+    <tr><td class="lhs" width="35%"> <b>Classes</b> </td><td class="rhs" width="65%"> [% request.config.classes.list.join(" , ") %] </td></tr>
+    <tr><td class="lhs" width="35%"> <b>Tables</b> </td><td class="rhs" width="65%"> [% request.config.display_tables.list.join(" , ") %] </td></tr>
 </table>
 
 </body>
 </html>
-
-

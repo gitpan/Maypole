@@ -11,7 +11,6 @@ WriteMakefile(
         Class::DBI::AbstractSearch       => 0,
         Class::DBI::Pager                => 0,
         Class::DBI::Plugin::RetrieveAll  => 0,
-        Class::DBI::FromCGI              => 0.94,
         Class::DBI::Loader::Relationship => 0,
         Class::DBI                       => 0.96,
         Class::DBI::SQLite               => 0,
@@ -23,21 +22,22 @@ WriteMakefile(
         URI                              => 0,
         URI::QueryParam                  => 0,
         CGI::Simple                      => 0,
-        HTTP::Headers                    => 1.59,
  	HTTP::Body			 => 0.5,
+	HTML::Element        		 => 0,
+        HTTP::Headers                    => 1.59,
         Template                         => 0,
         Template::Plugin::Class          => 0,
         Test::MockModule                 => 0,
         Digest::MD5			 => 0,
-	File::MMagic::XS		=> 0.08,
-	Class::DBI::Plugin::Type	=> 0,
+	File::MMagic::XS		 => 0.08,
+	Class::DBI::Plugin::Type	 => 0,
     },    # e.g., Module::Name => 1.1
     (
         $] >= 5.005
         ?    ## Add these new keywords supported since 5.005
           (
             ABSTRACT_FROM => 'lib/Maypole.pm',   # retrieve abstract from module
-            AUTHOR => 'Aaron TEEJAY Trevena <teejay#droogs.org>'
+            AUTHOR => 'Aaron TEEJAY Trevena <aaron@aarontrevena.co.uk>'
           )
         : ()
     ),
@@ -86,7 +86,7 @@ create table beer (
     style integer,
     name varchar(30),
     url varchar(120),
-#    tasted date,
+    tasted date,
     score integer(2),
     price varchar(12),
     abv varchar(10),

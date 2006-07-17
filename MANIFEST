@@ -3,8 +3,23 @@ ex/BeerDB.pm
 ex/BeerDB/Base.pm
 ex/BeerDB/Beer.pm
 ex/beerdb.sql
+ex/fancy_example/BeerDB.pm
+ex/fancy_example/beerdb.sql
+ex/fancy_example/BeerDB/Base.pm
+ex/fancy_example/BeerDB/Beer.pm
+ex/fancy_example/BeerDB/Brewery.pm
+ex/fancy_example/BeerDB/Drinker.pm
+ex/fancy_example/templates/custom/addnew  
+ex/fancy_example/templates/custom/display_inputs  
+ex/fancy_example/templates/custom/display_search_inputs  
+ex/fancy_example/templates/custom/edit  
+ex/fancy_example/templates/custom/header  
+ex/fancy_example/templates/custom/maypole.css  
+ex/fancy_example/templates/custom/metadata  
+ex/fancy_example/templates/custom/search_form
 lib/Apache/MVC.pm
 lib/CGI/Maypole.pm
+lib/CGI/Untaint/Maypole.pm
 lib/Maypole.pm
 lib/Maypole/Application.pm
 lib/Maypole/CLI.pm
@@ -29,12 +44,13 @@ lib/Maypole/Model/Base.pm
 lib/Maypole/Model/CDBI.pm
 lib/Maypole/Model/CDBI/Plain.pm
 lib/Maypole/Model/CDBI/AsForm.pm
+lib/Maypole/Model/CDBI/FromCGI.pm
 lib/Maypole/View/Base.pm
 lib/Maypole/View/TT.pm
 Makefile.PL
 MANIFEST
 MANIFEST.SKIP
-META.yml			Module meta-data (added by MakeMaker)
+META.yml
 README
 AUTHORS
 t/01basics.t
@@ -47,6 +63,7 @@ t/constants.t
 t/headers.t
 t/maypole.t
 t/pathtools.t
+t/db_colinfo.t
 t/templates/custom/classdata
 t/templates/custom/frontpage
 t/templates/custom/list

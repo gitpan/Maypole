@@ -41,10 +41,11 @@ sub vars {
         request => $r,
         objects => $r->objects,
         base    => $base,
-        config  => $r->config
-
-          # ...
+        config  => $r->config,
     );
+
+    $args{object} = $r->object if ($r->can('object'));
+
     if ($class) {
         my $classmeta = $r->template_args->{classmetadata} ||= {};
         $classmeta->{name}              ||= $class;

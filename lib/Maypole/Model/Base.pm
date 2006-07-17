@@ -133,6 +133,9 @@ Empty Action.
 
 Empty Action.
 
+=item index
+
+Empty Action, calls list if provided with a table.
 
 =back
 
@@ -146,6 +149,14 @@ sub view : Exported {
 }
 
 sub edit : Exported {
+}
+
+sub index : Exported {
+    my ( $self, $r ) = @_;
+    if ($r->table) {
+	$r->template("list");
+	return $self->list($r);
+    } 
 }
 
 =pod

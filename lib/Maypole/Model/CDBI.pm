@@ -24,22 +24,34 @@ will instead use Class::DBI classes provided.
 =cut
 
 use base qw(Maypole::Model::Base Class::DBI);
-use Maypole::Model::CDBI::AsForm;
-use CGI::Untaint;
-use Class::DBI::Plugin::Type;
-use Class::DBI::FromCGI;
+#use Class::DBI::Plugin::Type;
 use Class::DBI::Loader;
 use Class::DBI::AbstractSearch;
 use Class::DBI::Plugin::RetrieveAll;
 use Class::DBI::Pager;
-
 use Lingua::EN::Inflect::Number qw(to_PL);
 use attributes ();
 
-use Data::Dumper;
+use Maypole::Model::CDBI::AsForm;
+use Maypole::Model::CDBI::FromCGI; 
+use CGI::Untaint::Maypole;
 
-###############################################################################
-# Helper methods
+=head2 Untainter
+
+Set the class you use to untaint and validate form data
+Note it must be of type CGI::Untaint::Maypole (takes $r arg) or CGI::Untaint
+
+=cut
+sub Untainter { 'CGI::Untaint::Maypole' };
+
+# or if you like bugs 
+
+#use Class::DBI::FromCGI;
+#use CGI::Untaint;
+#sub Untainter { 'CGI::Untaint' };
+
+
+__PACKAGE__->mk_classdata($_) for (qw/COLUMN_INFO/);
 
 =head1 Action Methods
 
@@ -61,15 +73,15 @@ sub do_edit : Exported {
   my $config   = $r->config;
   my $table    = $r->table;
 
-  # handle cancel button hits
+  # handle cancel button hit
   if ( $r->{params}->{cancel} ) {
     $r->template("list");
     $r->objects( [$self->retrieve_all] );
     return;
   }
 
-  my $required_cols = $config->{$table}->{required_cols} || [];
-  my $ignored_cols = $r->{config}{ $r->{table} }{ignore_cols} || [];
+  my $required_cols = $config->{$table}{required_cols} || [];
+  my $ignored_cols  = $config->{$table}{ignore_cols} || [];
 
   ($obj, my $fatal, my $creating) = $self->_do_update_or_create($r, $obj, $required_cols, $ignored_cols);
 
@@ -80,7 +92,6 @@ sub do_edit : Exported {
     # Set it up as it was:
     $r->template_args->{cgi_params} = $r->params;
 
-    #
     # replace user unfriendly error messages with something nicer
 
     foreach (@{$config->{$table}->{required_cols}}) {
@@ -119,38 +130,64 @@ sub _do_update_or_create {
   my $fatal;
   my $creating = 0;
 
-  my $h = CGI::Untaint->new( %{$r->params} );
+  my $h = $self->Untainter->new( %{$r->params} );
 
   # update or create
   if ($obj) {
     # We have something to edit
-    eval { $obj->update_from_cgi( $h => {
+    eval { $obj->update_from_cgi( $r => {
 					 required => $required_cols,
 					 ignore => $ignored_cols,
-					} );
+					}); 
 	   $obj->update(); # pos fix for bug 17132 'autoupdate required by do_edit'
 	 };
     $fatal = $@;
   } else {
-    eval {
-      $obj = $self->create_from_cgi( $h => {
+    	eval {
+      	$obj = $self->create_from_cgi( $r => {
 					    required => $required_cols,
 					    ignore => $ignored_cols,
-					   } )
-    };
-
-    if ($fatal = $@) {
-      warn "FATAL ERROR: $fatal" if $r->debug;
-#      $self->dbi_rollback;
-    } else {
-#      $self->dbi_commit;
-    }
-    $creating++;
+					   } );
+    	};
+    	$fatal = $@;
+    	$creating++;
   }
-
   return $obj, $fatal, $creating;
 }
 
+
+# split out from do_edit to be reported by Mp::P::Trace
+#sub _do_update_or_create {
+#  my ($self, $r, $obj, $required_cols, $ignored_cols) = @_;
+#
+#  my $fatal;
+#  my $creating = 0;
+#
+#  my $h = $self->Untainter->new( %{$r->params} );
+#
+#  # update or create
+#  if ($obj) {
+#    # We have something to edit
+#    eval { $obj->update_from_cgi( $h => {
+#					 required => $required_cols,
+#					 ignore => $ignored_cols,
+#					} );
+#	   $obj->update(); # pos fix for bug 17132 'autoupdate required by do_edit'
+#	 };
+#    $fatal = $@;
+#  } else {
+#    	eval {
+#      	$obj = $self->create_from_cgi( $h => {
+#					    required => $required_cols,
+#					    ignore => $ignored_cols,
+#					   } );
+#    	};
+#    	$fatal = $@;
+#    	$creating++;
+#  }
+#
+#  return $obj, $fatal, $creating;
+#}
 
 =head2 delete
 
@@ -250,85 +287,6 @@ sub list : Exported {
     }
 }
 
-#######################
-# _process_local_srch #
-#######################
-
-# Makes the local part of the db search query
-# Puts search prams local to this table  in where array.
-# Returns a  where array ref and search criteria string. 
-# This is factored out of do_search so sub classes can override this part
-sub _process_local_srch {
-	my ($self, $hashed)  = @_;
-	my %fields = map { $_ => 1 } $self->columns;
-	my $moniker = $self->moniker;
-	my %colnames    = $self->column_names;
-	my $srch_crit = '';
-	my ($oper, $wc);
-	my @where = map { 
-		# prelim 
-		$srch_crit .= ' '.$colnames{$_}." = '".$hashed->{$_}."'";
-		$oper = $self->sql_search_oper($_);
-		$wc   = $oper =~ /LIKE/i ? '%':''; # match any substr
-	 	"$moniker.$_ $oper '$wc" .  $hashed->{$_} . "$wc'"; #the where clause
-		}
-		grep { defined $hashed->{$_} && length ($hashed->{$_}) && $fields{$_} }
-		keys %$hashed;
-
-	return (\@where, $srch_crit);
-}
-
-#########################
-# _process_foreign_srch #
-#########################
-
-# puts foreign search fields into select statement 
-# changes  @where  by ref and return sel and srch_criteria string
-sub _process_foreign_srch {
-	my ($self, $hashed, $sel, $where, $srch_crit) = @_;
-	my %colnames    = $self->column_names;
-	my $moniker     = $self->moniker; 
-	my %foreign;
-	foreach (keys  %$hashed) { 
-		$foreign{$_} =  delete $hashed->{$_} if ref $hashed->{$_};
-	}
-	my %accssr_class = %{$self->accessor_classes};
-	while (my ( $accssr, $prms) =  each %foreign ) {
-		my $fclass = $accssr_class{$accssr};
-		my %fields = map { $_ => 1 } $fclass->columns;
-		my %colnames = $fclass->column_names;
-		my ($oper, $wc);
-		my @this_where =
-		   # TODO make field name match in all cases in srch crit
-			map { 
-				# prelim
-				$srch_crit.= ' '.$colnames{$_}." = '".$prms->{$_}."'";
-				$oper = $fclass->sql_search_oper($_);
-				$wc   = $oper =~ /LIKE/i ? '%':'';
-			     "$accssr.$_ $oper '$wc".$prms->{$_}."$wc'"; # the where 
-				}
-			grep { defined $prms->{$_} && length ($prms->{$_}) && $fields{$_} }
-			keys %$prms;
-
-		next unless @this_where;
-		$sel .= ", " . $fclass->table . " $accssr"; # add foreign tables to from
-
-		# map relationships -- TODO use constraints in has_many and mhaves
-		# and make general
-		my $pk = $self->primary_column;
-		if ($fclass->find_column('owner_id') && $fclass->find_column('owner_table') ) {
-			unshift @this_where, ("$accssr.owner_id = $moniker.$pk", 
-		                        "$accssr.owner_table = '" . $self->table ."'");
-		}
-		# for has_own, has_a  where foreign id is in self's table 
-		elsif ( my $fk = $self->find_column($fclass->primary_column) ) {
-			unshift @this_where, "$accssr." . $fk->name . " = $moniker." . $fk->name;
-		}
-		push @$where, @this_where; 
-	}
-	return ($sel, $srch_crit);
-}
-
 ###############################################################################
 # Helper methods
 
@@ -348,36 +306,6 @@ sub adopt {
     if ( my $col = $child->stringify_column ) {
         $child->columns( Stringify => $col );
     }
-}
-
-=head2 is_class
-
-Tell if action is a class method (See Maypole::Plugin::Menu)
-
-=cut
-
-sub is_class {
-	my ( $self, $method, $attrs ) = @_;
-	die "Usage: method must be passed as first arg" unless $method;
-	$attrs = join(' ',$self->method_attrs($method)) unless ($attrs);
-	return 1 if $attrs  =~ /\bClass\b/i;
-	return 1 if $method =~ /^list$/;  # default class actions
-	return 0;
-}
-
-=head2 is_object
-
-Tell if action is a object method (See Maypole::Plugin::Menu)
-
-=cut
-
-sub is_object {
-	my ( $self, $method, $attrs ) = @_;
-	die "Usage: method must be passed as first arg" unless $method;
-	$attrs = join(' ',$self->method_attrs($method)) unless ($attrs);
-	return 1 if $attrs  =~ /\bObject\b/i;
-	return 1 if $method =~ /(^view$|^edit$|^delete$)/;  # default object actions
-	return 0;
 }
 
 
@@ -424,8 +352,7 @@ sub related_class {
 
   $class->related_meta($col);
 
-Given a column  associated with a relationship it will return the relatation
-ship type and the meta info for the relationship on the column.
+Returns the hash ref of relationship meta info for a given column.
 
 =cut
 
@@ -435,57 +362,9 @@ sub related_meta {
     my $class_meta = $self->meta_info;
     if (my ($rel_type) = grep { defined $class_meta->{$_}->{$accssr} }
         keys %$class_meta)
-    { return  $rel_type, $class_meta->{$rel_type}->{$accssr} };
+    { return  $class_meta->{$rel_type}->{$accssr} };
 }
 
-
-=head2 isa_class
-
-Returns class of a column inherited by is_a.
-
-=cut
-
-# Maybe put this in IsA?
-sub isa_class {
-  my ($class, $col) = @_;
-  $class->_croak( "Need a column for isa_class." ) unless $col;
-  my $isaclass;
-  my $isa = $class->meta_info("is_a") || {}; 
-  foreach ( keys %$isa ) {
-    $isaclass = $isa->{$_}->foreign_class; 
-    return $isaclass if ($isaclass->find_column($col));
-  }
-  return 0;			# col not in a is_a class 
-}
-
-=head2 accessor_classes
-
-Returns hash ref of classes for accessors.
-
-This is an attempt at a more efficient method than calling "related_class()"
-a bunch of times when you need it for many relations.
-It may be good to call at startup and store in a global config. 
-
-=cut
-
-sub accessor_classes {
-	my ($self, $class) = @_; # can pass a class arg to get accssor classes for
-	$class ||= $self;
-	my $meta = $class->meta_info;
-	my %res;
-	foreach my $rel (keys %$meta) {
-		my $rel_meta = $meta->{$rel};
-		%res = ( %res, map { $_ => $rel_meta->{$_}->{foreign_class} } 
-						   keys %$rel_meta );
-	}
-	return \%res;
-
-	# 2 liner to get class of accessor for $name
-	#my $meta = $class->meta_info;
-	#my ($isa) = map $_->foreign_class, grep defined, 
-	# map $meta->{$_}->{$name}, keys %$meta;
-
-}
 
 
 =head2 stringify_column
@@ -627,14 +506,218 @@ sub fetch_objects {
 }
 
 
-###############################################################################
-# private / internal functions and classes
 
-sub _column_info {
-	my $class =  shift;
-	$class = ref $class || $class;
-	no strict 'refs';
-	return ${$class . '::COLUMN_INFO'};
+
+
+=head2 _isa_class
+
+Private method to return the class a column 
+belongs to that was inherited by an is_a relationship.
+This should probably be public but need to think of API
+
+=cut
+
+sub _isa_class {
+    my ($class, $col) = @_;
+    $class->_croak( "Need a column for _isa_class." ) unless $col;
+    my $isaclass;
+    my $isa = $class->meta_info("is_a") || {};
+    foreach ( keys %$isa ) {
+        $isaclass = $isa->{$_}->foreign_class;
+        return $isaclass if ($isaclass->find_column($col));
+    }
+    return; # col not in a is_a class
 }
+
+
+
+# Thanks to dave baird --  form builder for these private functions
+sub _column_info {
+    my $self = shift;
+	my $dbh = $self->db_Main;
+	return $self->COLUMN_INFO if ref $self->COLUMN_INFO;
+
+	my $meta;  # The info we are after
+	my ($catalog, $schema) = (undef, undef); 
+	# Dave is suspicious this (above undefs) could 
+	# break things if driver useses this info
+
+ 	# '%' is a search pattern for columns - matches all columns
+    if ( my $sth = $dbh->column_info( $catalog, $schema, $self->table, '%' ) )
+    {
+        $dbh->errstr && die "Error getting column info sth: " . $dbh->errstr;
+        $self->COLUMN_INFO( $self->_hash_type_meta( $sth ) );    
+#	use Data::Dumper; warn "col info for typed is " . Dumper($self->COLUMN_INFO);
+    }
+    else
+    {
+        $self->COLUMN_INFO( $self->_hash_typeless_meta( ) );    
+#		use Data::Dumper; warn "col info TYPELESS is " . Dumper($self->COLUMN_INFO);
+    }
+	return $self->COLUMN_INFO;
+}
+
+sub _hash_type_meta
+{
+    my ($self, $sth) = @_;
+	my $meta;
+    while ( my $row = $sth->fetchrow_hashref )
+	
+    {
+        my ($col_meta, $col_name);
+        
+        foreach my $key ( keys %$row)
+        {
+            my $value = $row->{$key} || $row->{ uc $key };
+            $col_meta->{$key} = $value;
+            $col_name = $row->{COLUMN_NAME} || $row->{column_name};
+        }
+        
+        $meta->{$col_name} =  $col_meta;    
+    }
+	return $meta;
+}
+
+# typeless db e.g. sqlite
+sub _hash_typeless_meta
+{
+    my ( $self ) = @_;
+
+    $self->set_sql( fb_meta_dummy => 'SELECT * FROM __TABLE__ WHERE 1=0' )
+        unless $self->can( 'sql_fb_meta_dummy' );
+
+    my $sth = $self->sql_fb_meta_dummy;
+    
+    $sth->execute or die "Error executing column info: "  . $sth->errstr;;
+    
+    # see 'Statement Handle Attributes' in the DBI docs for a list of available attributes
+    my $cols  = $sth->{NAME};
+    my $types = $sth->{TYPE};
+    # my $sizes = $sth->{PRECISION};    # empty
+    # my $nulls = $sth->{NULLABLE};     # empty
+    
+    # we haven't actually fetched anything from the sth, so need to tell DBI we're not going to
+    $sth->finish;
+    
+    my $order = 0;
+    my $meta;
+    foreach my $col ( @$cols )
+    {
+        my $col_meta;
+        
+        $col_meta->{NULLABLE}    = 1;
+        
+        # in my limited testing, the columns are returned in the same order as they were defined in the schema
+        $col_meta->{ORDINAL_POSITION} = $order++;
+        
+        # type_name is taken literally from the schema, but is not actually used by sqlite, 
+        # so it can be anything, e.g. varchar or varchar(xxx) or VARCHAR etc.
+		my $type = shift( @$types );  
+		$type =~ /(\w+)\((\w+)\)/;
+        $col_meta->{type} = $type; 
+		$col_meta->{TYPE_NAME} = $1;
+		my $size = $2;
+		$col_meta->{COLUMN_SIZE} = $size if $type =~ /(CHAR|INT)/i; 
+  		$meta->{$col} = $col_meta;
+    }
+	return $meta;
+}
+
+
+
+=head2 column_type
+
+    my $type = $class->column_type('column_name');
+
+This returns the 'type' of this column (VARCHAR(20), BIGINT, etc.)
+For now, it returns "BOOL" for tinyints. 
+
+TODO :: TEST with enums and postgres
+
+=cut
+sub column_type {
+    my $class = shift;
+    my $col = shift or die "Need a column for column_type";
+	my $info = $class->_column_info->{$col} || 
+			   eval { $class->_isa_class($col)->_column_info($col) } ||
+			   return '';
+			   
+    my $type = $info->{mysql_type_name} || $info->{type};
+   	unless ($type) {
+		$type =  $info->{TYPE_NAME};
+		if ($info->{COLUMN_SIZE}) { $type .= "($info->{COLUMN_SIZE})"; }
+    }
+	# Bool if tinyint
+	if ($type and $type =~ /^tinyint/i and $info->{COLUMN_SIZE} == 1) { 
+			$type = 'BOOL'; 
+	}
+	return $type;
+}
+
+=head2 column_nullable
+
+Returns true if a column can be NULL and false if not.
+
+=cut
+
+sub column_nullable {
+    my $class = shift;
+    my $col = shift or $class->_croak( "Need a column for column_nullable" );
+	my $info = $class->_column_info->{$col} || 
+			   eval { $class->_isa_class($col)->_column_info($col) } ||
+			   return 1;
+    return $info->{NULLABLE};
+}
+
+=head2 column_default
+
+Returns default value for column or the empyty string. 
+Columns with NULL, CURRENT_TIMESTAMP, or Zeros( 0000-00...) for dates and times
+have '' returned.
+
+=cut
+
+sub column_default {
+    my $class = shift;
+    my $col = shift or $class->_croak( "Need a column for column_default");
+	#return unless $class->find_column($col); # not a real column
+
+	my $info = $class->_column_info->{$col} || 
+			   eval { $class->_isa_class($col)->_column_info($col) } ||
+			   return '';
+	
+    my $def = $info->{COLUMN_DEF};
+    $def = '' unless defined $def; # is this good?
+	return $def;
+}
+
+
+
+
+
+=head2 get_classmetadata
+
+Gets class meta data *excluding cgi input* for the passed in class or the
+calling class. *NOTE* excludes cgi inputs. This method is handy to call from 
+templates when you need some metadata for a related class.
+
+=cut
+
+sub get_classmetadata {
+    my ($self, $class) = @_; # class is class we want data for
+    $class ||= $self;
+    $class = ref $class || $class;
+
+    my %res;
+    $res{name}          = $class;
+    $res{colnames}      = {$class->column_names};
+    $res{columns}       = [$class->display_columns];
+    $res{list_columns}  = [$class->list_columns];
+    $res{moniker}       = $class->moniker;
+    $res{plural}        = $class->plural_moniker;
+    $res{table}         = $class->table;
+    \%res;
+}
+
 
 1;

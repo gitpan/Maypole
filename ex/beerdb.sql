@@ -26,7 +26,8 @@ CREATE TABLE beer (
     score integer(2),
     price varchar(12),
     abv varchar(10),
-    notes text
+    notes text,
+	tasted date
 );
 
 CREATE TABLE brewery (

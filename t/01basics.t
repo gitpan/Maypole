@@ -39,7 +39,7 @@ like ($classdata{cgi},qr/^HTML::Element/,'classdata.cgi');
 is ($classdata{table},'beer','classdata.table');
 is ($classdata{name},'BeerDB::Beer','classdata.name');
 is ($classdata{colnames},'Abv','classdata.colnames');
-is($classdata{columns}, 'abv brewery id name notes price score style url',
+is($classdata{columns}, 'abv brewery id name notes price score style tasted url',
    'classdata.columns');
 is($classdata{list_columns}, 'score name price style brewery url',
    'classdata.list_columns');

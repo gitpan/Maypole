@@ -12,7 +12,7 @@ use URI::QueryParam;
 use NEXT;
 use File::MMagic::XS qw(:compat);
 
-our $VERSION = '2.11_pre3';
+our $VERSION = '2.11_pre4';
 our $mmagic = File::MMagic::XS->new();
 
 # proposed privacy conventions:
@@ -652,8 +652,16 @@ sub __get_mime_type {
 sub __load_request_model
 {
     my ($self) = @_;
-    $self->model_class( $self->config->model->class_of($self, $self->table) );
+	# We may get a made up class from class_of
+    my $mclass = $self->config->model->class_of($self, $self->table);
+    if ( eval {$mclass->isa('Maypole::Model::Base')} ) {
+        $self->model_class( $mclass );
+    }
+    elsif ($self->debug) {
+      warn "***Warning:  No $mclass class appropriate for model. @_"; 
+    }
 }
+
 
 # is_applicable() returned false, so set up a plain template. Model processing 
 # will be skipped, but need to remove the model anyway so the template can't 
@@ -955,8 +963,6 @@ sub send_output {
 }
 
 
-
-
 =back
 
 =head2 Path processing and manipulation
@@ -977,13 +983,12 @@ properties. Calls C<preprocess_path> before parsing path and setting properties.
 sub parse_path 
 {
     my ($self) = @_;
-    
+
     # Previous versions unconditionally set table, action and args to whatever 
     # was in @pi (or else to defaults, if @pi is empty).
     # Adding preprocess_path(), and then setting table, action and args 
     # conditionally, broke lots of tests, hence this:
     $self->$_(undef) for qw/action table args/;
-    
     $self->preprocess_path;
     $self->path || $self->path('frontpage');
 
@@ -1146,6 +1151,24 @@ If the first item in C<$self-E<gt>args> can be C<retrieve()>d by the model
 class, it will be removed from C<args> and the retrieved object will be added to
 the C<objects> list. See L<Maypole::Model> for more information.
 
+
+=item object
+
+Alias to get/set the first/only model object. The object will be accessible
+in the view templates.
+
+When used to set the object, will overwrite the request objects
+with a single object.
+
+=cut
+
+sub object {
+  my ($r,$object) = @_;
+  $r->objects([$object]) if ($object);
+  return undef unless $r->objects();
+  return $r->objects->[0];
+}
+
 =item template_args
 
     $self->template_args->{foo} = 'bar';
@@ -1154,7 +1177,7 @@ Get/set a hash of template variables.
 
 =item stash
 
-A place to put custom application data. Not used by Maypole itself. 
+A place to put custom application data. Not used by Maypole itself.
 
 =item template
 

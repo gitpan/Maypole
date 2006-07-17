@@ -48,6 +48,7 @@ API additions and enhancements:
 	- improved exception handling
 	- now uses File::MMagic::XS to guess mime type of output unless already set
 	- new component method provides Maypole::Component functionality
+	- new object method gets/sets first/only object in objects
      Maypole::Model
 	- do_delete, do_search in place of delete/search actions
      Maypole::View::TT:
@@ -58,6 +59,7 @@ API additions and enhancements:
 	- Improved factory templates
         - added the status() attribute, although it's not used in many places 
             yet
+	- Changed factory edit/view to use object instead of objects
      Maypole::Model::CDBI
 	- improved error messages in do_edit action
 
@@ -94,6 +96,7 @@ Documentation:
 	Added Maypole::Manual::Terminology
         - updated Maypole::Manual::View
         - updated Maypole::View:TT
+    Examples of fancy forms and templates using new features
 
 Requirements:
    HTTP::Body now required

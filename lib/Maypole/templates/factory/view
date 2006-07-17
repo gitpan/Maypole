@@ -10,8 +10,7 @@ C<objects> and displays the object's properties in a table.
 #%]
 [% PROCESS macros %]
 [% INCLUDE header %]
-[% FOR item = objects %]
-[% view_item(item); %]
+[% view_item(object); %]
 [%#
 
 =for doc
@@ -23,12 +22,11 @@ a list of has-many accessors. Next it calls each of those accessors, and
 displays the results in a table.
 
 #%]
-    <br /><a href="[%base%]/[%item.table%]/list">Back to listing</a>
-[% view_related(item); %]
+    <br /><a href="[%base%]/[%object.table%]/list">Back to listing</a>
+[% view_related(object); %]
     
 [%
-    button(item, "edit");
-    button(item, "delete");
+    button(object, "edit");
+    button(object, "delete");
 %]
-[% END; %]
 [% INCLUDE footer %]

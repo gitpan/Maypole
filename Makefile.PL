@@ -13,7 +13,7 @@ WriteMakefile(
         Class::DBI::Plugin::RetrieveAll  => 0,
         Class::DBI::Loader::Relationship => 0,
         Class::DBI                       => 0.96,
-        Class::DBI::SQLite               => 0,
+        Class::DBI::SQLite               => 0.08,
         CGI::Untaint                     => 1.26,
 	CGI::Untaint::date		 => 0,
 	CGI::Untaint::email		 => 0,

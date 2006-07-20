@@ -149,7 +149,6 @@ SKIP: {
    	skip $skip_msg, $skip_howmany  if $err; 
 	$DB_Class->table($table); 
 #use Data::Dumper; 
-#warn "colinfo is " . Dumper($DB_Class->_column_info());
 	run_method_tests($DB_Class,'column_type', %correct_types);
 	# No support default
 	#run_method_tests($DB_Class,'column_default', %correct_defaults);

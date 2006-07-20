@@ -2,7 +2,7 @@
 use Test::More;
 use lib 'ex'; # Where BeerDB should live
 BEGIN {
-    $ENV{BEERDB_DEBUG} = 2;
+    $ENV{BEERDB_DEBUG} = 0;
 
     eval { require BeerDB };
     Test::More->import( skip_all =>

@@ -17,6 +17,18 @@ Maypole::Model::CDBI::Plain - Class::DBI model without ::Loader
     Foo->config->model("Maypole::Model::CDBI::Plain");
     Foo->setup([qw/ Foo::SomeTable Foo::Other::Table /]);
 
+    # untaint columns and provide custom actions for each class
+
+    Foo::SomeTable->untaint_columns(email => ['email'], printable => [qw/name description/]);
+
+    Foo::Other::Table->untaint_columns ( ... );
+
+    sub Foo::SomeTable::SomeAction : Exported {
+
+        . . .
+
+    }
+
 =head1 DESCRIPTION
 
 This module allows you to use Maypole with previously set-up

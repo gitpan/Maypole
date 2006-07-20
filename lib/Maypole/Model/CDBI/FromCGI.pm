@@ -18,7 +18,7 @@ Maypole::Model:CDBI::FromCGI - Validate form input and populate Model objects
 
   $obj = $obj->add_to_from_cgi($r);
   $obj = $obj->add_to_from_cgi($r, { params => {...} } );
-  
+
   # This does not work like in CDBI::FromCGI and probably never will :
   # $class->update_from_cgi($h, @columns);
 

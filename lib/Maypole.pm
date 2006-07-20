@@ -12,7 +12,7 @@ use URI::QueryParam;
 use NEXT;
 use File::MMagic::XS qw(:compat);
 
-our $VERSION = '2.11_pre4';
+our $VERSION = '2.11_pre5';
 our $mmagic = File::MMagic::XS->new();
 
 # proposed privacy conventions:
@@ -91,7 +91,7 @@ configuration (B<before> calling setup.)
 
 Note that some details in some of these resources may be out of date.
 
-=over 4 
+=over 4
 
 =item The Maypole Manual
 
@@ -120,7 +120,7 @@ may be out of date.
 =item Web applications with Maypole
 
 A tutorial written by Simon Cozens for YAPC::EU 2005 -
-http://www.droogs.org/perl/maypole/maypole-tutorial.pdf [228KB].
+http://www.aarontrevena.co.uk/opensource/maypole/maypole-tutorial.pdf [228KB].
 
 =item A Database-Driven Web Application in 18 Lines of Code
 
@@ -148,7 +148,7 @@ http://www.perl.com/pub/a/2004/04/15/maypole.html
 =item Authentication
 
 Some notes written by Simon Cozens. A little bit out of date, but still 
-very useful: http://www.droogs.org/perl/maypole/authentication.html
+very useful: http://www.aarontrevena.co.uk/opensource/maypole/authentication.html
 
 =item CheatSheet
 
@@ -170,30 +170,6 @@ blog entries, starting here: http://del.icio.us/search/?all=maypole
 
 There are a couple of short reviews here:
 http://cpanratings.perl.org/dist/Maypole
-
-=back
-
-=head1 DEMOS
-
-A couple of demos are available, sometimes with source code and configs. 
-
-=over 4 
-
-=item http://maypole.perl.org/beerdb/
-
-The standard BeerDB example, using the TT factory templates supplied in the
-distribution.
-
-=item beerdb.riverside-cms.co.uk
-
-The standard BeerDB example, running on Mason, using the factory templates
-supplied in the L<MasonX::Maypole> distribution.
-
-=item beerfb.riverside-cms.co.uk
-
-A demo of L<Maypole::FormBuilder>. This site is running on the set of Mason 
-templates included in the L<Maypole::FormBuilder> distribution. See the 
-synopsis of L<Maypole::Plugin::FormBuilder> for an example driver
 
 =back
 
@@ -255,7 +231,7 @@ Some packages respond to higher debug levels, try increasing it to 2 or 3.
 
 =cut
 
-sub debug { 1 }
+sub debug { 0 }
 
 =item config
 

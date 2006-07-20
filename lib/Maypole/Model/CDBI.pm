@@ -239,10 +239,13 @@ the, now deprecated, search method previously provided.
 sub search : Exported {
   my $self = shift;
   my ($sub) = (caller(1))[3];
-  $sub =~ /^(.+)::([^:]+)$/;
   # So subclasses can still send search down ...
-  return ($1 ne "Maypole::Model::Base" && $2 ne "search") ?
-    $self->SUPER::search(@_) : $self->do_search(@_);
+  if ($sub =~ /^(.+)::([^:]+)$/) {
+    return ($1 ne "Maypole::Model::Base" && $2 ne "search") ?
+      $self->SUPER::search(@_) : $self->do_search(@_);
+  } else {
+    $self->SUPER::search(@_);
+  }
 }
 
 sub do_search : Exported {

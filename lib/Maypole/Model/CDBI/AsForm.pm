@@ -53,25 +53,93 @@ Maypole::Model:CDBI::AsForm - Produce HTML form elements for database columns
                end_form;
     }
 
-# Example of has_many select
-package Job;
-__PACKAGE__->has_a('job_employer' => 'Employer');
-__PACKAGE__->has_a('contact'  => 'Contact')
 
-package Contact;
-__PACKAGE__->has_a('cont_employer' => 'Employer');
-__PACKAGE__->has_many('jobs'  => 'Job',
-        { join => { job_employer => 'cont_employer' },
-          constraint => { 'finshed' => 0  },
-          order_by   => "created ASC",
-        }
-);
+   . . .
 
-package Employer;
-__PACKAGE__->has_many('jobs'  => 'Job',);
-__PACKAGE__->has_many('contacts'  => 'Contact',
-			order_by => 'name DESC',
-);
+    # Somewhere else in a Maypole application about beer...
+
+
+
+
+   $beer->to_field('brewery', 'textfield', { 
+		name => 'brewery_id', value => $beer->brewery,
+		# however, no need to set value since $beer is object
+   });
+
+   # Rate a beer
+   $beer->to_field(rating =>  select => {
+		items => [1 , 2, 3, 4, 5],
+   });
+
+   # Select a Brewery to visit in the UK
+   Brewery->to_field(brewery_id => {
+		items => [ Brewery->search_like(location => 'UK') ],
+   });
+
+  # Make a select for a boolean field
+  $Pub->to_field('open' , { items => [ {'Open' => 1, 'Closed' => 0 } ] }); 
+
+   $beer->to_field('brewery', {
+		selected => $beer->brewery, # again not necessary since caller is obj.
+   });
+
+
+    $beer->to_field('brewery', 'link_hidden', {r => $r, uri => 'www.maypole.perl.org/brewery/view/'.$beer->brewery});
+    # an html link that is also a hidden input to the object. R is required to
+    # make the uri  unless you  pass a  uri
+
+
+
+    #####################################################
+    # Templates Usage
+
+    <form ..>
+
+    ...
+
+    <label>
+
+     <span class="field"> [% classmetadata.colnames.$col %] : </span>
+
+     [% object.to_field(col).as_XML %]
+
+    </label>
+
+    . . .
+
+    <label>
+
+     <span class="field"> Brewery : </span>
+
+     [% object.to_field('brewery', { selected => 23} ).as_XML %]
+
+    </label>
+
+    . . .
+
+
+    #####################################################
+    # Advanced Usage
+
+    # has_many select
+    package Job;
+    __PACKAGE__->has_a('job_employer' => 'Employer');
+    __PACKAGE__->has_a('contact'  => 'Contact')
+
+    package Contact;
+    __PACKAGE__->has_a('cont_employer' => 'Employer');
+    __PACKAGE__->has_many('jobs'  => 'Job',
+			  { join => { job_employer => 'cont_employer' },
+			    constraint => { 'finshed' => 0  },
+			    order_by   => "created ASC",
+			  }
+			 );
+
+    package Employer;
+    __PACKAGE__->has_many('jobs'  => 'Job',);
+    __PACKAGE__->has_many('contacts'  => 'Contact',
+			  order_by => 'name DESC',
+			 );
 
 
   # Choose some jobs to add to a contact (has multiple attribute).
@@ -80,6 +148,9 @@ __PACKAGE__->has_many('contacts'  => 'Contact',
 
   # Choose a job from $contact->jobs 
   my $job_sel = $contact->to_field('jobs');
+
+  1;
+
 
 
 

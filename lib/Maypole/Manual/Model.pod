@@ -113,10 +113,6 @@ We'll look more at how to put together actions in the
 L<Standard Templates and Actions|Maypole::Manual::StandardTemplates>
 chapter and our case studies.
 
-=head2 What Maypole wants from a model
-
-=head2 Building your own model class
-
 =head2 Links
 
 L<Contents|Maypole::Manual>,

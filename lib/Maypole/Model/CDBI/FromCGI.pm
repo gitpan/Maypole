@@ -279,12 +279,9 @@ sub validate_all {
   my $updating   = $opts->{updating};
 
   # Base case - validate this classes data
-  $opts->{all}   ||= eval{ $r->config->{$self->table}{all_cols} } 		||
-    [$self->columns('All')];
-  $opts->{required} ||= eval{ $r->config->{$self->table}{required_cols} } || 	
-  	[];
-  my $ignore = $opts->{ignore} || eval{ $r->config->{$self->table}{ignore_cols} } 	
-    || [];
+  $opts->{all}   ||= eval{ $r->config->{$self->table}{all_cols} } || [$self->columns('All')];
+  $opts->{required} ||= eval { $r->config->{$self->table}{required_cols} || $self->required_columns } || [];
+  my $ignore = $opts->{ignore} || eval{ $r->config->{$self->table}{ignore_cols} } || [];
   push @$ignore, $self->primary_column->name if $updating;
   
   # Ignore hashes of foreign inputs. This takes care of required has_a's 

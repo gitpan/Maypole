@@ -1,8 +1,9 @@
 #!/usr/bin/perl -w
 use Test::More;
+use Data::Dumper;
 use lib 'ex'; # Where BeerDB should live
 BEGIN {
-   plan tests => 35;
+   plan tests => 65;
 }
 
 $db     	= 'test';
@@ -56,7 +57,7 @@ create table $table (
 		  brewery   => 1, 
 		  modified 	=> 1,
 		  style 	=> 0,	
-		      name      => 0, 
+		  name      => 0, 
 		  tasted    => 0,
 );
 
@@ -66,8 +67,7 @@ create table $table (
 sub run_method_tests { 
   ($class, $method,  %correct)  = @_;
   for $col (sort keys %correct) {
-#    warn "class : $class\n";
-#    warn "ISA : ", join(', ',@BeerDB::BeerTestmysql::ISA);
+
     $val = $class->$method($col);
 
     # Hacks for various val types
@@ -76,6 +76,7 @@ sub run_method_tests {
     my $correct = $correct{$col};
     like($val, qr/$correct/,"$method $col is $val");
   }
+
 }
 
 
@@ -83,29 +84,33 @@ sub run_method_tests {
 
 # Make test class 
 package BeerDB::BeerTestmysql;
-use base Maypole::Model::CDBI;
+use base qw(Maypole::Model::CDBI Class::DBI);
 package main;
 
 $DB_Class = 'BeerDB::BeerTestmysql';
 
-my $drh = DBI->install_driver("mysql");
-my %databases = map { $_ => 1 } $drh->func('localhost', 3306, '_ListDBs');
-
-unless ($databases{test}) {
-  my $rc = $drh->func("createdb", 'test', 'admin');
-}
-
-%databases = map { $_ => 1 } $drh->func('localhost', 3306, '_ListDBs');
-
-if ($databases{test}) {
-  eval {$DB_Class->connection("dbi:mysql:$db", "$dbuser", "$dbpasswd"); };
-  $err = $@;
-  $skip_msg = "Could not connect to MySQL using database 'test', username 'test', and password ''. Check privileges and try again.";
+my $drh = eval { DBI->install_driver("mysql"); };
+$err = $@;
+if ($err) {
+  $skip_msg = "no driver for MySQL";
 } else {
-  $err = 'no test db';
-  $skip_msg = "Could not connect to MySQL using database 'test' as it doesn't exist, sorry";
-}
+  my %databases = map { $_ => 1 } $drh->func('localhost', 3306, '_ListDBs');
 
+  unless ($databases{test}) {
+    my $rc = $drh->func("createdb", 'test', 'admin');
+  }
+
+  %databases = map { $_ => 1 } $drh->func('localhost', 3306, '_ListDBs');
+
+  if ($databases{test}) {
+    eval {$DB_Class->connection("dbi:mysql:$db", "$dbuser", "$dbpasswd"); };
+    $err = $@;
+    $skip_msg = "Could not connect to MySQL using database 'test', username 'test', and password ''. Check privileges and try again.";
+  } else {
+    $err = 'no test db';
+    $skip_msg = "Could not connect to MySQL using database 'test' as it doesn't exist, sorry";
+  }
+}
 $skip_howmany = 22;
 
 SKIP: {
@@ -113,15 +118,40 @@ SKIP: {
 	$DB_Class->db_Main->do("drop table if exists $table;");
 	$DB_Class->db_Main->do($sql);
 	$DB_Class->table($table);
+	$DB_Class->columns(All => keys %correct_types);
+	$DB_Class->columns(Primary => 'id');
 	run_method_tests($DB_Class,'column_type', %correct_types);
 	run_method_tests($DB_Class,'column_default', %correct_defaults);
 	run_method_tests($DB_Class,'column_nullable', %correct_nullables);
+
+
+	foreach my $colname ( @{$DB_Class->required_columns()} ) {
+	    ok($correct_nullables{$colname} == 0,"nullable column $colname is required (via required_columns)");
+	}
+
+	foreach my $colname (keys %correct_nullables) {
+	    ok( $DB_Class->column_required($colname) == !$correct_nullables{$colname}, "nullable column $colname is required (via column_required)" )
+	}
+
+	ok($DB_Class->required_columns([qw/score/]), 'set required column(s)');
+	
+	foreach my $colname ( @{$DB_Class->required_columns()} ) {
+	    ok($correct_nullables{$colname} == 0 || $colname eq 'score',"nullable or required column $colname is required (via required_columns)" );
+	}
+	
+	foreach my $colname (keys %correct_nullables) {
+	    if ($colname eq 'score') {
+		ok( $DB_Class->column_required($colname) == 0, "nullable column $colname is required (via column_required)");
+	    } else {
+		ok( $DB_Class->column_required($colname) == !$correct_nullables{$colname}, "nullable column $colname is required (via column_required)");
+	    }
+	}	
 };
 
 # SQLite  test
 
 package BeerDB::BeerTestsqlite;
-use base Maypole::Model::CDBI;
+use base qw(Maypole::Model::CDBI Class::DBI);
 package main;
 use Cwd;
 
@@ -148,12 +178,29 @@ $skip_howmany = 13;
 SKIP: {
    	skip $skip_msg, $skip_howmany  if $err; 
 	$DB_Class->table($table); 
+	$DB_Class->columns(All => keys %correct_types);
+	$DB_Class->columns(Primary => 'id');
 #use Data::Dumper; 
 	run_method_tests($DB_Class,'column_type', %correct_types);
 	# No support default
 	#run_method_tests($DB_Class,'column_default', %correct_defaults);
 	# I think sqlite driver allows everything to be nullable.
 	#run_method_tests($DB_Class,'column_nullable', %correct_nullables);
+
+	ok($DB_Class->required_columns([qw/score style name tasted/]), 'set required column(s)');
+	
+
+	foreach my $colname ( @{$DB_Class->required_columns()} ) {
+	    ok($correct_nullables{$colname} == 0 || $colname eq 'score',"nullable or required column $colname is required (via required_columns)" );
+	}
+	
+	foreach my $colname (keys %correct_nullables) {
+	    if ($colname eq 'score') {
+		ok( $DB_Class->column_required($colname) == 0, "nullable column $colname is required (via column_required)");
+	    } else {
+		ok( $DB_Class->column_required($colname) == !$correct_nullables{$colname}, "nullable column $colname is required (via column_required)");
+	    }
+	}
 
 };
 

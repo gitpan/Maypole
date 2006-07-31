@@ -8,41 +8,40 @@ our $error_template;
 { local $/; $error_template = <DATA>; }
 
 use strict;
-our $VERSION = 2.11;
 
 sub template {
-    my ( $self, $r ) = @_;
-    unless ($self->{tt}) {
-        my $view_options = $r->config->view_options || {};
-        $self->{provider} = Template::Provider->new($view_options);
-        $self->{tt}       = Template->new({
-            %$view_options,
-            LOAD_TEMPLATES => [ $self->{provider} ],
-        });
-    }
+  my ( $self, $r ) = @_;
+  unless ($self->{tt}) {
+    my $view_options = $r->config->view_options || {};
+    $self->{provider} = Template::Provider->new($view_options);
+    $self->{tt}       = Template->new({
+				       %$view_options,
+				       LOAD_TEMPLATES => [ $self->{provider} ],
+				      });
+  }
 
-    $self->{provider}->include_path([ $self->paths($r) ]);
+  $self->{provider}->include_path([ $self->paths($r) ]);
 
-    my $template_file = $r->template;
+  my $template_file = $r->template;
 
-    my $ext = $r->config->template_extension;
-    $template_file .= $ext if defined $ext;
+  my $ext = $r->config->template_extension;
+  $template_file .= $ext if defined $ext;
 
-    my $output;
-    my $processed_ok = eval{$self->{tt}->process($template_file, { $self->vars($r) }, \$output );};
-    if ($processed_ok) {
-      $r->{output} = $output;
-      return OK;
+  my $output;
+  my $processed_ok = eval{$self->{tt}->process($template_file, { $self->vars($r) }, \$output );};
+  if ($processed_ok) {
+    $r->{output} = $output;
+    return OK;
+  } else {
+    if ($@) {
+      warn "fatal error in template '$template_file' : $@\n";
+      $r->{error} = "fatal error in template '$template_file' : $@";
     } else {
-      if ($@) {
-	warn "fatal error in template '$template_file' : $@\n";
-	$r->{error} = "fatal error in template '$template_file' : $@";
-      } else {
-	warn "TT error for template '$template_file'\n" . $self->{tt}->error;
-	$r->{error} = "TT error for template '$template_file'\n" . $self->{tt}->error;
-      }
-      return ERROR;
+      warn "TT error for template '$template_file'\n" . $self->{tt}->error;
+      $r->{error} = "TT error for template '$template_file'\n" . $self->{tt}->error;
     }
+    return ERROR;
+  }
 }
 
 
@@ -286,6 +285,18 @@ TT Filters process strings or blocks within a template, allowing you to
 truncate, format, escape or encode trivially. A useful selection is included
 with Template Toolkit and they can also be found on CPAN or can be written
 easily. See L<Template::Manual::Filters>.
+
+TT provides stderr and stdout filters, which allow you to write handy macros
+like this one to output debug information to your web server log, etc :
+
+=over 4
+
+[% MACRO debug_msg(text)
+    FILTER stderr; "[TT debug_msg] $text\n"; END;
+%]
+
+=back
+
 
 TT Macros allow you to reuse small blocks of content, directives, etc. The MACRO
 directive allows you to define a directive or directive block which is then

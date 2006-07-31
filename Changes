@@ -2,7 +2,9 @@ This file documents the revision history for Perl extension Maypole.
 For information about current developments and future releases, see:
     http://maypole.perl.org/?TheRoadmap
 
-2.11 
+2.11 Mon 31 July 2006
+
+SVN revision 519
 
 Deprecated:
     Directly accessing the attributes of the request object, or the parameters 
@@ -11,6 +13,9 @@ Deprecated:
 
     Maypole no longer uses Class::DBI::AsForm, instead Maypole::Model::CDBI::AsForm
     has replaced it.
+
+    $config->{$table}{required_cols} is deprecated, please use $class->required_columns instead
+
 
 Incompatible API changes:
     Maypole
@@ -62,6 +67,8 @@ API additions and enhancements:
 	- Changed factory edit/view to use object instead of objects
      Maypole::Model::CDBI
 	- improved error messages in do_edit action
+        - new required_columns mutator method
+        - new column_required accessor method
 
 Bug fixes:
     Fix to cgi_maypole.t (bug 11346)

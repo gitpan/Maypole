@@ -1,6 +1,8 @@
 package Maypole::Model::CDBI;
 use strict;
 
+use Data::Dumper;
+
 =head1 NAME
 
 Maypole::Model::CDBI - Model class based on Class::DBI
@@ -80,7 +82,7 @@ sub do_edit : Exported {
     return;
   }
 
-  my $required_cols = $config->{$table}{required_cols} || [];
+  my $required_cols = $config->{$table}{required_cols} || $self->required_columns;
   my $ignored_cols  = $config->{$table}{ignore_cols} || [];
 
   ($obj, my $fatal, my $creating) = $self->_do_update_or_create($r, $obj, $required_cols, $ignored_cols);
@@ -154,40 +156,6 @@ sub _do_update_or_create {
   }
   return $obj, $fatal, $creating;
 }
-
-
-# split out from do_edit to be reported by Mp::P::Trace
-#sub _do_update_or_create {
-#  my ($self, $r, $obj, $required_cols, $ignored_cols) = @_;
-#
-#  my $fatal;
-#  my $creating = 0;
-#
-#  my $h = $self->Untainter->new( %{$r->params} );
-#
-#  # update or create
-#  if ($obj) {
-#    # We have something to edit
-#    eval { $obj->update_from_cgi( $h => {
-#					 required => $required_cols,
-#					 ignore => $ignored_cols,
-#					} );
-#	   $obj->update(); # pos fix for bug 17132 'autoupdate required by do_edit'
-#	 };
-#    $fatal = $@;
-#  } else {
-#    	eval {
-#      	$obj = $self->create_from_cgi( $h => {
-#					    required => $required_cols,
-#					    ignore => $ignored_cols,
-#					   } );
-#    	};
-#    	$fatal = $@;
-#    	$creating++;
-#  }
-#
-#  return $obj, $fatal, $creating;
-#}
 
 =head2 delete
 
@@ -533,100 +501,105 @@ sub _isa_class {
 }
 
 
-
 # Thanks to dave baird --  form builder for these private functions
+# sub _column_info {
 sub _column_info {
-    my $self = shift;
-	my $dbh = $self->db_Main;
-	return $self->COLUMN_INFO if ref $self->COLUMN_INFO;
+  my $self = shift;
+  my $dbh = $self->db_Main;
 
-	my $meta;  # The info we are after
-	my ($catalog, $schema) = (undef, undef); 
-	# Dave is suspicious this (above undefs) could 
-	# break things if driver useses this info
+  my $meta;			# The info we are after
+  my ($catalog, $schema) = (undef, undef); 
+  # Dave is suspicious this (above undefs) could 
+  # break things if driver useses this info
 
- 	# '%' is a search pattern for columns - matches all columns
-    if ( my $sth = $dbh->column_info( $catalog, $schema, $self->table, '%' ) )
-    {
-        $dbh->errstr && die "Error getting column info sth: " . $dbh->errstr;
-        $self->COLUMN_INFO( $self->_hash_type_meta( $sth ) );    
-#	use Data::Dumper; warn "col info for typed is " . Dumper($self->COLUMN_INFO);
-    }
-    else
-    {
-        $self->COLUMN_INFO( $self->_hash_typeless_meta( ) );    
-#		use Data::Dumper; warn "col info TYPELESS is " . Dumper($self->COLUMN_INFO);
-    }
-	return $self->COLUMN_INFO;
+  my $original_metadata;
+  # '%' is a search pattern for columns - matches all columns
+  if ( my $sth = $dbh->column_info( $catalog, $schema, $self->table, '%' ) ) {
+    $dbh->errstr && die "Error getting column info sth: " . $dbh->errstr;
+    $self->COLUMN_INFO ($self->_hash_type_meta( $sth ));
+  } else {
+    $self->COLUMN_INFO ($self->_hash_typeless_meta( ));
+  }
+
+  return $self->COLUMN_INFO;
 }
 
-sub _hash_type_meta
-{
-    my ($self, $sth) = @_;
-	my $meta;
-    while ( my $row = $sth->fetchrow_hashref )
-	
-    {
-        my ($col_meta, $col_name);
-        
-        foreach my $key ( keys %$row)
-        {
-            my $value = $row->{$key} || $row->{ uc $key };
-            $col_meta->{$key} = $value;
-            $col_name = $row->{COLUMN_NAME} || $row->{column_name};
-        }
-        
-        $meta->{$col_name} =  $col_meta;    
+sub _hash_type_meta {
+  my ($self, $sth) = @_;
+  my $meta;
+  while ( my $row = $sth->fetchrow_hashref ) {
+    my $colname = $row->{COLUMN_NAME} || $row->{column_name};
+
+    # required / nullable
+    $meta->{$colname}{nullable} = $row->{NULLABLE};
+    $meta->{$colname}{required} = ( $meta->{$colname}{nullable} == 0 ) ? 1 : 0;
+
+    # default
+    if (defined $row->{COLUMN_DEF}) {
+      my $default = $row->{COLUMN_DEF};
+      $default =~ s/['"]?(.*?)['"]?::.*$/$1/;
+      $meta->{$colname}{default} = $default;
+    }else {
+      $meta->{$colname}{default} = '';
     }
-	return $meta;
+
+    # type
+    my $type = $row->{mysql_type_name} || $row->{type};
+    unless ($type) {
+      $type =  $row->{TYPE_NAME};
+      if ($row->{COLUMN_SIZE}) {
+	$type .= "($row->{COLUMN_SIZE})";
+      }
+    }
+    $type =~ s/['"]?(.*)['"]?::.*$/$1/;
+    # Bool if tinyint
+    if ($type and $type =~ /^tinyint/i and $row->{COLUMN_SIZE} == 1) { 
+      $type = 'BOOL';
+    }
+    $meta->{$colname}{type} = $type;
+
+    # order
+    $meta->{$colname}{position} = $row->{ORDINAL_POSITION}
+  }
+  return $meta;
 }
 
 # typeless db e.g. sqlite
-sub _hash_typeless_meta
-{
-    my ( $self ) = @_;
+sub _hash_typeless_meta {
+  my ( $self ) = @_;
 
-    $self->set_sql( fb_meta_dummy => 'SELECT * FROM __TABLE__ WHERE 1=0' )
-        unless $self->can( 'sql_fb_meta_dummy' );
+  $self->set_sql( fb_meta_dummy => 'SELECT * FROM __TABLE__ WHERE 1=0' )
+    unless $self->can( 'sql_fb_meta_dummy' );
 
-    my $sth = $self->sql_fb_meta_dummy;
-    
-    $sth->execute or die "Error executing column info: "  . $sth->errstr;;
-    
-    # see 'Statement Handle Attributes' in the DBI docs for a list of available attributes
-    my $cols  = $sth->{NAME};
-    my $types = $sth->{TYPE};
-    # my $sizes = $sth->{PRECISION};    # empty
-    # my $nulls = $sth->{NULLABLE};     # empty
-    
-    # we haven't actually fetched anything from the sth, so need to tell DBI we're not going to
-    $sth->finish;
-    
-    my $order = 0;
-    my $meta;
-    foreach my $col ( @$cols )
-    {
-        my $col_meta;
-        
-        $col_meta->{NULLABLE}    = 1;
-        
-        # in my limited testing, the columns are returned in the same order as they were defined in the schema
-        $col_meta->{ORDINAL_POSITION} = $order++;
-        
-        # type_name is taken literally from the schema, but is not actually used by sqlite, 
-        # so it can be anything, e.g. varchar or varchar(xxx) or VARCHAR etc.
-		my $type = shift( @$types );  
-		$type =~ /(\w+)\((\w+)\)/;
-        $col_meta->{type} = $type; 
-		$col_meta->{TYPE_NAME} = $1;
-		my $size = $2;
-		$col_meta->{COLUMN_SIZE} = $size if $type =~ /(CHAR|INT)/i; 
-  		$meta->{$col} = $col_meta;
-    }
-	return $meta;
+  my $sth = $self->sql_fb_meta_dummy;
+
+  $sth->execute or die "Error executing column info: "  . $sth->errstr;;
+
+  # see 'Statement Handle Attributes' in the DBI docs for a list of available attributes
+  my $cols  = $sth->{NAME};
+  my $types = $sth->{TYPE};
+  # my $sizes = $sth->{PRECISION};    # empty
+  # my $nulls = $sth->{NULLABLE};     # empty
+
+  # we haven't actually fetched anything from the sth, so need to tell DBI we're not going to
+  $sth->finish;
+
+  my $order = 0;
+  my $meta;
+  foreach my $col ( @$cols ) {
+    my $col_meta;
+    $col_meta->{nullable}    = 1;
+    $col_meta->{required}    = 0;
+    $col_meta->{default}     = '';
+    $col_meta->{position} = $order++;
+    # type_name is taken literally from the schema, but is not actually used by sqlite,
+    # so it can be anything, e.g. varchar or varchar(xxx) or VARCHAR etc.
+    my $type = shift( @$types );
+    $col_meta->{type} = ($type =~ /(\w+)\((\w+)\)/) ? $1 :$type ;
+    $meta->{$col} = $col_meta;
+  }
+  return $meta;
 }
-
-
 
 =head2 column_type
 
@@ -635,68 +608,146 @@ sub _hash_typeless_meta
 This returns the 'type' of this column (VARCHAR(20), BIGINT, etc.)
 For now, it returns "BOOL" for tinyints. 
 
-TODO :: TEST with enums and postgres
+TODO :: TEST with enums
 
 =cut
+
 sub column_type {
-    my $class = shift;
-    my $col = shift or die "Need a column for column_type";
-	my $info = $class->_column_info->{$col} || 
-			   eval { $class->_isa_class($col)->_column_info($col) } ||
-			   return '';
-			   
-    my $type = $info->{mysql_type_name} || $info->{type};
-   	unless ($type) {
-		$type =  $info->{TYPE_NAME};
-		if ($info->{COLUMN_SIZE}) { $type .= "($info->{COLUMN_SIZE})"; }
+  my $class = shift;
+  my $colname = shift or die "Need a column for column_type";
+  $class->_column_info() unless (ref $class->COLUMN_INFO);
+
+  if ($class->_isa_class($colname)) {
+    return $class->_isa_class($colname)->column_type($colname);
+  }
+  unless ( $class->find_column($colname) ) {
+    warn "$colname is not a recognised column in this class ", ref $class || $class, "\n";
+    return undef;
+  }
+  return $class->COLUMN_INFO->{$colname}{type};
+}
+
+=head2 required_columns
+
+  Accessor to get/set required columns for forms, validation, etc.
+
+  Returns list of required columns. Accepts an array ref of column names.
+
+  $class->required_columns([qw/foo bar baz/]);
+
+  Allows you to specify the required columns for a class, over-riding any
+  assumptions and guesses made by Maypole.
+
+  Use this instead of $config->{$table}{required_cols}
+
+  Note : you need to setup the model class before calling this method.
+
+=cut
+
+sub required_columns {
+  my ($class, $columns) = @_;
+  $class->_column_info() unless ref $class->COLUMN_INFO;
+  my $column_info = $class->COLUMN_INFO;
+
+  if ($columns) {
+    foreach my $colname ( @$columns ) {
+      if ($class->_isa_class($colname)) {
+	$class->_isa_class($colname)->COLUMN_INFO->{$colname}{required} = 1
+	  unless ($class->_isa_class($colname)->column_required);
+	next;
+      }
+      unless ( $class->find_column($colname) ) {
+	warn "$colname is not a recognised column in this class ", ref $class || $class, "\n";
+	next;
+      }
+      $column_info->{$colname}{required} = 1;
     }
-	# Bool if tinyint
-	if ($type and $type =~ /^tinyint/i and $info->{COLUMN_SIZE} == 1) { 
-			$type = 'BOOL'; 
-	}
-	return $type;
+    $class->COLUMN_INFO($column_info);
+  }
+
+  return [ grep ($column_info->{$_}{required}, keys %$column_info) ] ;
+}
+
+=head2 column_required
+
+  Returns true if a column is required
+
+  my $required = $class->column_required($column_name);
+
+  Columns can be required by the application but not the database, but not the other way around,
+  hence there is also a column_nullable method which will tell you if the column is nullable
+  within the database itself.
+
+=cut
+
+sub column_required {
+  my ($class, $colname) = @_;
+  $colname or $class->_croak( "Need a column for column_nullable" );
+  $class->_column_info() unless ref $class->COLUMN_INFO;
+  if ($class->_isa_class($colname)) {
+    return $class->_isa_class($colname)->column_required($colname);
+  }
+  unless ( $class->find_column($colname) ) {
+    # handle  non-existant columns
+    warn "$colname is not a recognised column in this class ", ref $class || $class, "\n";
+    return undef;
+  }
+  return $class->COLUMN_INFO->{$colname}{required} || 0;
 }
 
 =head2 column_nullable
 
-Returns true if a column can be NULL and false if not.
+  Returns true if a column can be NULL within the underlying database and false if not.
+
+  my $nullable = $class->column_nullable($column_name);
+
+  Any columns that are not nullable will automatically be specified as required, you can
+  also specify nullable columns as required within your application.
+
+  It is recomended you use column_required rather than column_nullable within your
+  application, this method is more useful if extending the model or handling your own
+  validation.
 
 =cut
 
 sub column_nullable {
     my $class = shift;
-    my $col = shift or $class->_croak( "Need a column for column_nullable" );
-	my $info = $class->_column_info->{$col} || 
-			   eval { $class->_isa_class($col)->_column_info($col) } ||
-			   return 1;
-    return $info->{NULLABLE};
+    my $colname = shift or $class->_croak( "Need a column for column_nullable" );
+
+  $class->_column_info() unless ref $class->COLUMN_INFO;
+  if ($class->_isa_class($colname)) {
+    return $class->_isa_class($colname)->column_nullable($colname);
+  }
+  unless ( $class->find_column($colname) ) {
+    # handle  non-existant columns
+    warn "$colname is not a recognised column in this class ", ref $class || $class, "\n";
+    return undef;
+  }
+  return $class->COLUMN_INFO->{$colname}{nullable} || 0;
 }
 
 =head2 column_default
 
-Returns default value for column or the empyty string. 
+Returns default value for column or the empty string. 
 Columns with NULL, CURRENT_TIMESTAMP, or Zeros( 0000-00...) for dates and times
 have '' returned.
 
 =cut
 
 sub column_default {
-    my $class = shift;
-    my $col = shift or $class->_croak( "Need a column for column_default");
-	#return unless $class->find_column($col); # not a real column
+  my $class = shift;
+  my $colname = shift or $class->_croak( "Need a column for column_default");
+  $class->_column_info() unless (ref $class->COLUMN_INFO);
+  if ($class->_isa_class($colname)) {
+    return $class->_isa_class($colname)->column_default($colname);
+  }
+  unless ( $class->find_column($colname) ) {
+    warn "$colname is not a recognised column in this class ", ref $class || $class, "\n";
+    return undef;
+  }
 
-	my $info = $class->_column_info->{$col} || 
-			   eval { $class->_isa_class($col)->_column_info($col) } ||
-			   return '';
-	
-    my $def = $info->{COLUMN_DEF};
-    $def = '' unless defined $def; # is this good?
-	return $def;
+  return $class->COLUMN_INFO->{$colname}{default};
 }
-
-
-
-
 
 =head2 get_classmetadata
 
@@ -719,7 +770,8 @@ sub get_classmetadata {
     $res{moniker}       = $class->moniker;
     $res{plural}        = $class->plural_moniker;
     $res{table}         = $class->table;
-    \%res;
+    $res{column_metadata} = (ref $class->COLUMN_INFO) ? $class->COLUMN_INFO : $class->_column_info() ;
+    return \%res;
 }
 
 

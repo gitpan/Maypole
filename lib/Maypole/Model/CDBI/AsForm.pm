@@ -117,6 +117,8 @@ Maypole::Model:CDBI::AsForm - Produce HTML form elements for database columns
 
     . . .
 
+    </form>
+
 
     #####################################################
     # Advanced Usage
@@ -313,7 +315,7 @@ sub to_cgi {
 This maps an individual column to a form element. The C<how> argument
 can be used to force the field type into any you want. All that you need 
 is a method named "_to_$how" in your class. Your class inherits many from
-AsForm  already. Override them at will. 
+AsForm  already. 
 
 If C<how> is specified but the class cannot call the method it maps to,
 then AsForm will issue a warning and the default input will be made. 
@@ -324,26 +326,24 @@ See C<HOW Methods>. You can also pass this argument in $args->{how}.
 =cut
 
 sub to_field {
-		my ($self, $field, $how, $args) = @_;
-		if (ref $how)   { $args = $how; $how = ''; }
-		unless ($how)   { $how = $args->{how} || ''; }
-#warn "In to_field field is $field how is $how. args ar e" . Dumper($args) . " \n";
-		# Set sensible default value
-		unless ($args->{default}) { 
-				my $def = $self->column_default($field);
-				# exclude defaults we don't want actually put as value for input
-				if (defined $def) {
-						$def = $def =~ /(^0000-00-00.*$|^0[0]*$|^0\.00$|CURRENT_TIMESTAMP|NULL)/i ? '' : $def ;
-						$args->{default} = $def;
-				}
-		}
+  my ($self, $field, $how, $args) = @_;
+  if (ref $how)   { $args = $how; $how = ''; }
+  unless ($how)   { $how = $args->{how} || ''; }
+  #warn "In to_field field is $field how is $how. args ar e" . Dumper($args) . " \n";
+  # Set sensible default value
+  if  ($field and not defined $args->{default}) { 
+    my $def = $self->column_default($field) ;
+    # exclude defaults we don't want actually put as value for input
+    if (defined $def) {
+      $def = $def =~ /(^0000-00-00.*$|^0[0]*$|^0\.00$|CURRENT_TIMESTAMP|NULL)/i ? '' : $def ;
+      $args->{default} = $def;
+    }
+  }
 
-
-
-		return	$self->_field_from_how($field, $how, $args)   || 
-		$self->_field_from_relationship($field, $args) ||
-		$self->_field_from_column($field, $args)  ||
-		$self->_to_textfield($field, $args);
+  return	$self->_field_from_how($field, $how, $args)   ||
+    $self->_field_from_relationship($field, $args) ||
+      $self->_field_from_column($field, $args)  ||
+	$self->_to_textfield($field, $args);
 }
 
 
@@ -373,65 +373,64 @@ Example:
 
 
 sub search_inputs {
-		my ($class, $args) = @_;
-		$class = ref $class || $class;
-		#my $accssr_class = { $class->accessor_classes };
-		my %cgi;
+  my ($class, $args) = @_;
+  $class = ref $class || $class;
+  #my $accssr_class = { $class->accessor_classes };
+  my %cgi;
+  
+  $args->{columns} ||= $class->can('search_columns') ?[$class->search_columns] : [$class->display_columns];
+  
+  foreach my $field ( @{ $args->{columns} } ) {
+    my $base_args = {
+		     no_hidden_constraints => 1,
+		     column_nullable => 1, # empty option on select boxes
+		     value  => '',
+		    };
+    if ( ref $field eq "HASH" ) { # foreign search fields
+      my ($accssr, $cols)  = each %$field;
+      $base_args->{columns} = $cols;
+      unless (  @$cols ) {
+	# default to search fields for related
+	#$cols =  $accssr_class->{$accssr}->search_columns;
+	die ("$class search_fields error: Must specify at least one column to search in the foreign object named '$accssr'");
+      }
+      my $fcgi  = $class->to_field($accssr, 'foreign_inputs', $base_args);
 
-		$args->{columns} ||= $class->can('search_columns') ?[$class->search_columns] : [$class->display_columns];
+      # unset the default values for a select box
+      foreach (keys %$fcgi) {
+	my $el = $fcgi->{$_};
+	if ($el->tag eq 'select') {
 
-		foreach my $field ( @{ $args->{columns} } ) {
-				my $base_args = {
-						no_hidden_constraints => 1,
-						column_nullable => 1, # empty option on select boxes
-						value  => '',
-				};
-				if ( ref $field eq "HASH" ) { # foreign search fields
-						my ($accssr, $cols)  = each %$field;
-						$base_args->{columns} = $cols;
-						unless (  @$cols ) {
-								# default to search fields for related
-								#$cols =  $accssr_class->{$accssr}->search_columns;
-								die ("$class search_fields error: Must specify at least one column to search in the foreign object named '$accssr'");
-						}
-						my $fcgi  = $class->to_field($accssr, 'foreign_inputs', $base_args);
+	  $class->unselect_element($el);
+	  my ($first, @content) = $el->content_list;
+	  my @fc = $first->content_list;
+	  my $val = $first ? $first->attr('value') : undef;  
+	  if ($first and (@fc > 0 or (defined $val and $val ne '')) ) {	# something ( $first->attr('value') ne '' or 
 
-						# unset the default values for a select box
-						foreach (keys %$fcgi) {
-								my $el = $fcgi->{$_};
-								if ($el->tag eq 'select') {
+	    #(defined $first->attr('value') or $first->attr('value') ne ''))  
+	    # push an empty option on stactk
+	    $el->unshift_content(HTML::Element->new('option'));
+	  }
+	}
 
-										$class->unselect_element($el);
-										my ($first, @content) = $el->content_list;
-										my @fc = $first->content_list;
-										my $val = $first ? $first->attr('value') : undef;  
-										if ($first and (@fc > 0 or (defined $val and $val ne '')) ) { # something ( $first->attr('value') ne '' or 
-
-												#(defined $first->attr('value') or $first->attr('value') ne ''))  
-												# push an empty option on stactk
-												$el->unshift_content(HTML::Element->new('option'));
-										}
-								}
-
-						}
-						$cgi{$accssr} = $fcgi;
-						delete $base_args->{columns};
-				}
-				else {
-						$cgi{$field} = $class->to_field($field, $base_args); #{no_select => $args->{no_select}{$field} });
-						my $el = $cgi{$field};
-						if ($el->tag eq 'select') {
-								$class->unselect_element($el);
-								my ($first, @content) = $el->content_list;
-								if ($first and $first->content_list) { # something 
-										#(defined $first->attr('value') or $first->attr('value') ne ''))  
-										# push an empty option on stactk
-										$el->unshift_content(HTML::Element->new('option'));
-								}
-						}
-				}
-		}
-		return \%cgi;
+      }
+      $cgi{$accssr} = $fcgi;
+      delete $base_args->{columns};
+    } else {
+      $cgi{$field} = $class->to_field($field, $base_args); #{no_select => $args->{no_select}{$field} });
+      my $el = $cgi{$field};
+      if ($el->tag eq 'select') {
+	$class->unselect_element($el);
+	my ($first, @content) = $el->content_list;
+	if ($first and $first->content_list) { # something 
+	  #(defined $first->attr('value') or $first->attr('value') ne ''))  
+	  # push an empty option on stactk
+	  $el->unshift_content(HTML::Element->new('option'));
+	}
+      }
+    }
+  }
+  return \%cgi;
 }
 
 
@@ -516,18 +515,6 @@ sub _field_from_relationship {
 				return;
 		}
 
-
-
-		#NOOO!  maybe select from has_many 
-#	if ($rel_type eq 'has_many' and ref $self) {
-#		$args->{items} ||= [$self->$field];
-#		# arg name || fclass pk name || field
-#		if (not $args->{name}) {
-#			$args->{name} =  eval{$fclass->primary_column->name} || $field; 
-#		}
-#    	return  $self->_to_select($field, $args);
-#	}
-		#
 		# maybe foreign inputs 
 		my %local_cols = map { $_ => 1 } $self->columns; # includes is_a cols
 		if ($fclass_is_cdbi and (not $local_cols{$field} or $rel_name eq 'has_own'))
@@ -546,38 +533,43 @@ Override at will.
 =cut
 
 sub _field_from_column {
-		my ($self, $field, $args) = @_;
-		return unless $field;
-		my $class = ref $self || $self;
-		# Get column type	
-		unless ($args->{column_type}) { 
-				if ($class->can('column_type')) {
-						$args->{column_type} = $class->column_type($field);
-				}	
-				else {
-						# Right, have some of this
-						eval "package $class; Class::DBI::Plugin::Type->import()";
-						$args->{column_type} = $class->column_type($field);
-				}
-		}
-		my $type = $args->{column_type};
+  my ($self, $field, $args) = @_;
+  # this class and pk are default class and field at this point
+  my $class = $args->{class} || $self;
+  $class = ref $class || $class;
+  $field  ||= ($class->primary_columns)[0]; # TODO
 
-		return $self->_to_textfield($field, $args)
-		if $type  and $type =~ /^(VAR)?CHAR/i;  #common type
-		return $self->_to_textarea($field, $args)
-		if $type and $type =~ /^(TEXT|BLOB)$/i;
-		return $self->_to_enum_select($field, $args)  
-		if $type and  $type =~ /^ENUM\((.*?)\)$/i; 
-		return $self->_to_bool_select($field, $args)
-		if $type and  $type =~ /^BOOL/i; 
-		return $self->_to_readonly($field, $args)
-		if $type and $type =~ /^readonly$/i;
-		return;
+  # Get column type
+  unless ($args->{column_type}) { 
+    if ($class->can('column_type')) {
+      $args->{column_type} = $class->column_type($field);
+    } else {
+      # Right, have some of this
+      eval "package $class; Class::DBI::Plugin::Type->import()";
+      $args->{column_type} = $class->column_type($field);
+    }
+  }
+  my $type = $args->{column_type};
+
+  return $self->_to_textfield($field, $args)
+    if $type  and $type =~ /^(VAR)?CHAR/i; #common type
+  return $self->_to_textarea($field, $args)
+    if $type and $type =~ /^(TEXT|BLOB)$/i;
+  return $self->_to_enum_select($field, $args)  
+    if $type and  $type =~ /^ENUM\((.*?)\)$/i; 
+  return $self->_to_bool_select($field, $args)
+    if $type and  $type =~ /^BOOL/i; 
+  return $self->_to_readonly($field, $args)
+    if $type and $type =~ /^readonly$/i;
+  return;
 }
 
 
 sub _to_textarea {
 		my ($self, $col, $args) = @_;
+		my $class = $args->{class} || $self;
+		$class = ref $class || $class;
+		$col  ||= ($class->primary_columns)[0]; # TODO
 		# pjs added default	
 		$args ||= {};
 		my $val =  $args->{value}; 
@@ -742,6 +734,7 @@ sub _to_select {
 				if not $args->{selected} and ref $self;
 		}
         $col = $args->{class}->primary_column;
+		$args->{name} ||= $col;
     }
     # Related Class maybe ? 
     elsif ($rel_meta =  $self->related_meta('r:)', $col) ) {
@@ -781,11 +774,10 @@ sub _to_select {
     }
     # We could say :Col is name and we are selecting  out of class arg.
 	# DIE for now
-	else {
-		#$args->{name} = $col;
-		die "Usage _to_select. $col not related to any class to select from. ";
+	#else {
+	#	die "Usage _to_select. $col not related to any class to select from. ";
 		
-    }
+	#}
 		
     # Set arguments 
 	unless ( defined  $args->{column_nullable} ) {
@@ -1315,13 +1307,13 @@ sub _options_from_hashes {
 	my $fclass = $args->{class} || '';
 	my $stringify = $args->{stringify} || '';
 	my @res;
-	for (@$items) {
-		my $val = defined $_->{$pk} ? $_->{$pk} : '';
+	for my $item (@$items) {
+		my $val = defined $item->{$pk} ? $item->{$pk} : '';
 		my $opt = HTML::Element->new("option", value => $val);
 		$opt->attr(selected => "selected") if $selected->{$val};
 		my $content = ($fclass and $stringify and $fclass->can($stringify)) ? 
 		              $fclass->$stringify($_) : 
-			          join(' ', keys %$_);
+			          join(' ', map {$item->{$_} } keys %$item);
 		$opt->push_content( $content );
         push @res, $opt; 
     }

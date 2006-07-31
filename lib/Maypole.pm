@@ -12,7 +12,7 @@ use URI::QueryParam;
 use NEXT;
 use File::MMagic::XS qw(:compat);
 
-our $VERSION = '2.11_pre5';
+our $VERSION = '2.11';
 our $mmagic = File::MMagic::XS->new();
 
 # proposed privacy conventions:
@@ -35,6 +35,9 @@ The canonical example used in the Maypole documentation is the beer database:
     
     # choose a frontend, initialise the config object, and load a plugin
     use Maypole::Application qw/Relationship/;
+
+    # set everything up
+    __PACKAGE__->setup("dbi:SQLite:t/beerdb.db");
     
     # get the empty config object created by Maypole::Application
     my $config = __PACKAGE__->config;
@@ -62,8 +65,8 @@ The canonical example used in the Maypole documentation is the beer database:
         date => [ qw/date/],
     );
 
-    # set everything up
-    __PACKAGE__->setup("dbi:SQLite:t/beerdb.db");
+    # note : set up model before calling this method
+    BeerDB::Beer->required_columns([qw/name/]); 
 
     1;    
 
@@ -1150,6 +1153,11 @@ sub object {
     $self->template_args->{foo} = 'bar';
 
 Get/set a hash of template variables.
+
+Maypole reserved words for template variables will over-ride values in template_variables.
+
+Reserved words are : r, request, object, objects, base, config and errors, as well as the
+current class or object name.
 
 =item stash
 

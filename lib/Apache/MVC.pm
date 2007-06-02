@@ -142,8 +142,7 @@ sub parse_args {
 
 =cut
 
-sub redirect_request
-{
+sub redirect_request {
   my $r = shift;
   my $redirect_url = $_[0];
   my $status = $MODPERL2 ? eval 'Apache2::Const::REDIRECT;' :
@@ -156,7 +155,11 @@ sub redirect_request
       my $path = $args{path} || $r->path;
       my $host = $args{domain} || $r->ar->hostname;
       my $protocol = $args{protocol} || $r->get_protocol;
-      $redirect_url = "${protocol}://${host}/${path}";
+
+      $redirect_url = URI->new;
+         $redirect_url->scheme($protocol);
+         $redirect_url->host($host);
+         $redirect_url->path($path);
     }
     $status = $args{status} if ($args{status});
   }

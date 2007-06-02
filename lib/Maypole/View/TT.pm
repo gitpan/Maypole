@@ -3,9 +3,14 @@ use base 'Maypole::View::Base';
 use Maypole::Constants;
 use Template;
 use File::Spec::Functions qw(catdir tmpdir);
+use Template::Constants qw( :all );
 
-our $error_template; 
+our $error_template;
 { local $/; $error_template = <DATA>; }
+
+our $VERSION = '2.111';
+
+my $debug_flags = DEBUG_ON;
 
 use strict;
 
@@ -13,6 +18,9 @@ sub template {
   my ( $self, $r ) = @_;
   unless ($self->{tt}) {
     my $view_options = $r->config->view_options || {};
+    if ($r->debug) {
+      $view_options->{DEBUG} = $debug_flags;
+    }
     $self->{provider} = Template::Provider->new($view_options);
     $self->{tt}       = Template->new({
 				       %$view_options,
@@ -34,11 +42,13 @@ sub template {
     return OK;
   } else {
     if ($@) {
-      warn "fatal error in template '$template_file' : $@\n";
-      $r->{error} = "fatal error in template '$template_file' : $@";
+      my $error = "fatal error in template '$template_file' : $@\nTT paths : " . join(', ',$self->paths($r)) . "\n";
+      $r->warn($error);
+      $r->{error} = $error;
     } else {
-      warn "TT error for template '$template_file'\n" . $self->{tt}->error;
-      $r->{error} = "TT error for template '$template_file'\n" . $self->{tt}->error;
+      my $error = "TT error for template '$template_file'\n" . $self->{tt}->error . "\nTT paths : " . join(', ',$self->paths($r)) . "\n";
+      $r->warn($error);
+      $r->{error} = $error;
     }
     return ERROR;
   }
@@ -49,20 +59,21 @@ sub report_error {
     my ($self, $r, $error, $type) = @_;
     my $output;
 
-    warn "self : $self, r : $r, error : $error, type : $type\n";
-
     # Need to be very careful here.
     my $tt = Template->new;
     unless (ref $r->{config}) {
-      warn "no config for this request\n";
+      $r->warn("no config for this request");
       $error .= '<br> There was a problem finding configuration for this request';
       $r->{config} ||= {};
     }
+
+    $r->warn("report_error - reporting error to user : $error\n");
+
     if ($tt->process(\$error_template,
 		     { err_type => $type, error => $error,
 		       config => $r->{config},
 		       request => $r,
-		       paths => $self->paths($r),
+		       paths => [ $self->paths($r) ],
 		       eval{$self->vars($r)} }, \$output )) {
         $r->{output} = $output;
         if ($tt->error) { $r->{output} = "<html><body>Even the error template
@@ -419,6 +430,11 @@ the path "[% request.path %]". The error text returned was:
     "content_type", "document_encoding", "action", "args", "objects"] %]
     <tr> <td class="lhs" width="35%"> <b>[% attribute %]</b> </td> <td class="rhs" width="65%"> [%
     request.$attribute.list.join(" , ") %] </td></tr>
+    [% END %]
+    <tr><td colspan="2"></tr>
+    <tr><td class="lhs" colspan="2"><b>CGI Parameters</b> </td></tr>
+    [% FOREACH param IN request.params %]
+    <tr> <td class="lhs" width="35%">[% param.key %]</td> <td class="rhs" width="65%"> [% param.value %] </td></tr>
     [% END %]
 </table>
 

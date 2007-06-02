@@ -12,7 +12,7 @@ use URI::QueryParam;
 use NEXT;
 use File::MMagic::XS qw(:compat);
 
-our $VERSION = '2.11';
+our $VERSION = '2.111';
 our $mmagic = File::MMagic::XS->new();
 
 # proposed privacy conventions:

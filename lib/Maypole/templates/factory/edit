@@ -18,7 +18,7 @@ form similar to L<addnew> but with the current values filled in.
 
 [% IF object %]
 <div id="title">Edit a [% classmetadata.moniker %]</div>
-<form action="[% base %]/[% item.table %]/do_edit/[% item.id %]" method="post">
+<form action="[% base %]/[% object.table %]/do_edit/[% object.id %]" method="post">
 <fieldset>
 <legend>Edit [% object.name %]</legend>
    [% FOR col = classmetadata.columns;

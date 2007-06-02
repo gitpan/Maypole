@@ -137,7 +137,7 @@ sub _do_update_or_create {
   # update or create
   if ($obj) {
     # We have something to edit
-    eval { $obj->update_from_cgi( $r => {
+    eval { $obj->update_from_cgi( $h => {
 					 required => $required_cols,
 					 ignore => $ignored_cols,
 					}); 
@@ -146,7 +146,7 @@ sub _do_update_or_create {
     $fatal = $@;
   } else {
     	eval {
-      	$obj = $self->create_from_cgi( $r => {
+      	$obj = $self->create_from_cgi( $h => {
 					    required => $required_cols,
 					    ignore => $ignored_cols,
 					   } );

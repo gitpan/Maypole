@@ -1,9 +1,17 @@
 #!/usr/bin/perl -w
 use Test::More;
 use Data::Dumper;
-use lib 'ex'; # Where BeerDB should live
+use DBI;
+use lib 'examples'; # Where BeerDB should live
 BEGIN {
-   plan tests => 65;
+	my $drh = eval {
+	  DBI->install_driver("mysql");
+	  my @databases = DBI->data_sources("mysql");
+	  die "couldn't connect to mysql" unless (@databases);
+	};
+	warn "error : $@ \n" if ($@);
+        my $testcount = ($@) ? 45 : 65 ;
+        plan tests => $testcount;
 }
 
 $db     	= 'test';
@@ -130,10 +138,10 @@ SKIP: {
 	}
 
 	foreach my $colname (keys %correct_nullables) {
-	    ok( $DB_Class->column_required($colname) == !$correct_nullables{$colname}, "nullable column $colname is required (via column_required)" )
+	  ok( $DB_Class->column_required($colname) == !$correct_nullables{$colname}, "nullable column $colname is required (via column_required)" )
 	}
 
-	ok($DB_Class->required_columns([qw/score/]), 'set required column(s)');
+	ok($DB_Class->required_columns([qw/style name tasted score/]), 'set required column(s)');
 	
 	foreach my $colname ( @{$DB_Class->required_columns()} ) {
 	    ok($correct_nullables{$colname} == 0 || $colname eq 'score',"nullable or required column $colname is required (via required_columns)" );

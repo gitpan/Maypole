@@ -14,7 +14,7 @@ catenating the base URL, table, command, and any arguments.
 [%
 MACRO link(table, command, additional, label) BLOCK;
     SET lnk = base _ "/" _ table _ "/" _ command _ "/" _ additional;
-    lnk = lnk | uri | html;
+    lnk = lnk | uri ;
     '<a href="' _ lnk _ '">';
     label | html;
     "</a>";

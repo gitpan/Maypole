@@ -2,6 +2,18 @@ This file documents the revision history for Perl extension Maypole.
 For information about current developments and future releases, see:
     http://maypole.perl.org/?TheRoadmap
 
+2.111 Sat 21 April 2007
+
+Fixes :
+   Fixed typo in edit form template
+   Fixed extra html filter in link macro in factory templates
+   Fixed typo in _do_update_or_create (bug 26495)
+   fix to display_line macro in factory templates (bug 22920)
+   fixed template path with array refs
+   fixed redirect_request
+   fixed db_colinfo.t test when no mysql
+
+
 2.11 Mon 31 July 2006
 
 SVN revision 519

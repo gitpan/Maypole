@@ -107,7 +107,7 @@ Orkut. It shows, specifically, the database structure and the
 variety of customized techniques that make such a system
 work.
 
-=item L<Maypole::Manual::IBuySpy> - Case Study: iBuySpy *
+=item L<Maypole::Manual::BuySpy> - Case Study: iBuySpy *
 
 This is an example of the C<ASP.NET> sample portal application
 ported to Maypole. L<http://www.ibuyspy.com> is a fictional

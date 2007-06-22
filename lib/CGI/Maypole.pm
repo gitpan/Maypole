@@ -7,7 +7,7 @@ use CGI::Simple;
 use Maypole::Headers;
 use Maypole::Constants;
 
-our $VERSION = '2.11';
+our $VERSION = '2.12';
 
 __PACKAGE__->mk_accessors( qw/cgi/ );
 
@@ -71,9 +71,11 @@ functionality. See L<Maypole> for these:
 
 =cut
 
-sub get_request 
-{
-    shift->cgi( CGI::Simple->new );
+sub get_request {
+  my $self = shift;
+  my $request_options = $self->config->request_options || {};
+  $CGI::Simple::POST_MAX = $request_options->{POST_MAX} if ($request_options->{POST_MAX});
+  $self->cgi( CGI::Simple->new );
 }
 
 =item parse_location
@@ -92,17 +94,34 @@ sub parse_location
         $r->headers_in->set($field_name => $cgi->http($http_header));
     }
 
+    $r->preprocess_location();
+
     my $path = $cgi->url( -absolute => 1, -path_info => 1 );
     my $loc = $cgi->url( -absolute => 1 );
     {
         no warnings 'uninitialized';
         $path .= '/' if $path eq $loc;
-        $path =~ s/^($loc)?\///;
+	if ($loc =~ /\/$/) {
+	  $path =~ s/^($loc)?//;
+	} else {
+	  $path =~ s/^($loc)?\///;
+	}
     }
     $r->path($path);
     
     $r->parse_path;
     $r->parse_args;
+}
+
+=item warn
+
+=cut
+
+sub warn {
+    my ($self,@args) = @_;
+    my ($package, $line) = (caller)[0,2];
+    warn "[$package line $line] ", @args ;
+    return;
 }
 
 =item parse_args

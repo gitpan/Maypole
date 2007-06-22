@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 use Test::More;
-use lib 'ex'; # Where BeerDB should live
+use lib 'examples'; # Where BeerDB should live
 BEGIN {
     $ENV{BEERDB_DEBUG} = 0;
 
@@ -48,4 +48,5 @@ is ($classdata{related_accessors},'pubs','classdata.related_accessors');
 # test Maypole::load_custom_class()
 can_ok(BeerDB::Beer => 'fooey');     # defined in BeerDB::Beer
 can_ok(BeerDB::Beer => 'floob');     # defined in BeerDB::Base
-is_deeply( [@BeerDB::Beer::ISA], [qw/Maypole::Model::CDBI Class::DBI::SQLite BeerDB::Base/] );
+
+is_deeply( [@BeerDB::Beer::ISA], [qw/Class::DBI::SQLite  Maypole::Model::CDBI BeerDB::Base/] );

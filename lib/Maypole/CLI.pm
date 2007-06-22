@@ -26,9 +26,19 @@ sub import {
 
 sub get_template_root { $ENV{MAYPOLE_TEMPLATES} || "." }
 
+sub warn {
+    my ($self,@args) = @_;
+    my ($package, $line) = (caller)[0,2];
+    warn "[$package line $line] ", @args ;
+    return;
+}
+
 sub parse_location {
     my $self = shift;
     my $url  = URI->new( shift @ARGV );
+
+    $self->preprocess_location();
+
     (my $uri_base = $self->config->uri_base) =~ s:/$::;
     my $root = URI->new( $uri_base )->path;
     $self->{path} = $url->path;
@@ -136,6 +146,8 @@ functionality. See L<Maypole> for these:
 =item parse_location
 
 =item send_output
+
+=item warn
 
 =back
 

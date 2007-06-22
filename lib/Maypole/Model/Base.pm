@@ -1,6 +1,6 @@
 package Maypole::Model::Base;
-
 use strict;
+
 use Maypole::Constants;
 use attributes ();
 
@@ -215,6 +215,13 @@ sub is_public {
 }
 
 
+=head2 add_model_superclass
+
+Adds model as superclass to model classes (if necessary)
+
+=cut
+
+sub add_model_superclass { return; }
 
 =head2 method_attrs
 
@@ -249,3 +256,24 @@ sub related {
 1;
 
 
+=head1 SEE ALSO
+
+L<Maypole>, L<Maypole::Model::CDBI>.
+
+=head1 AUTHOR
+
+Maypole is currently maintained by Aaron Trevena.
+
+=head1 AUTHOR EMERITUS
+
+Simon Cozens, C<simon#cpan.org>
+
+Simon Flack maintained Maypole from 2.05 to 2.09
+
+Sebastian Riedel, C<sri#oook.de> maintained Maypole from 1.99_01 to 2.04
+
+=head1 LICENSE
+
+You may distribute this code under the same terms as Perl itself.
+
+=cut

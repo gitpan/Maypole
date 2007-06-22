@@ -14,23 +14,22 @@ sub paths {
 	$root = [ $root ];
     }
     my @output = ();
+    my $i = 0;
     foreach my $path (@$root) {
-	push(@output, $path);
 	push(@output,
 	     (
               $r->model_class
 	      && File::Spec->catdir( $path, $r->model_class->table )
 	      )
 	     );
-	push(@output, File::Spec->catdir( $path, "custom" ));
-	push(@output, File::Spec->catdir( $path, "factory" ));
+	push(@output, File::Spec->catdir( $path, "custom" )) unless ($i);
+	push(@output, $path);
+	push(@output, File::Spec->catdir( $path, "factory" )) unless ($i);
+	$i = 1;
     }
 
-    return @output;
+    return grep( $_, @output);
 }
-
-
-
 
 sub vars {
     my ( $self, $r ) = @_;
@@ -50,14 +49,14 @@ sub vars {
         my $classmeta = $r->template_args->{classmetadata} ||= {};
         $classmeta->{name}              ||= $class;
         $classmeta->{table}             ||= $class->table;
-        $classmeta->{columns}           ||= [ $class->display_columns ];
-        $classmeta->{list_columns}      ||= [ $class->list_columns ];
-        $classmeta->{colnames}          ||= { $class->column_names };
+        $classmeta->{columns}           ||= [ $class->display_columns ] if ($class->can('display_columns'));
+        $classmeta->{list_columns}      ||= [ $class->list_columns ] if ($class->can('list_columns'));
+        $classmeta->{colnames}          ||= { $class->column_names } if ($class->can('column_names'));
         $classmeta->{related_accessors} ||= [ $class->related($r) ];
         $classmeta->{moniker}           ||= $class->moniker;
         $classmeta->{plural}            ||= $class->plural_moniker;
-        $classmeta->{cgi}               ||= { $class->to_cgi };
-	$classmeta->{stringify_column}  ||= $class->stringify_column;
+        $classmeta->{cgi}               ||= { $class->to_cgi } if ($r->build_form_elements && $class->can('to_cgi'));
+	$classmeta->{stringify_column}  ||= $class->stringify_column if ($class->can('stringify_column'));
 
         # User-friendliness facility for custom template writers.
         if ( @{ $r->objects || [] } > 1 ) {

@@ -33,8 +33,8 @@ application.
 =head1 Structure of a standard Maypole application
 
 A minimal Maypole application (such as the Beer database example from the
-L<Maypole> synopsis) consists of a custom driver class (BeerDB.pm), a set of
-auto-generated model classes, and a view class:
+L<Maypole> synopsis) consists of a custom driver (or controller) class (BeerDB.pm),
+a set of auto-generated model classes, and a view class:
 
 
            THE DRIVER
@@ -76,6 +76,11 @@ auto-generated model classes, and a view class:
           pub();                      BeerDB::Style
           beer();                     beers();
 
+=head2 Ouch, that's a lot of inheritence!
+
+Yes, that's a lot of inheritence, at some point in the future - probably Maypole 3.x we
+will move to Class::C3
+
 =head2 What about Maypole::Application - loading plugins
 
 The main job of L<Maypole::Application> is to insert the plugins into the
@@ -107,7 +112,7 @@ L<Class::DBI::Loader> identifies the appropriate L<Class::DBI> subclass and
 inserts it into each of these table classes' C<@ISA> ( C<<
 Class::DBI::<db_driver> >> in the diagrams)..
 
-Next, C<Maypole::setup> B<unshifts> L<Maypole::Model::CDBI> onto the C<@ISA> 
+Next, C<Maypole::setup> B<pushes> L<Maypole::Model::CDBI> onto the C<@ISA> 
 array of each of these classes. 
 
 Finally, the relationships among these tables are set up. Either do this
@@ -184,7 +189,7 @@ C<BeerDB2::Beer>, you would write:
     1;
     
 From Maypole 2.11, this package will be loaded automatically during C<setup()>,
-and C<BeerDB2::Maypole::Model> is B<unshifted> onto it's C<@ISA>.
+and C<BeerDB2::Maypole::Model> is B<pushed> onto it's C<@ISA>.
 
 Configure relationships either in the individual C<OfflineBeer::*> classes, or
 else all together in C<OfflineBeer> itself i.e. not in the Maypole model. This 
@@ -234,8 +239,8 @@ The resulting model looks like this:
 the Maypole application, and need not know it exists at all.
 
 2. Methods defined in the Maypole table classes, override methods defined in the
-Offline table classes, because C<BeerDB2::Maypole::Model> was unshifted onto the
-beginning of each Maypole table class's C<@ISA>. Perl's depth first,
+Offline table classes, because C<BeerDB2::Maypole::Model> was pushed onto the
+end of each Maypole table class's C<@ISA>. Perl's depth first,
 left-to-right method lookup from e.g. C<BeerDB2::Beer> starts in
 C<BeerDB2::Beer>, then C<BeerDB2::Maypole::Model>, C<Maypole::Model::CDBI>,
 C<Maypole::Model::Base>, and C<Class::DBI>, before moving on to

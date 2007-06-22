@@ -10,7 +10,7 @@ BEGIN {
 	  die "couldn't connect to mysql" unless (@databases);
 	};
 	warn "error : $@ \n" if ($@);
-        my $testcount = ($@) ? 45 : 65 ;
+        my $testcount = ($@) ? 45 : 64 ;
         plan tests => $testcount;
 }
 

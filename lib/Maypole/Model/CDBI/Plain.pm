@@ -1,9 +1,5 @@
 package Maypole::Model::CDBI::Plain;
-use Maypole::Config;
-use base 'Maypole::Model::CDBI';
 use strict;
-
-Maypole::Config->mk_accessors(qw(table_to_class));
 
 =head1 NAME
 
@@ -36,7 +32,60 @@ L<Class::DBI> classes; simply call C<setup> with a list reference
 of the classes you're going to use, and Maypole will work out the
 tables and set up the inheritance relationships as normal.
 
+=cut
+
+use Maypole::Config;
+use base 'Maypole::Model::CDBI::Base';
+
+use Maypole::Model::CDBI::AsForm;
+use Maypole::Model::CDBI::FromCGI;
+use CGI::Untaint::Maypole;
+
 =head1 METHODS
+
+=head1 Action Methods
+
+Action methods are methods that are accessed through web (or other public) interface.
+
+Inherited from L<Maypole::Model::CDBI::Base>
+
+=head2 do_edit
+
+If there is an object in C<$r-E<gt>objects>, then it should be edited
+with the parameters in C<$r-E<gt>params>; otherwise, a new object should
+be created with those parameters, and put back into C<$r-E<gt>objects>.
+The template should be changed to C<view>, or C<edit> if there were any
+errors. A hash of errors will be passed to the template.
+
+=head2 do_delete
+
+Inherited from Maypole::Model::CDBI::Base.
+
+This action deletes records
+
+=head2 do_search
+
+Inherited from Maypole::Model::CDBI::Base.
+
+This action method searches for database records.
+
+=head2 list
+
+Inherited from Maypole::Model::CDBI::Base.
+
+The C<list> method fills C<$r-E<gt>objects> with all of the
+objects in the class. The results are paged using a pager.
+
+=head1 Helper Methods
+
+=head2 Untainter
+
+Set the class you use to untaint and validate form data
+Note it must be of type CGI::Untaint::Maypole (takes $r arg) or CGI::Untaint
+
+=cut
+
+sub Untainter { 'CGI::Untaint::Maypole' };
 
 =head2 setup
 
@@ -49,8 +98,6 @@ tables and set up the inheritance relationships as normal.
   This method loads the model classes for the application
 
 =cut
-
-
 
 sub setup_database {
     my ( $self, $config, $namespace, $classes ) = @_;

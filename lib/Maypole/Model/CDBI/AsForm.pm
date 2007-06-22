@@ -1,14 +1,6 @@
 package Maypole::Model::CDBI::AsForm;
-
-#TODO -- 
-
-# TESTED and Works --
-#  has_many select -- $obj->to_field($has_many_col);   # select one form many
-#                  -- $class->to_field($has_many_col); # foreign inputs  
-#  $class->search_inputs; /
-
-
 use strict;
+
 use warnings;
 
 use base 'Exporter';
@@ -18,7 +10,6 @@ use HTML::Element;
 use Carp qw/cluck/;
 
 our $OLD_STYLE = 0;
-# pjs  --  Added new methods to @EXPORT 
 our @EXPORT = 
 	qw( 
 		to_cgi to_field  foreign_input_delimiter search_inputs unselect_element
@@ -30,7 +21,7 @@ our @EXPORT =
 		_options_from_array _options_from_hash 
     );
 
-our $VERSION = '.95'; 
+our $VERSION = '.97';
 
 =head1 NAME
 
@@ -297,17 +288,18 @@ columns and a hashref of hashes of arguments for each column.  If called with an
 =cut
 
 sub to_cgi {
-		my ($class, @columns) = @_; # pjs -- added columns arg
-		my $args = {};
-		if (not @columns) {
-				@columns = $class->columns;
-				# Eventually after stabalization, we could add display_columns 
-				#keys map { $_ => 1 } ($class->display_columns, $class->columns); 
-		}
-		else {
-				if ( ref $columns[-1] eq 'HASH' ) { $args = pop @columns; }
-		}
-		map { $_ => $class->to_field($_, $args->{$_}) } @columns;
+  my ($class, @columns) = @_;
+  my $args = {};
+  if (not @columns) {
+    @columns = $class->columns;
+    # Eventually after stabalization, we could add display_columns 
+    #keys map { $_ => 1 } ($class->display_columns, $class->columns); 
+  } else {
+    if ( ref $columns[-1] eq 'HASH' ) {
+      $args = pop @columns;
+    }
+  }
+  map { $_ => $class->to_field($_, $args->{$_}) } @columns;
 }
 
 =head2 to_field($field [, $how][, $args])
@@ -377,9 +369,9 @@ sub search_inputs {
   $class = ref $class || $class;
   #my $accssr_class = { $class->accessor_classes };
   my %cgi;
-  
+
   $args->{columns} ||= $class->can('search_columns') ?[$class->search_columns] : [$class->display_columns];
-  
+
   foreach my $field ( @{ $args->{columns} } ) {
     my $base_args = {
 		     no_hidden_constraints => 1,
@@ -407,7 +399,6 @@ sub search_inputs {
 	  my $val = $first ? $first->attr('value') : undef;  
 	  if ($first and (@fc > 0 or (defined $val and $val ne '')) ) {	# something ( $first->attr('value') ne '' or 
 
-	    #(defined $first->attr('value') or $first->attr('value') ne ''))  
 	    # push an empty option on stactk
 	    $el->unshift_content(HTML::Element->new('option'));
 	  }
@@ -442,35 +433,32 @@ sub search_inputs {
 
 =cut
 sub unselect_element {
-		my ($self, $el) = @_;
-		#unless (ref $el eq 'HTML::Element') {
-		#$self->_croak ('Need an HTML::Element to unselect. You gave a ' . Dumper($el)); }
-		if ($el->tag eq 'select') {
-				foreach my $opt ($el->content_list) {
-						$opt->attr('selected', undef) if $opt->attr('selected');
-				}
-		}
+  my ($self, $el) = @_;
+  if (ref $el && $el->can('tag') && $el->tag eq 'select') {
+    foreach my $opt ($el->content_list) {
+      $opt->attr('selected', undef) if $opt->attr('selected');
+    }
+  }
 }
 
 =head2 _field_from_how($field, $how,$args)
 
 Returns an input element based the "how" parameter or nothing at all.
-Override at will. 
+Override at will.
 
 =cut
 
 sub _field_from_how {
-		my ($self, $field, $how, $args) = @_;
-		return unless $how;
-		$args ||= {};
-		no strict 'refs';
-		my $meth = "_to_$how";
-		if (not $self->can($meth)) { 
-				warn "Class can not $meth";
-				return;
-		}
-		return $self->$meth($field, $args); 
-		return;
+  my ($self, $field, $how, $args) = @_;
+  return unless $how;
+  $args ||= {};
+  no strict 'refs';
+  my $meth = "_to_$how";
+  if (not $self->can($meth)) {
+    warn "Class can not $meth";
+    return;
+  }
+  return $self->$meth($field, $args);
 }
 
 =head2 _field_from_relationship($field, $args)
@@ -483,46 +471,41 @@ For has_a it will give select box
 =cut
 
 sub _field_from_relationship {
-		my ($self, $field, $args) = @_;
-		return unless $field;
-		my $rel_meta = $self->related_meta('r',$field) || return; 
-		my $rel_name = $rel_meta->{name};
-		#my $meta = $self->meta_info;
-		#grep{ defined $meta->{$_}{$field} } keys %$meta;
-		my $fclass = $rel_meta->foreign_class;
-		my $fclass_is_cdbi = $fclass ? $fclass->isa('Class::DBI') : 0;
+  my ($self, $field, $args) = @_;
+  return unless $field;
+  my $rel_meta = $self->related_meta('r',$field) || return; 
+  my $rel_name = $rel_meta->{name};
+  my $fclass = $rel_meta->foreign_class;
+  my $fclass_is_cdbi = $fclass ? $fclass->isa('Class::DBI') : 0;
 
-		# maybe has_a select 
-		if ($rel_meta->{name} eq 'has_a' and $fclass_is_cdbi) {
-				# This condictions allows for trumping of the has_a args
-				if  (not $rel_meta->{args}{no_select} and not $args->{no_select}) 
-				{
-						$args->{class} = $fclass;
-						return  $self->_to_select($field, $args);
-				}
-				return;
-		}
-		# maybe has many select
-		if ($rel_meta->{name} eq 'has_many' and $fclass_is_cdbi and ref $self) {
-				# This condictions allows for trumping of the has_a args
-				if  (not $rel_meta->{args}{no_select} and not $args->{no_select}) 
-				{
-						$args->{class} = $fclass;
-						my @itms = $self->$field; # need list not iterator
-						$args->{items} = \@itms;
-						return  $self->_to_select($field, $args);
-				}
-				return;
-		}
+  # maybe has_a select 
+  if ($rel_meta->{name} eq 'has_a' and $fclass_is_cdbi) {
+    # This condictions allows for trumping of the has_a args
+    if (not $rel_meta->{args}{no_select} and not $args->{no_select}) {
+      $args->{class} = $fclass;
+      return  $self->_to_select($field, $args);
+    }
+    return;
+  }
+  # maybe has many select
+  if ($rel_meta->{name} eq 'has_many' and $fclass_is_cdbi and ref $self) {
+    # This condictions allows for trumping of the has_a args
+    if (not $rel_meta->{args}{no_select} and not $args->{no_select}) {
+      $args->{class} = $fclass;
+      my @itms = $self->$field; # need list not iterator
+      $args->{items} = \@itms;
+      return  $self->_to_select($field, $args);
+    }
+    return;
+  }
 
-		# maybe foreign inputs 
-		my %local_cols = map { $_ => 1 } $self->columns; # includes is_a cols
-		if ($fclass_is_cdbi and (not $local_cols{$field} or $rel_name eq 'has_own'))
-		{
-				$args->{related_meta} = $rel_meta; # suspect faster to set these args 
-				return $self->_to_foreign_inputs($field, $args);
-		}
-		return;
+  # maybe foreign inputs 
+  my %local_cols = map { $_ => 1 } $self->columns; # includes is_a cols
+  if ($fclass_is_cdbi and (not $local_cols{$field} or $rel_name eq 'has_own')) {
+    $args->{related_meta} = $rel_meta; # suspect faster to set these args 
+    return $self->_to_foreign_inputs($field, $args);
+  }
+  return;
 }
 
 =head2 _field_from_column($field, $args)
@@ -566,102 +549,75 @@ sub _field_from_column {
 
 
 sub _to_textarea {
-		my ($self, $col, $args) = @_;
-		my $class = $args->{class} || $self;
-		$class = ref $class || $class;
-		$col  ||= ($class->primary_columns)[0]; # TODO
-		# pjs added default	
-		$args ||= {};
-		my $val =  $args->{value}; 
+  my ($self, $col, $args) = @_;
+  my $class = $args->{class} || $self;
+  $class = ref $class || $class;
+  $col  ||= ($class->primary_columns)[0]; # TODO
+  # pjs added default
+  $args ||= {};
+  my $val =  $args->{value}; 
 
-		unless (defined $val) {
-				if (ref $self) {
-						$val = $self->$col; 
-				}
-				else { 
-						$val = $args->{default}; 
-						$val = '' unless defined $val;  
-				}
-		}
-		my ($rows, $cols) = _box($val);
-		$rows = $args->{rows} if $args->{rows};
-		$cols = $args->{cols} if $args->{cols};;
-		my $name = $args->{name} || $col; 
-		my $a =
-		HTML::Element->new("textarea", name => $name, rows => $rows, cols => $cols);
-		$a->push_content($val);
-		$OLD_STYLE && return $a->as_HTML;
-		$a;
+  unless (defined $val) {
+    if (ref $self) {
+      $val = $self->$col; 
+    } else { 
+      $val = $args->{default}; 
+      $val = '' unless defined $val;  
+    }
+  }
+  my ($rows, $cols) = _box($val);
+  $rows = $args->{rows} if $args->{rows};
+  $cols = $args->{cols} if $args->{cols};;
+  my $name = $args->{name} || $col; 
+  my $a =
+    HTML::Element->new("textarea", name => $name, rows => $rows, cols => $cols);
+  $a->push_content($val);
+  $OLD_STYLE && return $a->as_HTML;
+  $a;
 }
 
 sub _to_textfield {
-		my ($self, $col, $args ) = @_;
-		use Carp qw/confess/;
-		confess "No col passed to _to_textfield" unless $col;
-		$args ||= {};
-		my $val  = $args->{value}; 
-		my $name = $args->{name} || $col; 
+  my ($self, $col, $args ) = @_;
+  use Carp qw/confess/;
+  confess "No col passed to _to_textfield" unless $col;
+  $args ||= {};
+  my $val  = $args->{value}; 
+  my $name = $args->{name} || $col; 
 
-		unless (defined $val) {
-				if (ref $self) {
-						# Case where column inflates.
-						# Input would get stringification which could be not good.
-						#  as in the case of Time::Piece objects
-						$val = $self->can($col) ? $self->$col : ''; # in case it is a virtual column
-						if (ref $val) {
-								if (my $meta = $self->related_meta('',$col)) {
-										if (my $code = $meta->{args}{deflate4edit} || $meta->{args}{deflate} ) {
-												$val  = ref $code ? &$code($val) : $val->$code;
-										}
-										elsif ( $val->isa('Class::DBI') ) {
-												$val  = $val->id;
-										}
-										else { 
-												#warn "No deflate4edit code defined for $val of type " . 
-												#ref $val . ". Using the stringified value in textfield..";
-										}
-								}
-								else {
-										$val  = $val->id if $val->isa("Class::DBI"); 
-								}
-						}
+  unless (defined $val) {
+    if (ref $self) {
+      # Case where column inflates.
+      # Input would get stringification which could be not good.
+      #  as in the case of Time::Piece objects
+      $val = $self->can($col) ? $self->$col : ''; # in case it is a virtual column
+      if (ref $val) {
+	if (my $meta = $self->related_meta('',$col)) {
+	  if (my $code = $meta->{args}{deflate4edit} || $meta->{args}{deflate} ) {
+	    $val  = ref $code ? &$code($val) : $val->$code;
+	  } elsif ( $val->isa('Class::DBI') ) {
+	    $val  = $val->id;
+	  } else { 
+	    #warn "No deflate4edit code defined for $val of type " . 
+	    #ref $val . ". Using the stringified value in textfield..";
+	  }
+	} else {
+	  $val  = $val->id if $val->isa("Class::DBI"); 
+	}
+      }
 
-				}
-				else {
-						$val = $args->{default}; 
-						$val = '' unless defined $val;
-				}
-		}
-		my $a;
-		# THIS If section is neccessary or you end up with "value" for a vaiue
-		# if val is 
-		$val = '' unless defined $val; 
-		$a = HTML::Element->new("input", type => "text", name => $name, value =>$val);
-		$OLD_STYLE && return $a->as_HTML;
-		$a;
+    } else {
+      $val = $args->{default}; 
+      $val = '' unless defined $val;
+    }
+  }
+  my $a;
+  # THIS If section is neccessary or you end up with "value" for a vaiue
+  # if val is 
+  $val = '' unless defined $val; 
+  $a = HTML::Element->new("input", type => "text", name => $name, value =>$val);
+  $OLD_STYLE && return $a->as_HTML;
+  $a;
 }
-
-
-# Old version
-#sub _to_select {
-#	my ($self, $col, $hint) = @_;
-#	my $fclass = $hint || $self->__hasa_rels->{$col}->[0];
-#	my @objs        = $fclass->retrieve_all;
-#	my $a           = HTML::Element->new("select", name => $col);
-#	for (@objs) {
-#		my $sel = HTML::Element->new("option", value => $_->id);
-#		$sel->attr("selected" => "selected")
-#			if ref $self
-#			and eval { $_->id eq $self->$col->id };
-#		$sel->push_content($_->stringify_self);
-#		$a->push_content($sel);
-#	}
-#	$OLD_STYLE && return $a->as_HTML;
-#	$a;
-#}
-
-
-
 
 =head2 recognized arguments
 
@@ -677,10 +633,6 @@ sub _to_textfield {
   stringify => $stringify_coderef|$method_name
 
 
-
-
-# select box requirements
-# 1. a select box for objecs of a has_a related class -- DONE 
 =head2  1. a select box out of a has_a or has_many related class.
   # For has_a the default behavior is to make a select box of every element in 
   # related class and you choose one. 
@@ -713,100 +665,94 @@ sub _to_textfield {
 =cut
 
 sub _to_select {
-		my ($self, $col, $args) = @_;
-		$args ||= {};
-		# Do we have items already ? Go no further. 
-		if ($args->{items} and ref $args->{items}) {  
-				my $a = $self->_select_guts($col,  $args);
-    	$OLD_STYLE && return $a->as_HTML;
-		if ($args->{multiple}) { $a->attr('multiple', 'multiple');}
-		return $a;
-	}
-	
-	# Proceed with work
+  my ($self, $col, $args) = @_;
 
-	my $rel_meta;  
-    if (not $col) { 
-		unless ($args->{class}) {
-        	$args->{class} = ref $self || $self;
-			# object selected if called with one
-            $args->{selected} = { $self->id => 1} 
-				if not $args->{selected} and ref $self;
-		}
-        $col = $args->{class}->primary_column;
-		$args->{name} ||= $col;
-    }
-    # Related Class maybe ? 
-    elsif ($rel_meta =  $self->related_meta('r:)', $col) ) {
-        $args->{class} = $rel_meta->{foreign_class};
-        # related objects pre selected if object
-				
-		# "Has many" -- Issues:
-		# 1) want to select one  or many from list if self is an object
-		# Thats about all we can do really, 
-		# 2) except for mapping which is TODO and  would 
-		# do something like add to and take away from list of permissions for
-		# example.
-
-		# Hasmany select one from list if ref self
-		if ($rel_meta->{name} =~ /has_many/i and ref $self) {
-		    my @itms =  $self->$col; # need list not iterator
-			$args->{items} = \@itms;
-			my $a = $self->_select_guts($col,  $args);
-		    $OLD_STYLE && return $a->as_HTML;
-		    return $a;
-		}
-		else {
-			$args->{selected} ||= [ $self->$col ] if  ref $self; 
-			#warn "selected is " . Dumper($args->{selected});
-			my $c = $rel_meta->{args}{constraint} || {};
-			my $j = $rel_meta->{args}{join} || {};
-			my @join ; 
-			if (ref $self) {
-				@join   =  map { $_ ." = ". $self->_attr($_) } keys %$j; 
-			}
-			my @constr= map { "$_ = '$c->{$_}'"} keys %$c; 
-			$args->{where}    ||= join (' AND ', (@join, @constr));
-			$args->{order_by} ||= $rel_meta->{args}{order_by};
-			$args->{limit}    ||= $rel_meta->{args}{limit};
-		}
-			
-    }
-    # We could say :Col is name and we are selecting  out of class arg.
-	# DIE for now
-	#else {
-	#	die "Usage _to_select. $col not related to any class to select from. ";
-		
-	#}
-		
-    # Set arguments 
-	unless ( defined  $args->{column_nullable} ) {
-	    $args->{column_nullable} = $self->can('column_nullable') ?
-			 $self->column_nullable($col) : 1;
-	}
-
-	# Get items to select from
-    my $items = _select_items($args); # array of hashrefs 
-
-	# Turn items into objects if related 
-	if ($rel_meta and not $args->{no_construct}) { 
-		my @objs = ();
-		push @objs, $rel_meta->{foreign_class}->construct($_) foreach @$items;
-		$args->{items} = \@objs; 
-	}
-	else { $args->{items} = $items; } 
-	
-	#use Data::Dumper;
-	#warn "Just got items. They are  " . Dumper($args->{items});
-
-	# Make select HTML element
-	$a = $self->_select_guts($col, $args);
-
-	if ($args->{multiple}) {$a->attr('multiple', 'multiple');}
-
-	# Return 
+  $args ||= {};
+  # Do we have items already ? Go no further. 
+  if ($args->{items} and ref $args->{items}) {  
+    my $a = $self->_select_guts($col,  $args);
     $OLD_STYLE && return $a->as_HTML;
-    $a;
+    if ($args->{multiple}) {
+      $a->attr('multiple', 'multiple');
+    }
+    return $a;
+  }
+
+  # Proceed with work
+
+  my $rel_meta;
+  if (not $col) {
+    unless ($args->{class}) {
+      $args->{class} = ref $self || $self;
+      # object selected if called with one
+      $args->{selected} = { $self->id => 1} 
+	if not $args->{selected} and ref $self;
+    }
+    $col = $args->{class}->primary_column;
+    $args->{name} ||= $col;
+  }
+  # Related Class maybe ? 
+  elsif ($rel_meta =  $self->related_meta('r:)', $col) ) {
+    $args->{class} = $rel_meta->{foreign_class};
+    # related objects pre selected if object
+    # "Has many" -- Issues:
+    # 1) want to select one  or many from list if self is an object
+    # Thats about all we can do really, 
+    # 2) except for mapping which is TODO and  would 
+    # do something like add to and take away from list of permissions for
+    # example.
+
+    # Hasmany select one from list if ref self
+    if ($rel_meta->{name} =~ /has_many/i and ref $self) {
+      my @itms =  $self->$col;	# need list not iterator
+      $args->{items} = \@itms;
+      my $a = $self->_select_guts($col,  $args);
+      $OLD_STYLE && return $a->as_HTML;
+      return $a;
+    } else {
+      $args->{selected} ||= [ $self->$col ] if  ref $self; 
+      #warn "selected is " . Dumper($args->{selected});
+      my $c = $rel_meta->{args}{constraint} || {};
+      my $j = $rel_meta->{args}{join} || {};
+      my @join ; 
+      if (ref $self) {
+	@join   =  map { $_ ." = ". $self->_attr($_) } keys %$j; 
+      }
+      my @constr= map { "$_ = '$c->{$_}'"} keys %$c; 
+      $args->{where}    ||= join (' AND ', (@join, @constr));
+      $args->{order_by} ||= $rel_meta->{args}{order_by};
+      $args->{limit}    ||= $rel_meta->{args}{limit};
+    }
+  }
+
+  # Set arguments 
+  unless ( defined  $args->{column_nullable} ) {
+    $args->{column_nullable} = $self->can('column_nullable') ?
+      $self->column_nullable($col) : 1;
+  }
+
+  # Get items to select from
+  my $items = _select_items($args); # array of hashrefs 
+
+  # Turn items into objects if related 
+  if ($rel_meta and not $args->{no_construct}) { 
+    my @objs = ();
+    push @objs, $rel_meta->{foreign_class}->construct($_) foreach @$items;
+    $args->{items} = \@objs; 
+  } else {
+    $args->{items} = $items;
+  }
+
+  # Make select HTML element
+  $a = $self->_select_guts($col, $args);
+
+  if ($args->{multiple}) {
+    $a->attr('multiple', 'multiple');
+  }
+
+  # Return 
+  $OLD_STYLE && return $a->as_HTML;
+  $a;
 
 }
 
@@ -816,64 +762,68 @@ sub _to_select {
 # #############
 # returns the intersection of list refs a and b
 sub _list_intersect {
-	my ($a, $b) = @_;
-	my %isect; my %union;
-    foreach my $e (@$a, @$b) { $union{$e}++ && $isect{$e}++ }
-	return  %isect;
+  my ($a, $b) = @_;
+  my %isect; my %union;
+  foreach my $e (@$a, @$b) {
+    $union{$e}++ && $isect{$e}++;
+  }
+  return  %isect;
 }
+
 ############
 # FUNCTION #
 ############
 # Get Items  returns array of hashrefs
 sub _select_items { 
-	my $args = shift;
-	my $fclass = $args->{class};
-    my @disp_cols = @{$args->{columns} || []};
-    @disp_cols = $fclass->columns('SelectBox') unless @disp_cols;
-    @disp_cols = $fclass->columns('Stringify')unless @disp_cols;
-    @disp_cols = $fclass->_essential unless @disp_cols;
-	unshift @disp_cols,  $fclass->columns('Primary');
-	#my %isect = _list_intersect(\@pks, \@disp_cols);
-	#foreach (@pks) { push @sel_cols, $_ unless $isect{$_}; } 
-    #push @sel_cols, @disp_cols;		
+  my $args = shift;
+  my $fclass = $args->{class};
+  my @disp_cols = @{$args->{columns} || []};
+  @disp_cols = $fclass->columns('SelectBox') unless @disp_cols;
+  @disp_cols = $fclass->columns('Stringify')unless @disp_cols;
+  @disp_cols = $fclass->_essential unless @disp_cols;
+  unshift @disp_cols,  $fclass->columns('Primary');
+  #my %isect = _list_intersect(\@pks, \@disp_cols);
+  #foreach (@pks) { push @sel_cols, $_ unless $isect{$_}; } 
+  #push @sel_cols, @disp_cols;		
 
-	#warn "in select items. args are : " . Dumper($args);
-	my $distinct = '';
-	if ($args->{'distinct'}) {
-    	$distinct = 'DISTINCT ';
-	}
+  #warn "in select items. args are : " . Dumper($args);
+  my $distinct = '';
+  if ($args->{'distinct'}) {
+    $distinct = 'DISTINCT ';
+  }
 
-    my $sql = "SELECT $distinct" . join( ', ', @disp_cols) . 
-	          " FROM " . $fclass->table;
+  my $sql = "SELECT $distinct" . join( ', ', @disp_cols) . 
+    " FROM " . $fclass->table;
 
-	$sql .=	" WHERE " . $args->{where}   if $args->{where};
-	$sql .= " ORDER BY " . $args->{order_by} if $args->{order_by};
-	$sql .= " LIMIT " . $args->{limit} if $args->{limit};
-	#warn "_select_items sql is : $sql";
+  $sql .=	" WHERE " . $args->{where}   if $args->{where};
+  $sql .= " ORDER BY " . $args->{order_by} if $args->{order_by};
+  $sql .= " LIMIT " . $args->{limit} if $args->{limit};
+  #warn "_select_items sql is : $sql";
 
-	my $sth = $fclass->db_Main->prepare($sql);
-	$sth->execute;
-	my @data;
-	while ( my $d = $sth->fetchrow_hashref ) {push @data, $d};  
-	return \@data;
-
+  my $sth = $fclass->db_Main->prepare($sql);
+  $sth->execute;
+  my @data;
+  while ( my $d = $sth->fetchrow_hashref ) {
+    push @data, $d;
+  }
+  return \@data;
 }
 
 
 # Makes a readonly input box out of column's value
 # No args makes object to readonly
 sub _to_readonly {
-    my ($self, $col, $args) = @_;
-    my $val = $args->{value};
-    if (not defined $val ) { # object to readonly
-    	$self->_croak("AsForm: To readonly field called as class method without a value") unless ref $self; 
-        $val = $self->id;
-        $col = $self->primary_column;
-    }
-    my $a = HTML::Element->new('input', 'type' => 'text', readonly => '1',
-        'name' => $col, 'value'=>$val);
-	$OLD_STYLE && return $a->as_HTML;
-    $a;
+  my ($self, $col, $args) = @_;
+  my $val = $args->{value};
+  if (not defined $val ) {	# object to readonly
+    $self->_croak("AsForm: To readonly field called as class method without a value") unless ref $self; 
+    $val = $self->id;
+    $col = $self->primary_column;
+  }
+  my $a = HTML::Element->new('input', 'type' => 'text', readonly => '1',
+			     'name' => $col, 'value'=>$val);
+  $OLD_STYLE && return $a->as_HTML;
+  $a;
 }
 
 
@@ -884,26 +834,26 @@ Returns a select box for the an enum column type.
 =cut
 
 sub _to_enum_select {
-    my ($self, $col, $args) = @_;
-	my $type = $args->{column_type};
-    $type =~ /ENUM\((.*?)\)/i;
-    (my $enum = $1) =~ s/'//g;
-    my @enum_vals = split /\s*,\s*/, $enum;
+  my ($self, $col, $args) = @_;
+  my $type = $args->{column_type};
+  $type =~ /ENUM\((.*?)\)/i;
+  (my $enum = $1) =~ s/'//g;
+  my @enum_vals = split /\s*,\s*/, $enum;
 
-    # determine which is pre selected --
-    my $selected = eval { $self->$col  };
-    $selected = $args->{default} unless defined $selected;
-    $selected = $enum_vals[0] unless defined $selected;
+  # determine which is pre selected
+  my $selected = eval { $self->$col  };
+  $selected = $args->{default} unless defined $selected;
+  $selected = $enum_vals[0] unless defined $selected;
 
-    my $a = HTML::Element->new("select", name => $col);
-    for ( @enum_vals ) {
-        my $sel = HTML::Element->new("option", value => $_);
-        $sel->attr("selected" => "selected") if $_ eq $selected ;
-        $sel->push_content($_);
-        $a->push_content($sel);
-    }
-    $OLD_STYLE && return $a->as_HTML;
-    $a;
+  my $a = HTML::Element->new("select", name => $col);
+  for ( @enum_vals ) {
+    my $sel = HTML::Element->new("option", value => $_);
+    $sel->attr("selected" => "selected") if $_ eq $selected ;
+    $sel->push_content($_);
+    $a->push_content($sel);
+  }
+  $OLD_STYLE && return $a->as_HTML;
+  $a;
 }
 
 
@@ -912,43 +862,42 @@ sub _to_enum_select {
 Returns a "No/Yes"  select box for a boolean column type. 
 
 =cut
-# TCODO fix this mess with args
+
+# TODO fix this mess with args
 sub _to_bool_select {
-    my ($self, $col, $args) = @_;
-	my $type = $args->{column_type};
-	my @bool_text = ('No', 'Yes');	
-	if ($type =~ /BOOL\((.+?)\)/i) {
-		(my $bool = $1) =~ s/'//g;
-		@bool_text = split /,/, $bool;
-	}
+  my ($self, $col, $args) = @_;
+  my $type = $args->{column_type};
+  my @bool_text = ('No', 'Yes');
+  if ($type =~ /BOOL\((.+?)\)/i) {
+    (my $bool = $1) =~ s/'//g;
+    @bool_text = split /,/, $bool;
+  }
 
-	# get selected 
-	
-	my $selected = $args->{value} if defined $args->{value};
-	$selected = $args->{selected} unless defined $selected;
-	$selected =  ref $self ? eval {$self->$col;} : $args->{default}
-		unless (defined $selected);
+  # get selected 
+  my $selected = $args->{value} if defined $args->{value};
+  $selected = $args->{selected} unless defined $selected;
+  $selected =  ref $self ? eval {$self->$col;} : $args->{default}
+    unless (defined $selected);
 
-    my $a = HTML::Element->new("select", name => $col);
-    if ($args->{column_nullable} || $args->{value} eq '') {
-		my $null =  HTML::Element->new("option");
-		$null->attr('selected', 'selected') if  $args->{value} eq '';
-	    $a->push_content( $null ); 
-	}
-	   
-    my ($opt0, $opt1) = ( HTML::Element->new("option", value => 0),
-						  HTML::Element->new("option", value => 1) ); 
-    $opt0->push_content($bool_text[0]); 
-    $opt1->push_content($bool_text[1]); 
-	unless ($selected eq '') { 
-    	$opt0->attr("selected" => "selected") if not $selected; 
-    	$opt1->attr("selected" => "selected") if $selected; 
-	}
-    $a->push_content($opt0, $opt1);
-    $OLD_STYLE && return $a->as_HTML;
-    $a;
+  my $a = HTML::Element->new("select", name => $col);
+  if ($args->{column_nullable} || $args->{value} eq '') {
+    my $null =  HTML::Element->new("option");
+    $null->attr('selected', 'selected') if  $args->{value} eq '';
+    $a->push_content( $null ); 
+  }
+
+  my ($opt0, $opt1) = ( HTML::Element->new("option", value => 0),
+			HTML::Element->new("option", value => 1) ); 
+  $opt0->push_content($bool_text[0]); 
+  $opt1->push_content($bool_text[1]); 
+  unless ($selected eq '') { 
+    $opt0->attr("selected" => "selected") if not $selected; 
+    $opt1->attr("selected" => "selected") if $selected; 
+  }
+  $a->push_content($opt0, $opt1);
+  $OLD_STYLE && return $a->as_HTML;
+  $a;
 }
-
 
 =head2 _to_hidden($field, $args)
 
@@ -960,20 +909,21 @@ name  and the value of the column by the derived name.
 =cut
 
 sub _to_hidden {
-    my ($self, $field, $args) = @_;
-    $args ||= {};
-	my ($name, $value) = ($args->{'name'}, $args->{value});
-	$name = $field unless defined $name;
-	if (! defined $name and !defined $value) { # check for objects
-    	my $obj = $args->{items}->[0] || $self;
-		unless (ref $obj) { die "_to_hidden cannot determine a value. It was passed a value argument or items object or called with an object."; }
-		$name = $obj->primary_column->name unless $name;
-		$value = $obj->$name unless $value;
-	}
+  my ($self, $field, $args) = @_;
+  $args ||= {};
+  my ($name, $value) = ($args->{'name'}, $args->{value});
+  $name = $field unless defined $name;
+  if (! defined $name and !defined $value) { # check for objects
+    my $obj = $args->{items}->[0] || $self;
+    unless (ref $obj) {
+      die "_to_hidden cannot determine a value. It was passed a value argument or items object or called with an object.";
+    }
+    $name = $obj->primary_column->name unless $name;
+    $value = $obj->$name unless $value;
+  }
 
-    return HTML::Element->new('input', 'type' => 'hidden',
-                              'name' => $name, 'value'=>$value);
-    
+  return HTML::Element->new('input', 'type' => 'hidden',
+			    'name' => $name, 'value'=>$value);
 }
 
 =head2 _to_link_hidden($col, $args) 
@@ -984,34 +934,31 @@ Name defaults to the objects primary key. The object defaults to self.
 =cut
 
 sub _to_link_hidden {
-    my ($self, $accessor, $args) = @_;
-    my $r =  eval {$self->controller} || $args->{r} || '';
-    my $uri = $args->{uri} || '';
-   use Data::Dumper;
-    $self->_croak("_to_link_hidden cant get uri. No  Maypole Request class (\$r) or uri arg. Need one or other.")
-        unless $r;
-    my ($obj, $name);
-    if (ref $self) { # hidding linking self
-         $obj  = $self;
-         $name = $args->{name} || $obj->primary_column->name;
-    }
-    elsif ($obj = $args->{items}->[0]) {
-        $name = $args->{name} || $accessor || $obj->primary_column->name; 
-		# TODO use meta data above maybe
-    }
-    else {           # hiding linking related object with id in args
-        $obj  = $self->related_class($r, $accessor)->retrieve($args->{id});
-        $name = $args->{name} || $accessor ; #$obj->primary_column->name;
-		# TODO use meta data above maybe
-    }
-    $self->_croak("_to_link_hidden has no object") unless ref $obj;
-    my $href =  $uri || $r->config->{uri_base} . "/". $obj->table."/view/".$obj->id;
-    my $a = HTML::Element->new('a', 'href' => $href);
-    $a->push_content("$obj");
-    $a->push_content($self->to_field('blahfooey', 'hidden', {name => $name, value =>  $obj->id} ));
+  my ($self, $accessor, $args) = @_;
+  my $r =  eval {$self->controller} || $args->{r} || '';
+  my $uri = $args->{uri} || '';
+  $self->_croak("_to_link_hidden cant get uri. No  Maypole Request class (\$r) or uri arg. Need one or other.")
+    unless $r;
+  my ($obj, $name);
+  if (ref $self) {		# hidding linking self
+    $obj  = $self;
+    $name = $args->{name} || $obj->primary_column->name;
+  } elsif ($obj = $args->{items}->[0]) {
+    $name = $args->{name} || $accessor || $obj->primary_column->name; 
+    # TODO use meta data above maybe
+  } else {	       # hiding linking related object with id in args
+    $obj  = $self->related_class($r, $accessor)->retrieve($args->{id});
+    $name = $args->{name} || $accessor ; #$obj->primary_column->name;
+    # TODO use meta data above maybe
+  }
+  $self->_croak("_to_link_hidden has no object") unless ref $obj;
+  my $href =  $uri || $r->config->{uri_base} . "/". $obj->table."/view/".$obj->id;
+  my $a = HTML::Element->new('a', 'href' => $href);
+  $a->push_content("$obj");
+  $a->push_content($self->to_field('blahfooey', 'hidden', {name => $name, value =>  $obj->id} ));
 
-	$OLD_STYLE && return $a->as_HTML;
-    $a;
+  $OLD_STYLE && return $a->as_HTML;
+  return $a;
 }
 
 =head2 _to_foreign_inputs
@@ -1030,41 +977,43 @@ Arguments this recognizes are :
 =cut
 
 sub _to_foreign_inputs {
-	my ($self, $accssr, $args) = @_;
-	my $rel_meta = $args->{related_meta} || $self->related_meta('r',$accssr); 
-	my $fields 		= $args->{columns};
-	if (!$rel_meta) {
-		$self->_croak( "No relationship for accessor $accssr");
-	}
+  my ($self, $accssr, $args) = @_;
+  my $rel_meta = $args->{related_meta} || $self->related_meta('r',$accssr); 
+  my $fields 		= $args->{columns};
+  if (!$rel_meta) {
+    $self->_carp( "[_to_foreign_inputs] No relationship for accessor $accssr");
+    return;
+  }
 
-	my $rel_type = $rel_meta->{name};
-	my $classORobj = ref $self && ref $self->$accssr ? $self->$accssr : $rel_meta->{foreign_class};
+  my $rel_type = $rel_meta->{name};
+  my $classORobj = ref $self && ref $self->$accssr ? $self->$accssr : $rel_meta->{foreign_class};
 	
-	unless ($fields) { 	
-		$fields = $classORobj->can('display_columns') ? 
-			[$classORobj->display_columns] : [$classORobj->columns];
-	}
+  unless ($fields) { 	
+    $fields = $classORobj->can('display_columns') ? 
+      [$classORobj->display_columns] : [$classORobj->columns];
+  }
 	
-	# Ignore our fkey in them to  prevent infinite recursion 
-	my $me 	        = eval {$rel_meta->{args}{foreign_key}} || 
-					  eval {$rel_meta->{args}{foreign_column}}
-	                  || ''; # what uses foreign_column has_many or might_have  
-	my $constrained = $rel_meta->{args}{constraint}; 
-	my %inputs;
-	foreach ( @$fields ) {
-		next if $constrained->{$_} || ($_ eq $me); # don't display constrained
-		$inputs{$_} =  $classORobj->to_field($_);
-	}
+  # Ignore our fkey in them to  prevent infinite recursion 
+  my $me 	        = eval {$rel_meta->{args}{foreign_key}} || 
+    eval {$rel_meta->{args}{foreign_column}}
+      || '';	   # what uses foreign_column has_many or might_have  
+  my $constrained = $rel_meta->{args}{constraint}; 
+  my %inputs;
+  foreach ( @$fields ) {
+    next if $constrained->{$_} || ($_ eq $me); # don't display constrained
+    $inputs{$_} =  $classORobj->to_field($_);
+  }
 
-	# Make hidden inputs for constrained columns unless we are editing object
-	# TODO -- is this right thing to do?
-	unless (ref $classORobj || $args->{no_hidden_constraints}) {
-		$inputs{$_} = $classORobj->to_field('blahfooey', 'hidden', 
-				      {name => $_, value => $constrained->{$_}} ) 
-			foreach ( keys %$constrained );  
-	}
-	$self->_rename_foreign_input($accssr, \%inputs);
-	return \%inputs;
+  # Make hidden inputs for constrained columns unless we are editing object
+  # TODO -- is this right thing to do?
+  unless (ref $classORobj || $args->{no_hidden_constraints}) {
+    foreach ( keys %$constrained ) {
+      $inputs{$_} = $classORobj->to_field('blahfooey', 'hidden', 
+					  { name => $_, value => $constrained->{$_}} );
+    }
+  }
+  $self->_rename_foreign_input($accssr, \%inputs);
+  return \%inputs;
 }
 
 
@@ -1083,57 +1032,57 @@ and in the following ways
   Array ref of objects 	-- same as Object
   Arrays of data 		-- uses the 0th element in each
   Hashes of data 		-- uses key named 'id'
-    
-=cut 
- 
+
+=cut
+
 ############
 # FUNCTION #
 ############
-sub _hash_selected {
-	my ($args) = shift;
-	my $selected = $args->{value} || $args->{selected};
-	#warn "**** SELECTED is $selected ****";
-	my $type = ref $selected;
-    return $selected unless $selected and $type ne 'HASH'; 
-	#warn "Selected dump : " . Dumper($selected);
-	# Single Object 
-    if ($type and $type ne 'ARRAY') {
-	   my $id = $selected->id;
-	   $id =~ s/^0*//;
-       return  {$id => 1};
-    }
-    # Single Scalar id 
-	elsif (not $type) {
-		return { $selected => 1}; 
-	}
-	
 
-	# Array of objs, arrays, hashes, or just scalalrs. 
-	elsif ($type eq 'ARRAY') {
-		my %hashed;
-		my $ltype = ref $selected->[0];
-		# Objects
-		if ($ltype and $ltype ne 'ARRAY')  {
-			%hashed = map { $_->id  => 1 } @$selected;
-       	}
-		# Arrays of data with id first 
-	    elsif ($ltype and $ltype eq 'ARRAY') {
-			%hashed = map { $_->[0]  => 1 } @$selected; 
-		}
-		# Hashes using pk or id key
-		elsif ($ltype and $ltype eq 'HASH') {
-			my $pk = $args->{class}->primary_column || 'id';
-			%hashed = map { $_->{$pk}  => 1 } @$selected; 
-		}
-		# Just Scalars
-        else { 
-			%hashed = map { $_  => 1 } @$selected; 
-		}
-		return \%hashed;
-	}
-	else { warn "AsForm Could not hash the selected argument: $selected"; }
-} 
-		
+sub _hash_selected {
+  my ($args) = shift;
+  my $selected = $args->{value} || $args->{selected};
+  my $type = ref $selected;
+  return $selected unless $selected and $type ne 'HASH'; 
+
+  # Single Object 
+  if ($type and $type ne 'ARRAY') {
+    my $id = $selected->id;
+    $id =~ s/^0*//;
+    return  {$id => 1};
+  }
+  # Single Scalar id 
+  elsif (not $type) {
+    return { $selected => 1}; 
+  }
+
+  # Array of objs, arrays, hashes, or just scalalrs. 
+  elsif ($type eq 'ARRAY') {
+    my %hashed;
+    my $ltype = ref $selected->[0];
+    # Objects
+    if ($ltype and $ltype ne 'ARRAY') {
+      %hashed = map { $_->id  => 1 } @$selected;
+    }
+    # Arrays of data with id first 
+    elsif ($ltype and $ltype eq 'ARRAY') {
+      %hashed = map { $_->[0]  => 1 } @$selected; 
+    }
+    # Hashes using pk or id key
+    elsif ($ltype and $ltype eq 'HASH') {
+      my $pk = $args->{class}->primary_column || 'id';
+      %hashed = map { $_->{$pk}  => 1 } @$selected; 
+    }
+    # Just Scalars
+    else { 
+      %hashed = map { $_  => 1 } @$selected; 
+    }
+    return \%hashed;
+  } else {
+    warn "AsForm Could not hash the selected argument: $selected";
+  }
+  return;
+}
 
 
 
@@ -1151,67 +1100,63 @@ Items to make options out of can be
 
 =cut
 
-
-
 sub _select_guts {
-    my ($self, $col, $args) = @_; #$nullable, $selected_id, $values) = @_;
+  my ($self, $col, $args) = @_;	#$nullable, $selected_id, $values) = @_;
 
-    #$args->{stringify} ||=  'stringify_selectbox';
-
-    $args->{selected} = _hash_selected($args) if defined $args->{selected};
-	my $name = $args->{name} || $col;
-    my $a = HTML::Element->new('select', name => $name);
-	$a->attr( %{$args->{attr}} ) if $args->{attr};
+  $args->{selected} = _hash_selected($args) if defined $args->{selected};
+  my $name = $args->{name} || $col;
+  my $a = HTML::Element->new('select', name => $name);
+  $a->attr( %{$args->{attr}} ) if $args->{attr};
     
-    if ($args->{column_nullable}) {
-		my $null_element = HTML::Element->new('option', value => '');
-        $null_element->attr(selected => 'selected')
-	    	if ($args->{selected}{'null'});
-        $a->push_content($null_element);
-    }
+  if ($args->{column_nullable}) {
+    my $null_element = HTML::Element->new('option', value => '');
+    $null_element->attr(selected => 'selected')
+      if ($args->{selected}{'null'});
+    $a->push_content($null_element);
+  }
 
- 	my $items = $args->{items};
-    my $type = ref $items;
-	my $proto = eval { ref $items->[0]; } || "";
-	my $optgroups = $args->{optgroups} || '';
-	
-	# Array of hashes, one for each optgroup
-	if ($optgroups) {
-		my $i = 0;
-		foreach (@$optgroups) {
-			my $ogrp=  HTML::Element->new('optgroup', label => $_);
-			$ogrp->push_content($self->_options_from_hash($items->[$i], $args));
-			$a->push_content($ogrp);
-			$i++;
-		}
-	}		
-    # Single Hash
-    elsif ($type eq 'HASH') {
-        $a->push_content($self->_options_from_hash($items, $args));
-    }
-    # Single Array
-    elsif ( $type eq 'ARRAY' and not ref $items->[0] ) {
-        $a->push_content($self->_options_from_array($items, $args));
-    }
-    # Array of Objects
-    elsif( $type eq 'ARRAY' and $proto !~ /ARRAY|HASH/i ) {
-        # make select  of objects
-        $a->push_content($self->_options_from_objects($items, $args));
-    }
-    # Array of Arrays
-    elsif ( $type eq 'ARRAY' and $proto eq 'ARRAY' ) {
-        $a->push_content($self->_options_from_arrays($items, $args));
-    }
-    # Array of Hashes
-    elsif ( $type eq 'ARRAY' and $proto eq 'HASH' ) {
-        $a->push_content($self->_options_from_hashes($items, $args));
-    }
-    else {
-        die "You passed a weird type of data structure to me. Here it is: " .
-	Dumper($items );
-    }
+  my $items = $args->{items};
+  my $type = ref $items;
+  my $proto = eval { ref $items->[0]; } || "";
+  my $optgroups = $args->{optgroups} || '';
 
-    return $a;
+  # Array of hashes, one for each optgroup
+  if ($optgroups) {
+    my $i = 0;
+    foreach (@$optgroups) {
+      my $ogrp=  HTML::Element->new('optgroup', label => $_);
+      $ogrp->push_content($self->_options_from_hash($items->[$i], $args));
+      $a->push_content($ogrp);
+      $i++;
+    }
+  }
+
+  # Single Hash
+  elsif ($type eq 'HASH') {
+    $a->push_content($self->_options_from_hash($items, $args));
+  }
+  # Single Array
+  elsif ( $type eq 'ARRAY' and not ref $items->[0] ) {
+    $a->push_content($self->_options_from_array($items, $args));
+  }
+  # Array of Objects
+  elsif ( $type eq 'ARRAY' and $proto !~ /ARRAY|HASH/i ) {
+    # make select  of objects
+    $a->push_content($self->_options_from_objects($items, $args));
+  }
+  # Array of Arrays
+  elsif ( $type eq 'ARRAY' and $proto eq 'ARRAY' ) {
+    $a->push_content($self->_options_from_arrays($items, $args));
+  }
+  # Array of Hashes
+  elsif ( $type eq 'ARRAY' and $proto eq 'HASH' ) {
+    $a->push_content($self->_options_from_hashes($items, $args));
+  } else {
+    die "You passed a weird type of data structure to me. Here it is: " .
+      Dumper($items );
+  }
+
+  return $a;
 
 
 }
@@ -1225,113 +1170,111 @@ objects stringify method specified in $args->{stringify} as the content. Otherwi
 
 =cut
 sub _options_from_objects {
-    my ($self, $items, $args) = @_;
-	my $selected = $args->{selected} || {};
-	my $stringify = $args->{stringify} || '';
-    my @res;
-	for (@$items) {
-		my $id = $_->id;
-		my $opt = HTML::Element->new("option", value => $id);
-		$id =~ s/^0*//; # leading zeros no good in hash key
-		$opt->attr(selected => "selected") if $selected->{$id}; 
-		my $content = $stringify ? $_->stringify :  "$_";
-		$opt->push_content($content);
-		push @res, $opt; 
-	}
-    return @res;
+  my ($self, $items, $args) = @_;
+  my $selected = $args->{selected} || {};
+
+  my @res;
+  for my $object (@$items) {
+    my $stringify = $args->{stringify};
+    if ($object->can('stringify_column') ) {
+      $stringify ||= $object->stringify_column if ($object->stringify_column && $object->can($object->stringify_column));
+    }
+    my $id = $object->id;
+    my $opt = HTML::Element->new("option", value => $id);
+    $id =~ s/^0*//;		# leading zeros no good in hash key
+    $opt->attr(selected => "selected") if $selected->{$id};
+    my $content = $stringify ? $object->$stringify :  "$object";
+    $opt->push_content($content);
+    push @res, $opt;
+  }
+  return @res;
 }
 
 sub _options_from_arrays {
-    my ($self, $items, $args) = @_;
-	my $selected = $args->{selected} || {};
-    my @res;
-	my $class = $args->{class} || '';
-	my $stringify = $args->{stringify} || '';
-	for my $item (@$items) {
-	    my @pks; # for future multiple key support
-	    push @pks, shift @$item foreach $class->columns('Primary');
-		my $id = $pks[0];
-		$id =~ s/^0+//;  # In case zerofill is on .
-		my $val = defined $id ? $id : '';
-		my $opt = HTML::Element->new("option", value =>$val);
-		$opt->attr(selected => "selected") if $selected->{$id};
-		
-		my $content = ($class and $stringify and $class->can($stringify)) ? 
-		              $class->$stringify($_) : 
-			          join( '/', map { $_ if $_; }@{$item} );
-		$opt->push_content( $content );
-        push @res, $opt; 
-    }
-    return @res;
+  my ($self, $items, $args) = @_;
+  my $selected = $args->{selected} || {};
+  my @res;
+  my $class = $args->{class} || '';
+  my $stringify = $args->{stringify};
+  $stringify ||= $self->stringify_column if ($self->can('stringify_column'));
+  for my $item (@$items) {
+    my @pks;			# for future multiple key support
+    push @pks, shift @$item foreach $class->columns('Primary');
+    my $id = $pks[0];
+    $id =~ s/^0+//;		# In case zerofill is on .
+    my $val = defined $id ? $id : '';
+    my $opt = HTML::Element->new("option", value =>$val);
+    $opt->attr(selected => "selected") if $selected->{$id};
+    my $content = ($class and $stringify and $class->can($stringify)) ? 
+      $class->$stringify($_) : 
+	join( '/', map { $_ if $_; }@{$item} );
+    $opt->push_content( $content );
+    push @res, $opt; 
+  }
+  return @res;
 }
 
 
 sub _options_from_array {
-    my ($self, $items, $args) = @_;
-    my $selected = $args->{selected} || {};
-    my @res;
-    for (@$items) {
-		my $val = defined $_ ? $_ : '';
-        my $opt = HTML::Element->new("option", value => $val);
-        #$opt->attr(selected => "selected") if $selected =~/^$id$/;
-        $opt->attr(selected => "selected") if $selected->{$_};
-        $opt->push_content( $_ );
-        push @res, $opt;
-    }
-    return @res;
+  my ($self, $items, $args) = @_;
+  my $selected = $args->{selected} || {};
+  my @res;
+  for (@$items) {
+    my $val = defined $_ ? $_ : '';
+    my $opt = HTML::Element->new("option", value => $val);
+    #$opt->attr(selected => "selected") if $selected =~/^$id$/;
+    $opt->attr(selected => "selected") if $selected->{$_};
+    $opt->push_content( $_ );
+    push @res, $opt;
+  }
+  return @res;
 }
 
 sub _options_from_hash {
-    my ($self, $items, $args) = @_;
-    my $selected = $args->{selected} || {};
-    my @res;
+  my ($self, $items, $args) = @_;
+  my $selected = $args->{selected} || {};
+  my @res;
 
-    my @values = values %$items;
-    # hash Key is the option content  and the hash value is option value
-    for (sort keys %$items) {
-		my $val = defined $items->{$_} ? $items->{$_} : '';
-        my $opt = HTML::Element->new("option", value => $val);
-        #$opt->attr(selected => "selected") if $selected =~/^$id$/;
-        $opt->attr(selected => "selected") if $selected->{$items->{$_}};
-        $opt->push_content( $_ );
-        push @res, $opt;
-    }
-    return @res;
+  my @values = values %$items;
+  # hash Key is the option content  and the hash value is option value
+  for (sort keys %$items) {
+    my $val = defined $items->{$_} ? $items->{$_} : '';
+    my $opt = HTML::Element->new("option", value => $val);
+    $opt->attr(selected => "selected") if $selected->{$items->{$_}};
+    $opt->push_content( $_ );
+    push @res, $opt;
+  }
+  return @res;
 }
 
 
 sub _options_from_hashes {
-    my ($self, $items, $args) = @_;
-	my $selected = $args->{selected} || {};
-	my $pk = eval {$args->{class}->primary_column} || 'id';
-	my $fclass = $args->{class} || '';
-	my $stringify = $args->{stringify} || '';
-	my @res;
-	for my $item (@$items) {
-		my $val = defined $item->{$pk} ? $item->{$pk} : '';
-		my $opt = HTML::Element->new("option", value => $val);
-		$opt->attr(selected => "selected") if $selected->{$val};
-		my $content = ($fclass and $stringify and $fclass->can($stringify)) ? 
-		              $fclass->$stringify($_) : 
-			          join(' ', map {$item->{$_} } keys %$item);
-		$opt->push_content( $content );
-        push @res, $opt; 
+  my ($self, $items, $args) = @_;
+  my $selected = $args->{selected} || {};
+  my $pk = eval {$args->{class}->primary_column} || 'id';
+  my $fclass = $args->{class} || '';
+  my $stringify = $args->{stringify};
+  $stringify ||= $self->stringify_column if ( $self->can('stringify_column') );
+  my @res;
+  for my $item (@$items) {
+    my $val = defined $item->{$pk} ? $item->{$pk} : '';
+    my $opt = HTML::Element->new("option", value => $val);
+    $opt->attr(selected => "selected") if $selected->{$val};
+    my $content;
+    if ($fclass and $stringify and $fclass->can($stringify)) {
+      $content = bless ($item,$fclass)->$stringify();
+    } elsif ( $stringify ) {
+      $content = $item->{$stringify};
+    } else {
+      $content = join(' ', map {$item->{$_} } keys %$item);
     }
-	return @res;
+
+    $opt->push_content( $content );
+    push @res, $opt;
+  }
+  return @res;
 }
 
-# TODO -- Maybe
-#sub _to_select_or_create {
-#	my ($self, $col, $args) = @_;
-#	$args->{name} ||= $col;
-#	my $select = $self->to_field($col, 'select', $args);
-#	$args->{name} = "create_" . $args->{name};
-#	my $create = $self->to_field($col, 'foreign_inputs', $args);
-#	$create->{'__select_or_create__'} = 
-#		$self->to_field('__select_or_create__',{ name => '__select_or_create__' , value => 1 } );
-#	return ($select, $create);
-#}
-	
 
 =head2 _to_checkbox 
 
@@ -1365,21 +1308,25 @@ Makes a radio button element -- TODO
 # TODO  -- make this general radio butons
 #
 sub _to_radio {
-    my ($self, $col) = @_;
-    my $value = ref $self && $self->$col || '';
-    my $nullable = eval {self->column_nullable($col)} || 0; 
-    my $a = HTML::Element->new("span");
-    my $ry = HTML::Element->new("input", type=> "radio", name=>$col, value=>'Y' );
-    my $rn = HTML::Element->new("input", type=> "radio", name=>$col, value=>'N' );
-    my $ru = HTML::Element->new("input", type=> "radio", name=>$col, value=>'' ) if $nullable;
-    $ry->push_content('Yes'); $rn->push_content('No');
-    $ru->push_content('n/a') if $nullable;
-    if ($value eq 'Y') { $ry->attr("checked" => 'true') }
-    elsif ($value eq 'N') { $rn->attr("checked" => 'true') }
-    elsif ($nullable) { $ru->attr("checked" => 'true') }
-    $a->push_content($ry, $rn);
-    $a->push_content($ru) if $nullable;
-    return $a;
+  my ($self, $col) = @_;
+  my $value = ref $self && $self->$col || '';
+  my $nullable = eval {self->column_nullable($col)} || 0; 
+  my $a = HTML::Element->new("span");
+  my $ry = HTML::Element->new("input", type=> "radio", name=>$col, value=>'Y' );
+  my $rn = HTML::Element->new("input", type=> "radio", name=>$col, value=>'N' );
+  my $ru = HTML::Element->new("input", type=> "radio", name=>$col, value=>'' ) if $nullable;
+  $ry->push_content('Yes'); $rn->push_content('No');
+  $ru->push_content('n/a') if $nullable;
+  if ($value eq 'Y') {
+    $ry->attr("checked" => 'true');
+  } elsif ($value eq 'N') {
+    $rn->attr("checked" => 'true');
+  } elsif ($nullable) {
+    $ru->attr("checked" => 'true');
+  }
+  $a->push_content($ry, $rn);
+  $a->push_content($ru) if $nullable;
+  return $a;
 }
 
 
@@ -1413,17 +1360,16 @@ person->{address} data slot, insert the person and put the person id in the empl
 =cut
 
 sub _rename_foreign_input {
-	my ($self, $accssr, $element) = @_;
-	my $del = $self->foreign_input_delimiter;
-	
-	if ( ref $element ne 'HASH' ) {
-	#	my $new_name = $accssr . "__AF__" . $input->attr('name');
-		$element->attr( name => $accssr . $del . $element->attr('name'));
-	}
-	else {
-		$self->_rename_foreign_input($accssr, $element->{$_}) 
-			foreach (keys %$element);
-	}
+  my ($self, $accssr, $element) = @_;
+  my $del = $self->foreign_input_delimiter;
+
+  if ( ref $element ne 'HASH' ) {
+    #	my $new_name = $accssr . "__AF__" . $input->attr('name');
+    $element->attr( name => $accssr . $del . $element->attr('name'));
+  } else {
+    $self->_rename_foreign_input($accssr, $element->{$_}) 
+      foreach (keys %$element);
+  }
 }
 
 =head2 foreign_input_delimiter
@@ -1442,28 +1388,27 @@ or the defaults.
 
 =cut
 
-sub _box
-{
-	
-	my ($min_rows, $max_rows, $min_cols, $max_cols) = (2 => 50, 20 => 100);
-    my $text = shift;
-    if ($text) {
-	my @rows = split /^/, $text;
-	my $cols = $min_cols;
-	my $chars = 0;
-	for (@rows) {
-	    my $len = length $_;
-	    $chars += $len;
-	    $cols = $len if $len > $cols;
-	    $cols = $max_cols if $cols > $max_cols;
-	}
-	my $rows = @rows;
-	$rows = int($chars/$cols) + 1 if $chars/$cols > $rows;
-	$rows = $min_rows if $rows < $min_rows;
-	$rows = $max_rows if $rows > $max_rows;
-	($rows, $cols)
+sub _box {
+  my ($min_rows, $max_rows, $min_cols, $max_cols) = (2 => 50, 20 => 100);
+  my $text = shift;
+  if ($text) {
+    my @rows = split /^/, $text;
+    my $cols = $min_cols;
+    my $chars = 0;
+    for (@rows) {
+      my $len = length $_;
+      $chars += $len;
+      $cols = $len if $len > $cols;
+      $cols = $max_cols if $cols > $max_cols;
     }
-    else { ($min_rows, $min_cols) }
+    my $rows = @rows;
+    $rows = int($chars/$cols) + 1 if $chars/$cols > $rows;
+    $rows = $min_rows if $rows < $min_rows;
+    $rows = $max_rows if $rows > $max_rows;
+    ($rows, $cols)
+  } else {
+    ($min_rows, $min_cols);
+  }
 }
 
 
@@ -1488,11 +1433,9 @@ Simon Cozens, Tony Bowden
 
 =head1 TODO
 
-  Documenting 
   Testing - lots
-  chekbox generalization
+  checkbox generalization
   radio generalization
-  select work
   Make link_hidden use standard make_url stuff when it gets in Maypole
   How do you tell AF --" I want a has_many select box for this every time so,
      when you call "to_field($this_hasmany)" you get a select box
@@ -1500,7 +1443,7 @@ Simon Cozens, Tony Bowden
 =head1 BUGS and QUERIES
 
 Please direct all correspondence regarding this module to:
- Maypole list. 
+ Maypole list.
 
 =head1 COPYRIGHT AND LICENSE
 

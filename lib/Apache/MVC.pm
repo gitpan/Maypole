@@ -1,6 +1,6 @@
 package Apache::MVC;
 
-our $VERSION = '2.11';
+our $VERSION = '2.12';
 
 use strict;
 use warnings;
@@ -93,13 +93,31 @@ functionality. See L<Maypole> for these:
 
 sub get_request {
     my ($self, $r) = @_;
+    my $request_options = $self->config->request_options || {};
     my $ar;
     if ($MODPERL2) {
-    	$ar = eval {require Apache2::Request} ? Apache2::Request->new($r) : $r;
+    	$ar = eval {require Apache2::Request} ? Apache2::Request->new($r,%{$request_options}) : $r;
 	}
-    else { $ar = Apache::Request->instance($r); }
+    else { $ar = Apache::Request->instance($r,%{$request_options}); }
     $self->ar($ar);
 }
+
+=item warn
+
+=cut
+
+sub warn {
+  my ($self,@args) = @_;
+  my ($package, $line) = (caller)[0,2];
+  my $ar = $self->parent ? $self->parent->{ar} : $self->{ar};
+  if ( $args[0] and ref $self ) {
+    $ar->warn("[$package line $line] ", @args) ;
+  } else {
+    print "warn called by ", caller, " with ", @_, "\n";
+  }
+  return;
+}
+
 
 =item parse_location
 
@@ -110,19 +128,30 @@ sub parse_location {
 
     # Reconstruct the request headers
     $self->headers_in(Maypole::Headers->new);
+
     my %headers;
     if ($MODPERL2) { %headers = %{$self->ar->headers_in};
     } else { %headers = $self->ar->headers_in; }
     for (keys %headers) {
         $self->headers_in->set($_, $headers{$_});
     }
+
+    $self->preprocess_location();
+
     my $path = $self->ar->uri;
-    my $loc  = $self->ar->location;
+    my $base  = URI->new($self->config->uri_base);
+    my $loc = $base->path;
+
     {
         no warnings 'uninitialized';
         $path .= '/' if $path eq $loc;
-        $path =~ s/^($loc)?\///;
+	if ($loc =~ /\/$/) {
+	  $path =~ s/^($loc)?//;
+	} else {
+	  $path =~ s/^($loc)?\///;
+	}
     }
+
     $self->path($path);
     $self->parse_path;
     $self->parse_args;
@@ -139,6 +168,24 @@ sub parse_args {
 }
 
 =item redirect_request
+
+Sets output headers to redirect based on the arguments provided
+
+Accepts either a single argument of the full url to redirect to, or a hash of
+named parameters :
+
+$r->redirect_request('http://www.example.com/path');
+
+or
+
+$r->redirect_request(protocol=>'https', domain=>'www.example.com', path=>'/path/file?arguments', status=>'302', url=>'..');
+
+The named parameters are protocol, domain, path, status and url
+
+Only 1 named parameter is required but other than url, they can be combined as
+required and current values (from the request) will be used in place of any
+missing arguments. The url argument must be a full url including protocol and
+can only be combined with status.
 
 =cut
 
@@ -168,6 +215,7 @@ sub redirect_request {
   $r->ar->headers_out->set('Location' => $redirect_url);
   return OK;
 }
+
 
 =item get_protocol
 

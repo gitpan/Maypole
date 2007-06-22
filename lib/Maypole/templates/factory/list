@@ -24,7 +24,7 @@
                     SET additional =
                         additional  _ "&" _ name _ "=" _
                         request.params.$name;
-                    SET action = "search";
+                    SET action = "do_search";
                   END;
                 END;
 		USE model_obj = Class request.model_class;

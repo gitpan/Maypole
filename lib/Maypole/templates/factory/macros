@@ -63,8 +63,7 @@ for some.
         ELSIF col == classmetadata.stringify_column;
             maybe_link_view(item);
  		ELSIF col_obj; # its a real column
-            accessor = item.accessor_name_for(col_obj) ||
-			           item.accessor_name(col_obj); # deprecated in cdbi
+            accessor = item.accessor_name_for(col_obj) || item.accessor_name(col_obj); # deprecated in cdbi
             maybe_link_view(item.$accessor);
         ELSE; 
             item.$col;

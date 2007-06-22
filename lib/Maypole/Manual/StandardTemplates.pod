@@ -61,10 +61,11 @@ This deletes a row, returning to the C<list> page.
 
 This provides a paged list of the table suitable for browsing.
 
-=item C</[table]/search/>
+=item C</[table]/do_search/>
 
 This handles a search query and presents the search results back to the
-F<list> template.
+F<list> template. Previously this was called search, but obviously that 
+clashes with a lot of stuff, and that usage is now deprecated.
 
 =back
 
@@ -211,12 +212,16 @@ This is usually integer, if you're using numeric IDs for your primary
 key. If not, you probably want C<printable>, but you probably know what
 you're doing anyway.
 
-=head3 delete
+=head3 do_delete
 
-The delete method takes a number of arguments and deletes those rows from the
+The do_delete method takes a number of arguments and deletes those rows from the
 database; it then loads up all rows and heads to the F<list> template.
 You almost certainly want to override this to provide some kind of
 authentication.
+
+Previously this was called delete, but obviously that clashes with a lot of stuff,
+and that usage is now deprecated.
+
 
 =head3 list
 

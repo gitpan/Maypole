@@ -101,8 +101,6 @@ Returns errors that ocurred during an operation.
 
 sub cgi_update_errors { %{ shift->{_cgi_update_error} || {} } }
 
-
-
 =head2 create_from_cgi
 
 Based on the same method in Class::DBI::FromCGI.
@@ -418,35 +416,17 @@ sub _do_create_all {
   foreach (keys %$validated) {
     $related{$_}= delete $validated->{$_} if ref $validated->{$_} eq 'HASH';
   }
-  # Make has_own/a rel type objects and put id in parent's data hash 
-#  foreach $accssr (keys %related) {
-#    my $rel_meta = $self->related_meta('r', $accssr); 
-#    $self->_croak("No relationship found for $accssr to $class.")
-#      unless $rel_meta;
-#    my $rel_type   = $rel_meta->{name};
-#    if ($rel_type =~ /(^has_own$|^has_a$)/) {
-#      my $fclass= $rel_meta->{foreign_class};
-#      my ($rel_obj, $errs) = $fclass->_do_create_all($related{$accssr});
-#      # put id in parent's data hash 
-#      if (not keys %$errs) {
-#	$validated->{$accssr} = $rel_obj->id;
-#      } else {
-#	$errors->{$accssr} = $errs;
-#      }
-#      delete $related{$accssr}; # done with this 
-#    }
-#  }
 
   # Make main object -- base case
   #warn "\n*** validated data is " . Dumper($validated). "***\n";
   my $me_obj  = eval { $self->create($validated) };
   if ($@) { 
- 	warn "Just failed making a " . $self. " FATAL Error is $@"
-		if (eval{$self->model_debug});  
+    warn "Just failed making a " . $self. " FATAL Error is $@"
+      if (eval{$self->model_debug});  
     $errors->{FATAL} = $@; 
     return (undef, $errors);
   }
-	
+
   if (eval{$self->model_debug}) {
     if ($me_obj) {
       warn "Just made a $self : $me_obj ( " . $me_obj->id . ")";
@@ -460,7 +440,7 @@ sub _do_create_all {
     my ($rel_obj, $errs) = 
       $me_obj->_create_related($accssr, $related{$accssr});
     $errors->{$accssr} = $errs if $errs;
-	
+
   }
   #warn "Errors are " . Dumper($errors);
 
@@ -524,43 +504,44 @@ sub _do_update_all {
 # If no errors, then undef in that slot.
 
 sub _create_related {
-	# self is object or class, accssr is accssr to relationship, params are 
-	# data for relobject, and created is the array ref to store objs we 
-	# create (optional).
-	my ( $self, $accssr, $params, $created )  = @_;
-	$self->_croak ("Can't make related object without a parent $self object") 
-		unless ref $self;
-	$created      ||= [];
-	my  $rel_meta = $self->related_meta('r',$accssr);
+    # self is object or class, accssr is accssr to relationship, params are 
+    # data for relobject, and created is the array ref to store objs we 
+    # create (optional).
+    my ( $self, $accssr, $params, $created )  = @_;
+    $self->_croak ("Can't make related object without a parent $self object") 
+	unless ref $self;
+    $created      ||= [];
+    my  $rel_meta = $self->related_meta('r',$accssr);
     if (!$rel_meta) {
-		$self->_croak("No relationship for $accssr in " . ref($self));
-	}
-	my $rel_type  = $rel_meta->{name};
-	my $fclass    = $rel_meta->{foreign_class};
-	#warn " Dumper of meta is " . Dumper($rel_meta);
-	
+	$self->_carp("[_create_related] No relationship for $accssr in " . ref($self));
+	return;
+    }
+    my $rel_type  = $rel_meta->{name};
+    my $fclass    = $rel_meta->{foreign_class};
+    #warn " Dumper of meta is " . Dumper($rel_meta);
 
-	my ($rel, $errs); 
 
-	# Set up params for might_have, has_many, etc
-	if ($rel_type ne 'has_own' and $rel_type ne 'has_a') {
+    my ($rel, $errs); 
 
-		# Foreign Key meta data not very standardized in CDBI
-		my $fkey= $rel_meta->{args}{foreign_key} || $rel_meta->{foreign_column};
-		unless ($fkey) { die " Could not determine foreign key for $fclass"; }
-		my %data = (%$params, $fkey => $self->id);
-		%data = ( %data, %{$rel_meta->{args}->{constraint} || {}} );
-		#warn "Data is " . Dumper(\%data);
-	    ($rel, $errs) =  $fclass->_do_create_all(\%data, $created);
+    # Set up params for might_have, has_many, etc
+    if ($rel_type ne 'has_own' and $rel_type ne 'has_a') {
+
+	# Foreign Key meta data not very standardized in CDBI
+	my $fkey= $rel_meta->{args}{foreign_key} || $rel_meta->{foreign_column};
+	unless ($fkey) { die " Could not determine foreign key for $fclass"; }
+	my %data = (%$params, $fkey => $self->id);
+	%data = ( %data, %{$rel_meta->{args}->{constraint} || {}} );
+	#warn "Data is " . Dumper(\%data);
+	($rel, $errs) =  $fclass->_do_create_all(\%data, $created);
+    }
+    else { 
+	($rel, $errs) =  $fclass->_do_create_all($params, $created);
+	unless ($errs) {
+	    $self->$accssr($rel->id);
+	    $self->update;
 	}
-	else { 
-	    ($rel, $errs) =  $fclass->_do_create_all($params, $created);
-		unless ($errs) {
-			$self->$accssr($rel->id);
-			$self->update;
-		}
-	}
-	return ($rel, $errs);
+    }
+    return ($rel, $errs);
 }
 
 

@@ -56,6 +56,29 @@ The second reason why we want our table classes to inherit from
 C<Maypole::Model::CDBI> is because it provides a useful set of 
 default actions. So what's an action, and why are they useful?
 
+
+=head2 Maypole::Model::CDBI::Plain
+
+The 'Plain' maypole Model : C<Maypole::Model::CDBI> allows you
+
+    package Foo;
+    use 'Maypole::Application';
+
+    Foo->config->model("Maypole::Model::CDBI::Plain");
+    Foo->setup([qw/ Foo::SomeTable Foo::Other::Table /]);
+
+    # untaint columns and provide custom actions for each class
+
+    Foo::SomeTable->untaint_columns(email => ['email'], printable => [qw/name description/]);
+
+    Foo::Other::Table->untaint_columns ( ... );
+
+    sub Foo::SomeTable::SomeAction : Exported {
+
+        . . .
+
+    }
+
 =head2 Extending a model class with actions
 
 Maypole operates primarily by turning URLs into method calls on a model
@@ -118,3 +141,5 @@ chapter and our case studies.
 L<Contents|Maypole::Manual>,
 Next L<Maypole View Classes|Maypole::Manual::View>,
 Previous L<Introduction to Maypole|Maypole::Manual::About>
+
+=cut

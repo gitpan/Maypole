@@ -12,7 +12,7 @@ use URI::QueryParam;
 use NEXT;
 use File::MMagic::XS qw(:compat);
 
-our $VERSION = '2.111';
+our $VERSION = '2.12';
 our $mmagic = File::MMagic::XS->new();
 
 # proposed privacy conventions:
@@ -183,7 +183,8 @@ __PACKAGE__->mk_classdata($_) for qw( config init_done view_object model_classes
 __PACKAGE__->mk_accessors(
     qw( params query objects model_class template_args output path
         args action template error document_encoding content_type table
-        headers_in headers_out stash status parent)
+        headers_in headers_out stash status parent build_form_elements
+        user session)
 );
 
 __PACKAGE__->config( Maypole::Config->new() );
@@ -299,14 +300,10 @@ sub setup_model {
   # among other things, this populates $config->classes
   $config->model->setup_database($config, $class, @_);
 
-  foreach my $subclass ( @{ $config->classes } ) {
-    next if $subclass->isa("Maypole::Model::Base");
-    no strict 'refs';
-    unshift @{ $subclass . "::ISA" }, $config->model;
-  }
+  $config->model->add_model_superclass($config);
 
   # Load custom model code, if it exists - nb this must happen after the
-  # unshift, to allow code attributes to work, but before adopt(),
+  # adding the model superclass, to allow code attributes to work, but before adopt(),
   # in case adopt() calls overridden methods on $subclass
   foreach my $subclass ( @{ $config->classes } ) {
     $class->load_model_subclass($subclass) unless ($class->model_classes_loaded());
@@ -384,13 +381,12 @@ sub new
         config        => $class->config,
     }, $class;
 
-	$self->stash({});
-	$self->params({});
-	$self->query({});
-	$self->template_args({});
-	$self->args([]);
-	$self->objects([]);
-    
+    $self->stash({});
+    $self->params({});
+    $self->query({});
+    $self->template_args({});
+    $self->args([]);
+    $self->objects([]);
     return $self;
 }
 
@@ -439,8 +435,12 @@ sub handler : method  {
   return $self->status unless $self->status == Maypole::Constants::OK();
   die "status undefined after start_request_hook()" unless defined
     $self->status;
-  $self->get_session;
-  $self->get_user;
+
+  my $session = $self->get_session;
+  $self->session($self->{session} || $session);
+  my $user = $self->get_user;
+  $self->user($self->{user} || $user);
+
   my $status = $self->handler_guts;
   return $status unless $status == OK;
   # TODO: require send_output to return a status code
@@ -463,7 +463,7 @@ to call those actions. You may pass a query string in the usual URL style.
 You should not fully qualify the Maypole URLs.
 
 Note: any HTTP POST or URL parameters passed to the parent are not passed to the
-component sub-request, only what is included in the url passed as an argyument
+component sub-request, only what is included in the url passed as an argument
 to the method
 
 =cut
@@ -471,16 +471,17 @@ to the method
 sub component {
     my ( $r, $path ) = @_;
     my $self = bless { parent => $r, config => $r->{config}, } , ref $r;
-	$self->stash({});
-	$self->params({});
-	$self->query({});
-	$self->template_args({});
-	$self->args([]);
-	$self->objects([]);
+    $self->stash({});
+    $self->params({});
+    $self->query({});
+    $self->template_args({});
+    $self->args([]);
+    $self->objects([]);
 
-    $self->get_user;
+    $self->session($self->get_session);
+    $self->user($self->get_user);
+
     my $url = URI->new($path);
-    warn "path : $path\n";
     $self->{path} = $url->path;
     $self->parse_path;
     $self->params( $url->query_form_hash );
@@ -540,71 +541,66 @@ sub __call_hook
 This is the main request handling method and calls various methods to handle the
 request/response and defines the workflow within Maypole.
 
-B<Currently undocumented and liable to be refactored without warning>.
-
 =cut
 
 # The root of all evil
-sub handler_guts 
-{
-    my ($self) = @_;
-    
-    $self->__load_request_model;
+sub handler_guts {
+  my ($self) = @_;
+  $self->build_form_elements(1) unless (defined ($self->config->build_form_elements) && $self->config->build_form_elements == 0);
+  $self->__load_request_model;
 
-    my $applicable = $self->is_model_applicable == OK;
+  my $applicable = $self->is_model_applicable == OK;
 
-    my $status;
+  my $status;
 
-    # handle authentication
-    eval { $status = $self->call_authenticate };
-    if ( my $error = $@ ) 
-    {
-        $status = $self->call_exception($error, "authentication");
-        if ( $status != OK ) 
-        {
-            warn "caught authenticate error: $error";
-            return $self->debug ? 
-                    $self->view_object->error($self, $error) : ERROR;
-        }
+  # handle authentication
+  eval { $status = $self->call_authenticate };
+  if ( my $error = $@ ) {
+    $status = $self->call_exception($error, "authentication");
+    if ( $status != OK ) {
+      $self->warn("caught authenticate error: $error");
+      return $self->debug ? 
+	$self->view_object->error($self, $error) : ERROR;
     }
-    if ( $self->debug and $status != OK and $status != DECLINED ) 
-    {
-        $self->view_object->error( $self,
-            "Got unexpected status $status from calling authentication" );
+  }
+  if ( $self->debug and $status != OK and $status != DECLINED ) {
+    $self->view_object->error( $self,
+			       "Got unexpected status $status from calling authentication" );
+  }
+
+  return $status unless $status == OK;
+
+  # We run additional_data for every request
+  $self->additional_data;
+
+  if ($applicable) {
+    eval { $self->model_class->process($self) };
+    if ( my $error = $@ ) {
+      $status = $self->call_exception($error, "model");
+      if ( $status != OK ) {
+	$self->warn("caught model error: $error");
+	return $self->debug ? 
+	  $self->view_object->error($self, $error) : ERROR;
+      }
     }
+  } else {
+    $self->__setup_plain_template;
+  }
 
-    return $status unless $status == OK;
-
-    # We run additional_data for every request
-    $self->additional_data;
-
-    if ($applicable) {
-      eval { $self->model_class->process($self) };
-      if ( my $error = $@ ) 
-        {
-	  $status = $self->call_exception($error, "model");
-	  if ( $status != OK )
-            {
-	      warn "caught model error: $error";
-	      return $self->debug ? 
-		$self->view_object->error($self, $error) : ERROR;
-            }
-        }
-    } else {
-      $self->__setup_plain_template;
-    }
-
-    # less frequent path - perhaps output has been set to an error message
-    return OK if $self->output;
-
-    # normal path - no output has been generated yet
-    my $processed_view_ok = $self->__call_process_view;
-
+  # less frequent path - perhaps output has been set to an error message
+  if ($self->output) {
     $self->{content_type}      ||= $self->__get_mime_type();
     $self->{document_encoding} ||= "utf-8";
+    return OK;
+  }
 
+  # normal path - no output has been generated yet
+  my $processed_view_ok = $self->__call_process_view;
 
-    return $processed_view_ok;
+  $self->{content_type}      ||= $self->__get_mime_type();
+  $self->{document_encoding} ||= "utf-8";
+
+  return $processed_view_ok;
 }
 
 my %filetypes = (
@@ -636,8 +632,8 @@ sub __load_request_model
     if ( eval {$mclass->isa('Maypole::Model::Base')} ) {
         $self->model_class( $mclass );
     }
-    elsif ($self->debug) {
-      warn "***Warning:  No $mclass class appropriate for model. @_"; 
+    elsif ($self->debug > 1) {
+      $self->warn("***Warning:  No $mclass class appropriate for model. @_");
     }
 }
 
@@ -650,13 +646,16 @@ sub __setup_plain_template
     my ($self) = @_;
 
     # It's just a plain template
+    $self->build_form_elements(0);
     $self->model_class(undef);
-    
-    my $path = $self->path;
-    $path =~ s{/$}{};    # De-absolutify
-    $self->path($path);
-    
-    $self->template($self->path);
+
+    unless ($self->template) {
+      # FIXME: this is likely to be redundant and is definately causing problems.
+      my $path = $self->path;
+      $path =~ s{/$}{};    # De-absolutify
+      $self->path($path);
+      $self->template($self->path);
+    }
 }
 
 # The model has been processed or skipped (if is_applicable returned false), 
@@ -680,6 +679,32 @@ sub __call_process_view {
 
   return $status;
 }
+
+=item warn
+
+$r->warn('its all gone pete tong');
+
+Warn must be implemented by the backend, i.e. Apache::MVC
+and warn to stderr or appropriate logfile.
+
+You can also over-ride this in your Maypole driver, should you
+want to use something like Log::Log4perl instead.
+
+=cut
+
+sub warn { }
+
+=item build_form_elements
+
+$r->build_form_elements(0);
+
+Specify (in an action) whether to build HTML form elements and populate
+the cgi element of classmetadata in the view.
+
+You can set this globally using the accessor of the same name in Maypole::Config,
+this method allows you to over-ride that setting per action.
+
+=cut
 
 =item get_request
 
@@ -798,9 +823,9 @@ sub is_model_applicable {
 
     if (not $ok) 
     {
-        warn "We don't have that table ($table).\n"
+        $self->warn ("We don't have that table ($table).\n"
             . "Available tables are: "
-            . join( ",", keys %$ok_tables )
+            . join( ",", keys %$ok_tables ))
                 if $self->debug and not $ok_tables->{$table};
                 
         return DECLINED;
@@ -810,7 +835,7 @@ sub is_model_applicable {
     my $action = $self->action;
     return OK if $self->model_class->is_public($action);
     
-    warn "The action '$action' is not applicable to the table '$table'"
+    $self->warn("The action '$action' is not applicable to the table '$table'")
          if $self->debug;
     
     return DECLINED;
@@ -959,8 +984,7 @@ properties. Calls C<preprocess_path> before parsing path and setting properties.
 
 =cut
 
-sub parse_path 
-{
+sub parse_path {
     my ($self) = @_;
 
     # Previous versions unconditionally set table, action and args to whatever 
@@ -969,10 +993,13 @@ sub parse_path
     # conditionally, broke lots of tests, hence this:
     $self->$_(undef) for qw/action table args/;
     $self->preprocess_path;
-    $self->path || $self->path('frontpage');
+
+    # use frontpage template for frontpage
+    unless ($self->path && $self->path ne '/') {
+      $self->path('frontpage');
+    }
 
     my @pi = grep {length} split '/', $self->path;
-
 
     $self->table  || $self->table(shift @pi);
     $self->action || $self->action( shift @pi or 'index' );
@@ -982,18 +1009,31 @@ sub parse_path
 =item preprocess_path
 
 Sometimes when you don't want to rewrite or over-ride parse_path but
-want to rewrite urls or extract data from them before it is parsed.
+want to rewrite urls or extract data from them before it is parsed,
+the preprocess_path/location methods allow you to munge paths and urls
+before maypole maps them to actions, classes, etc.
 
 This method is called after parse_location has populated the request
 information and before parse_path has populated the model and action
 information, and is passed the request object.
 
 You can set action, args or table in this method and parse_path will
-then leave those values in place or populate them if not present
+then leave those values in place or populate them based on the current
+value of the path attribute if they are not present.
 
 =cut
 
 sub preprocess_path { };
+
+=item preprocess_location
+
+This method is called at the start of parse_location, after the headers in, and allows you
+to rewrite the url used by maypole, or dynamically set configuration
+like the base_uri based on the hostname or path.
+
+=cut
+
+sub preprocess_location { };
 
 =item make_path( %args or \%args or @args )
 
@@ -1017,6 +1057,7 @@ expanded into extra path elements, whereas a hashref is translated into a query
 string. 
 
 =cut
+
 
 sub make_path
 {
@@ -1267,9 +1308,9 @@ sub param
 	$self->params->{$key} = $new_val;
     }
     
-    return ref $val ? @$val : ($val) if wantarray;
+    return (ref $val eq 'ARRAY') ? @$val : ($val) if wantarray;
         
-    return ref $val ? $val->[0] : $val;
+    return (ref $val eq 'ARRAY') ? $val->[0] : $val;
 }
 
 
@@ -1316,13 +1357,13 @@ sub redirect_request {
   die "redirect_request is a virtual method. Do not use Maypole directly; use Apache::MVC or similar";
 }
 
-=item redirect_internal_request 
-
-=cut
-
-sub redirect_internal_request {
-
-}
+# =item redirect_internal_request
+#
+# =cut
+#
+# sub redirect_internal_request {
+#
+# }
 
 
 =item make_random_id

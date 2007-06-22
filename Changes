@@ -2,17 +2,49 @@ This file documents the revision history for Perl extension Maypole.
 For information about current developments and future releases, see:
     http://maypole.perl.org/?TheRoadmap
 
-2.111 Sat 21 April 2007
+2.12  22 June 2007 
 
-Fixes :
+SVN revision 573
+
+API additions and enhancements :
+
+Bug Fixes :
+   Fixed some db_colinfo test bugs
    Fixed typo in edit form template
-   Fixed extra html filter in link macro in factory templates
-   Fixed typo in _do_update_or_create (bug 26495)
-   fix to display_line macro in factory templates (bug 22920)
+   AsForm fixes to stringification _to_select
+   made DFV and FromCGI warn instead of die on unexpected cgi params
+   small improvements to some factory templates
+   fix to path handling in mod_perl and CGI when location ends in /
+   fixed template path ordering so i.e. /tablename/list is used before /list when provided with a tablename
    fixed template path with array refs
-   fixed redirect_request
-   fixed db_colinfo.t test when no mysql
+   fix to template being reset from path in plain templates (i.e. where no model), may affect those relying on the bug ( bug 23722 )
+   fix to display_line macro in factory templates (bug 22920)
+   fix to correct problem with LocationMatch and regex based Location directives in apache config.
+   fix to redirect_request
+   Fixed typo in _do_update_or_create (bug 26495)
 
+
+API additions and enhancements :
+   new Class::DBI::DFV based model
+   New config method : additional, for stashing additional info, especially from additional_data method
+   new warn method in maypole/request class/object, over-ridden by Apache::MVC, etc or own driver
+   new build_form_elements attribute for Maypole request and Maypole::Config, set it to 0 to avoid building cgi form if you don't need it
+   added CGI params to TT error template
+   improvements to factory templates
+   added search_columns method to base cdbi model class, provides display_columns unless over-ridden
+   added new hook - preprocess_location
+   added new attribute to Maypole::Config - request_options
+   improved pager template macro
+
+
+Internal additions and enhancements :
+   Inheritence simpler and nicer and less hacked
+   add_model_superclass method moves @ISA munging into the model
+   new test to check everything compiles
+   Model inheritance re-organised
+
+2.111 Mon 30 April 2007
+   - forked - see 2.111 changelog
 
 2.11 Mon 31 July 2006
 

@@ -188,7 +188,7 @@ you need to write for a simple database front-end:
         "a pub has beers on handpumps");
     1;
 
-There's a version of this program in the F<ex/> directory in the Maypole
+There's a version of this program in the F<examples/> directory in the Maypole
 files that you downloaded in the F<~root/.cpan/> build area.
 This defines the C<BeerDB> application.
 To set it up as a mod_perl handler, just tell the Apache configuration

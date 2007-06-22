@@ -505,5 +505,5 @@ L<http://cvs.simon-cozens.org/viewcvs.cgi/flox>.
 
 L<Contents|Maypole::Manual>,
 Next L<The Maypole iBuySpy Portal|Maypole::Manual::BuySpy>,
-Previous L<Maypole Request Hacking Cookbook|Maypole::Manual::Request>
+Previous L<Maypole Request Hacking Cookbook|Maypole::Manual::Cookbook>
 

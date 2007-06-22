@@ -8,7 +8,7 @@ use Template::Constants qw( :all );
 our $error_template;
 { local $/; $error_template = <DATA>; }
 
-our $VERSION = '2.111';
+our $VERSION = '2.12';
 
 my $debug_flags = DEBUG_ON;
 

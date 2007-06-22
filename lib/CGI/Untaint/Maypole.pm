@@ -6,7 +6,7 @@ our $VERSION = '0.01';
 use base 'CGI::Untaint';
 use Carp;
 
-=head1 NAME 
+=head1 NAME
 
 CGI::Untaint::Maypole - Use instead of CGI::Untaint. Based on CGI::Untaint
 

@@ -2,11 +2,20 @@ This file documents the revision history for Perl extension Maypole.
 For information about current developments and future releases, see:
     http://maypole.perl.org/?TheRoadmap
 
+2.121 29 August 2007
+
+SVN revision 581
+
+Bug Fixes :
+   Apache::Request is fetched with a new object instead of instance if request options are provided
+   additional, request_options and view_options attributes of Maypole::Config are initialised with hashref
+   do_delete action now has exported attribute in ::Model::CDBI::Base
+   Fixed links in flox to cookbook (bug 22899)
+   Applied change from bug 14565
+
 2.12  22 June 2007 
 
 SVN revision 573
-
-API additions and enhancements :
 
 Bug Fixes :
    Fixed some db_colinfo test bugs

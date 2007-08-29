@@ -183,8 +183,7 @@ sub delete : Exported {
   }
 }
 
-
-sub do_delete {
+sub do_delete : Exported {
   my ( $self, $r ) = @_;
   # FIXME: handle fatal error with exception
   $_->SUPER::delete for @{ $r->objects || [] };

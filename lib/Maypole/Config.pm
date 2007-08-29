@@ -5,14 +5,19 @@ use attributes ();
 use strict;
 use warnings;
 
-our $VERSION = "1." . sprintf "%04d", q$Rev: 570 $ =~ /: (\d+)/;
+our $VERSION = 2.121;
 
 # Public accessors.
 __PACKAGE__->mk_accessors(
-     qw( view view_options uri_base template_root template_extension model
-         loader display_tables ok_tables rows_per_page dsn user pass opts
-         application_name additional build_form_elements request_options)
-);
+			  qw(
+			      view view_options template_root template_extension build_form_elements
+			      uri_base rows_per_page application_name
+			      model loader display_tables ok_tables
+			      dsn user pass opts
+			      additional
+			      request_options
+			     )
+			  );
 
 # Should only be modified by model.
 __PACKAGE__->mk_ro_accessors(qw( classes tables));

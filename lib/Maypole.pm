@@ -12,7 +12,7 @@ use URI::QueryParam;
 use NEXT;
 use File::MMagic::XS qw(:compat);
 
-our $VERSION = '2.12';
+our $VERSION = '2.121';
 our $mmagic = File::MMagic::XS->new();
 
 # proposed privacy conventions:
@@ -187,7 +187,7 @@ __PACKAGE__->mk_accessors(
         user session)
 );
 
-__PACKAGE__->config( Maypole::Config->new() );
+__PACKAGE__->config( Maypole::Config->new({additional => { }, request_options => { }, view_options => { },}) );
 
 __PACKAGE__->init_done(0);
 
@@ -573,14 +573,17 @@ sub handler_guts {
   # We run additional_data for every request
   $self->additional_data;
 
+  # process request with model if applicable and template not set.
   if ($applicable) {
-    eval { $self->model_class->process($self) };
-    if ( my $error = $@ ) {
-      $status = $self->call_exception($error, "model");
-      if ( $status != OK ) {
-	$self->warn("caught model error: $error");
-	return $self->debug ? 
-	  $self->view_object->error($self, $error) : ERROR;
+    unless ($self->{template}) {
+      eval { $self->model_class->process($self) };
+      if ( my $error = $@ ) {
+	$status = $self->call_exception($error, "model");
+	if ( $status != OK ) {
+	  $self->warn("caught model error: $error");
+	  return $self->debug ? 
+	    $self->view_object->error($self, $error) : ERROR;
+	}
       }
     }
   } else {

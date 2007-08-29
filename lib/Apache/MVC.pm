@@ -1,6 +1,6 @@
 package Apache::MVC;
 
-our $VERSION = '2.12';
+our $VERSION = '2.121';
 
 use strict;
 use warnings;
@@ -96,9 +96,14 @@ sub get_request {
     my $request_options = $self->config->request_options || {};
     my $ar;
     if ($MODPERL2) {
-    	$ar = eval {require Apache2::Request} ? Apache2::Request->new($r,%{$request_options}) : $r;
-	}
-    else { $ar = Apache::Request->instance($r,%{$request_options}); }
+      $ar = eval {require Apache2::Request} ? Apache2::Request->new($r,%{$request_options}) : $r;
+    } else {
+      if (keys %$request_options) {
+	$ar = Apache::Request->new($r,%{$request_options});
+      } else {
+	$ar = Apache::Request->instance($r);
+      }
+    }
     $self->ar($ar);
 }
 

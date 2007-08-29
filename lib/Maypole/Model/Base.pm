@@ -24,7 +24,6 @@ sub FETCH_CODE_ATTRIBUTES { @{ $remember{$_[1]} || [] } }
 sub process {
     my ( $class, $r ) = @_;
     my $method = $r->action;
-    return if $r->{template};    # Authentication has set this, we're done.
 
     $r->{template} = $method;
     my $obj = $class->fetch_objects($r);

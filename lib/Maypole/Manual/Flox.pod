@@ -20,7 +20,7 @@ university student population.
 
 Flox is still in, uh, flux, but it does the essentials. We're going to
 see how it was put together, and how the techniques shown in the
-L<Request Cookbook|Maypole::Manual::Request> can help to
+L<Request Cookbook|Maypole::Manual::Cookbook> can help to
 create a sophisticated web
 application. Of course, I didn't have this manual available at the time,
 so it took a bit longer than it should have done...
@@ -152,7 +152,7 @@ Very simple, as these things are meant to be. Now let's build on it.
 The concept of a current user is absolutely critical in a site like
 Flox; it represents "me", the viewer of the page, as the site explores
 the connections in my world. We've described the authentication hacks
-briefly in the L<Request Cookbook|Maypole::Manual::Request>,
+briefly in the L<Request Cookbook|Maypole::Manual::Cookbook>,
 but now it's time to go into a little more detail about how user
 handling is done.
 
@@ -195,7 +195,7 @@ The next stage is viewing the user's photo. Assuming we've got the photo
 stored in the database already (which is a reasonable assumption for the
 moment since we don't have a way to upload a photo quite yet) then we
 can use a variation of the "Displaying pictures" hack from the 
-L<Request Cookbook|Maypole::Manual::Request>:
+L<Request Cookbook|Maypole::Manual::Cookbook>:
 
     sub view_picture :Exported {
         my ($self, $r) = @_;
@@ -328,7 +328,7 @@ and the template proceeds as normal:
     <TABLE>
 
 Now we use the "Catching errors in a form" recipe from the
-L<Request Cookbook|Maypole::Manual::Request> and
+L<Request Cookbook|Maypole::Manual::Cookbook> and
 write our form template:
 
     <TR><TD>

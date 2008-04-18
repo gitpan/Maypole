@@ -12,7 +12,7 @@ use URI::QueryParam;
 use NEXT;
 use File::MMagic::XS qw(:compat);
 
-our $VERSION = '2.121';
+our $VERSION = '2.13';
 our $mmagic = File::MMagic::XS->new();
 
 # proposed privacy conventions:
@@ -616,7 +616,7 @@ my %filetypes = (
 sub __get_mime_type {
   my $self = shift;
   my $type = 'text/html';
-  if ($self->path =~ m/.*\.(\w{3,4})$/) {
+  if ($self->path =~ m/.*\.(\w{2,4})$/) {
     $type = $filetypes{$1};
   } else {
     my $output = $self->output;

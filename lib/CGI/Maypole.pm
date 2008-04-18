@@ -7,7 +7,7 @@ use CGI::Simple;
 use Maypole::Headers;
 use Maypole::Constants;
 
-our $VERSION = '2.12';
+our $VERSION = '2.13';
 
 __PACKAGE__->mk_accessors( qw/cgi/ );
 
@@ -54,10 +54,19 @@ Call this from your CGI script to start the Maypole application.
 
 =cut
 
-sub run 
-{
-    my $self = shift;
-    return $self->handler;
+sub run  {
+  my $self = shift;
+  my $status = $self->handler;
+  if ($status != OK) {
+    print <<EOT;
+Status: 500 Maypole application error
+Content-Type: text/html
+
+<title>Maypole application error</h1>
+<h1>Maypole application error</h1>
+EOT
+  }
+  return $status;
 }
 
 =head1 Implementation

@@ -1,17 +1,22 @@
 #!/usr/bin/perl -w
 use strict;
 use Test::More;
+
 BEGIN {
-    if (eval { require Apache::Request }) {
+    if (eval { require Apache2::RequestRec }) {
+       $ENV{MOD_PERL_API_VERSION} = 2;
+        plan tests => 3;
+    } elsif (eval { require Apache::Request }) {
         plan tests => 3;
     } else {
-        Test::More->import(skip_all =>"Apache::Request is not installed: $@");
+	Test::More->import(skip_all =>"Neither Apache2::RequestRec nor Apache::Request is installed: $@");
     }
 }
 
 require_ok('Apache::MVC');
 ok($Apache::MVC::VERSION, 'defines $VERSION');
 ok(Apache::MVC->can('ar'), 'defines an "ar" accessor');
+
 # defines $VERSION
 # uses mod_perl
 # @ISA = 'Maypole'

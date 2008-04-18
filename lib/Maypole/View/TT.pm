@@ -21,6 +21,8 @@ sub template {
     if ($r->debug) {
       $view_options->{DEBUG} = $debug_flags;
     }
+
+    $view_options->{POST_CHOMP} = 1 unless (exists $view_options->{POST_CHOMP});
     $self->{provider} = Template::Provider->new($view_options);
     $self->{tt}       = Template->new({
 				       %$view_options,

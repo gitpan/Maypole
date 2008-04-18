@@ -2,6 +2,26 @@ This file documents the revision history for Perl extension Maypole.
 For information about current developments and future releases, see:
     http://maypole.perl.org/?TheRoadmap
 
+
+
+2.13 April 2008
+SVN Revision
+
+Bug Fixes :
+   DBD::SQLite no longer required by Makefile.PL
+   CGI handler now produces response for fatal error (bug 29981)
+   Fix to link macro
+   Fix to redirect_request in Apache::MVC
+   Fix to mime detection by file extension
+   Fixed MODIFY_CODE_ATTRIBUTES and FETCH_CODE_ATTRIBUTES to work with mod_perl threaded model 
+     - Patch from Ben Hutchings http://rt.cpan.org/Public/Bug/Display.html?id=29984
+   fixes for bug 29982 Inconsistency between examples and tutorial (patch from Ben Hutchings)
+   fixed apache_mvc.t to work with Apache2 (bug #29979 patch from Ben Hutchings)
+   added post_chomp as default option for TT view
+
+Improvements :
+   link macro now takes a target argument, and has slightly better pod
+
 2.121 29 August 2007
 
 SVN revision 581

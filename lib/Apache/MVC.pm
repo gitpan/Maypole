@@ -197,8 +197,7 @@ can only be combined with status.
 sub redirect_request {
   my $r = shift;
   my $redirect_url = $_[0];
-  my $status = $MODPERL2 ? eval 'Apache2::Const::REDIRECT;' :
-          eval 'Apache::Constants::REDIRECT;'; # why have to eval this?
+  my $status = $MODPERL2 ? eval 'Apache2::Const::REDIRECT;' : eval 'Apache::Constants::REDIRECT;';
   if ($_[1]) {
     my %args = @_;
     if ($args{url}) {
@@ -218,6 +217,7 @@ sub redirect_request {
 
   $r->ar->status($status);
   $r->ar->headers_out->set('Location' => $redirect_url);
+  $r->output('<html><head><title>redirecting...</title></head><body><h2>redirecting..</h2></body></html>') unless ($r->output);
   return OK;
 }
 

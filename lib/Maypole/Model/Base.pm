@@ -7,19 +7,26 @@ use attributes ();
 # don't know why this is a global - drb
 our %remember;
 
-sub MODIFY_CODE_ATTRIBUTES 
-{ 
+sub MODIFY_CODE_ATTRIBUTES {
     shift; # class name not used
     my ($coderef, @attrs) = @_;
-    
-    $remember{$coderef} = \@attrs; 
-    
+    $remember{$coderef} = [$coderef, \@attrs];
+
     # previous version took care to return an empty array, not sure why, 
     # but shall cargo cult it until know better
     return; 
 }
 
-sub FETCH_CODE_ATTRIBUTES { @{ $remember{$_[1]} || [] } }
+sub FETCH_CODE_ATTRIBUTES { @{ $remember{$_[1]}->[1] || [] } }
+
+sub CLONE {
+ # re-hash %remember
+ for my $key (keys %remember) {
+ my $value = delete $remember{$key};
+ $key = $value->[0];
+ $remember{$key} = $value;
+ }
+}
 
 sub process {
     my ( $class, $r ) = @_;

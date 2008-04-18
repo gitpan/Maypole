@@ -6,11 +6,23 @@ sub debug { $ENV{BEERDB_DEBUG} || 0 }
 # This is the sample application.  Change this to the path to your
 # database. (or use mysql or something)
 use constant DBI_DRIVER => 'SQLite';
-use constant DATASOURCE => '/home/peter/Desktop/maypolebeer/beerdb'; 
+use constant DATASOURCE => $ENV{BEERDB_DATASOURCE} || 't/beerdb.db';
 
 BeerDB->config->model('BeerDB::Base'); 
 
-BeerDB->setup("dbi:mysql:beerdb",'root', '');
+BEGIN {
+    my $dbi_driver = DBI_DRIVER;
+    if ($dbi_driver =~ /^SQLite/) {
+	unless -e (DATASOURCE) {
+	    die sprintf("SQLite datasource '%s' not found, correct the path or recreate the database by running Makefile.PL", DATASOURCE), "\n";
+	}            
+	eval "require DBD::SQLite";
+        if ($@) {
+            eval "require DBD::SQLite2" and $dbi_driver = 'SQLite2';
+        }
+    }
+    BeerDB->setup(join ':', "dbi", $dbi_driver, DATASOURCE);
+}
 
 # Give it a name.
 BeerDB->config->application_name('The Beer Database');
@@ -19,8 +31,7 @@ BeerDB->config->application_name('The Beer Database');
 BeerDB->config->uri_base( $ENV{BEERDB_BASE} || "http://localhost/beerdb/" );
 
 # Change this to the htdoc root for your maypole application.
-
-my @root=  ('/home/peter/Desktop/maypolebeer/templates'); 
+my @root=  ('t/templates');
 push @root,$ENV{BEERDB_TEMPLATE_ROOT} if ($ENV{BEERDB_TEMPLATE_ROOT});
 BeerDB->config->template_root( [@root] ); 
 # Specify the rows per page in search results, lists, etc : 10 is a nice round number
@@ -47,7 +58,7 @@ BeerDB::Pint->untaint_columns( printable => [qw/date_and_time/]);
 
 
 # Required Fields
-BeerDB->config->{brewery}{required_cols} = [qw/name url/];
+BeerDB->config->{brewery}{required_cols} = [qw/name/];
 BeerDB->config->{style}{required_cols} = [qw/name/];
 BeerDB->config->{beer}{required_cols} = [qw/brewery name price/];
 BeerDB->config->{pub}{required_cols} = [qw/name/];

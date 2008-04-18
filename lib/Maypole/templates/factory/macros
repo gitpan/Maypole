@@ -10,12 +10,20 @@ system.
 This creates an <A HREF="..."> to a command in the Apache::MVC system by
 catenating the base URL, table, command, and any arguments.
 
+arguments are table, command, additional, label, target.
+
+target specifies a target for the link if provided.
+
 #%]
 [%
-MACRO link(table, command, additional, label) BLOCK;
+MACRO link(table, command, additional, label, target) BLOCK;
     SET lnk = base _ "/" _ table _ "/" _ command _ "/" _ additional;
     lnk = lnk | uri ;
-    '<a href="' _ lnk _ '">';
+    IF target ;
+	'<a href="' _ lnk _ '" target="' _ target _'">';
+    ELSE;
+	'<a href="' _ lnk _ '">';
+    END;
     label | html;
     "</a>";
 END;
